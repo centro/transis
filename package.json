@@ -1,0 +1,15 @@
+{
+  "name": "ryno",
+  "version": "0.0.0",
+  "description": "Data modeling library",
+  "main": "index.js",
+  "scripts": {
+    "test": "make"
+  },
+  "keywords": [
+    "model",
+    "mvc"
+  ],
+  "author": "Corey Burrows <corey.burrows@gmail.com>",
+  "license": "MIT"
+}
