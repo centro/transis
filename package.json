@@ -2,7 +2,7 @@
   "name": "ryno",
   "version": "0.0.0",
   "description": "Data modeling library",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
     "test": "make"
   },
@@ -11,5 +11,9 @@
     "mvc"
   ],
   "author": "Corey Burrows <corey.burrows@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "6to5": "1.15.0",
+    "jasmine-node": "2.0.0-beta4"
+  }
 }
