@@ -28,6 +28,9 @@ spec_browser: build/ryno.js $(ES5_SPECS)
 
 spec: spec_node spec_browser
 
+repl: ryno
+	env NODE_NO_READLINE=1 rlwrap node ./util/repl.js
+
 clean:
 	rm -rf ./build
 
