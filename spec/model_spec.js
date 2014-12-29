@@ -32,4 +32,22 @@ describe('Model', function () {
       }).toThrow(new Error("Ryno.Model.registerModel: a class with name `A` has already been registered"));
     });
   });
+
+  describe('.empty', function() {
+    it('returns an instance of the class with sourceState set to EMPTY and the given id', function() {
+      var m = Model.empty(127);
+      expect(m.id).toBe(127);
+      expect(m.sourceState).toBe(Model.EMPTY);
+    });
+  });
+
+  describe('#id=', function() {
+    it('throws an exception when an attempt is made to overwrite an existing non-null value', function() {
+      var m = new BasicModel({id: 1});
+      expect(m.id).toBe(1);
+      expect(function() {
+        m.id = 9;
+      }).toThrow(new Error(`Ryno.Model#id=: overwriting a model's identity is not allowed: ${m}`));
+    });
+  });
 });
