@@ -67,3 +67,26 @@ describe('NumberAttr#serialize', function() {
     expect(attrs.NumberAttr.serialize(undefined)).toBeUndefined();
   });
 });
+
+describe('BooleanAttr#coerce', function() {
+  it('converts the given value to a boolean', function() {
+    expect(attrs.BooleanAttr.coerce(true)).toBe(true);
+    expect(attrs.BooleanAttr.coerce(false)).toBe(false);
+    expect(attrs.BooleanAttr.coerce(1)).toBe(true);
+    expect(attrs.BooleanAttr.coerce('foo')).toBe(true);
+    expect(attrs.BooleanAttr.coerce({})).toBe(true);
+    expect(attrs.BooleanAttr.coerce(0)).toBe(false);
+    expect(attrs.BooleanAttr.coerce('')).toBe(false);
+    expect(attrs.BooleanAttr.coerce(null)).toBe(false);
+    expect(attrs.BooleanAttr.coerce(undefined)).toBe(false);
+  });
+});
+
+describe('BooleanAttr#serialize', function() {
+  it('returns the argument', function() {
+    expect(attrs.BooleanAttr.serialize(true)).toBe(true);
+    expect(attrs.BooleanAttr.serialize(false)).toBe(false);
+    expect(attrs.BooleanAttr.serialize(null)).toBeNull();
+    expect(attrs.BooleanAttr.serialize(undefined)).toBeUndefined();
+  });
+});

@@ -19,3 +19,8 @@ export var NumberAttr = {
 
   serialize: function(n) { return n; }
 };
+
+export var BooleanAttr = {
+  coerce: function(v) { return !!v; },
+  serialize: function(b) { return b; }
+};
