@@ -48,3 +48,17 @@ export function parseDate(s) {
     return null;
   }
 }
+
+const NO_TZ_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?$/;
+
+// Public: Parses a string containing an ISO8601 formatted date and time.
+//
+// s - The string to parse.
+//
+// Returns a `Date` or `null` if parsing fails.
+export function parseDateTime(s) {
+  var n;
+  s = String(s);
+  if (s.match(NO_TZ_RE)) { s += 'Z'; }
+  return (n = Date.parse(s)) ? new Date(n) : null;
+}

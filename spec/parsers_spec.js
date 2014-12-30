@@ -104,3 +104,18 @@ describe('parseDate', function() {
     expect(parsers.parseDate('5/19')).toEqual(new Date(y, 4, 19));
   });
 });
+
+describe('parseDateTime', function() {
+  it('returns null when given a string that cannot be parsed by Date.parse', function() {
+    expect(parsers.parseDateTime('asdf')).toBeNull();
+  });
+
+  it('returns a Date object when given a valid ISO8601 date string', function() {
+    expect(parsers.parseDateTime("2013-03-29T09:49:30Z")).toEqual(new Date(Date.UTC(2013, 2, 29, 9, 49, 30, 0)));
+    expect(parsers.parseDateTime("2013-03-29T09:49:30")).toEqual(new Date(Date.UTC(2013, 2, 29, 9, 49, 30, 0)));
+    expect(parsers.parseDateTime("2013-03-29T09:49:30.000")).toEqual(new Date(Date.UTC(2013, 2, 29, 9, 49, 30, 0)));
+    expect(parsers.parseDateTime("2013-03-29T09:49:30-05:00")).toEqual(new Date(Date.UTC(2013, 2, 29, 9, 49, 30, 0) + (5 * 60 * 60 * 1000)));
+    expect(parsers.parseDateTime("2013-03-29T09:49:30-06:00")).toEqual(new Date(Date.UTC(2013, 2, 29, 9, 49, 30, 0) + (6 * 60 * 60 * 1000)));
+    expect(parsers.parseDateTime("2013-03-29T09:49:30+02:00")).toEqual(new Date(Date.UTC(2013, 2, 29, 9, 49, 30, 0) - (2 * 60 * 60 * 1000)));
+  });
+});
