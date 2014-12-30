@@ -90,3 +90,83 @@ describe('BooleanAttr#serialize', function() {
     expect(attrs.BooleanAttr.serialize(undefined)).toBeUndefined();
   });
 });
+
+describe('DateAttr#coerce', function() {
+  it('returns the argument when its a Date object', function() {
+    var d = new Date;
+    expect(attrs.DateAttr.coerce(d)).toBe(d);
+  });
+
+  it('returns the argument when its null or undefined', function() {
+    expect(attrs.DateAttr.coerce(null)).toBeNull();
+    expect(attrs.DateAttr.coerce(undefined)).toBeUndefined();
+  });
+
+  it('converts numbers to Date objects', function() {
+    var d1 = new Date(2014, 11, 29), d2 = new Date(0);
+    expect(attrs.DateAttr.coerce(d1.valueOf())).toEqual(d1);
+    expect(attrs.DateAttr.coerce(d2.valueOf())).toEqual(d2);
+  });
+
+  it('converts strings to Date objects', function() {
+    expect(attrs.DateAttr.coerce('2014-12-29')).toEqual(new Date(2014, 11, 29));
+  });
+
+  it('throws an exception when given something other than a number or string', function() {
+    expect(function() {
+      attrs.DateAttr.coerce({});
+    }).toThrow(new Error("Ryno.DateAttr#coerce: don't know how to coerce `[object Object]` to a Date"));
+  });
+});
+
+describe('DateAttr#serialize', function() {
+  it('converts the given Date to an ISO8601 formatted string', function() {
+    expect(attrs.DateAttr.serialize(new Date(2014, 11, 29))).toEqual('2014-12-29');
+    expect(attrs.DateAttr.serialize(new Date(2015, 0, 1))).toEqual('2015-01-01');
+  });
+
+  it('passes through null and undefined', function() {
+    expect(attrs.DateAttr.serialize(null)).toBeNull();
+    expect(attrs.DateAttr.serialize(undefined)).toBeUndefined();
+  });
+});
+
+describe('DateTimeAttr#coerce', function() {
+  it('returns the argument when its a Date object', function() {
+    var d = new Date;
+    expect(attrs.DateTimeAttr.coerce(d)).toBe(d);
+  });
+
+  it('returns the argument when its null or undefined', function() {
+    expect(attrs.DateTimeAttr.coerce(null)).toBeNull();
+    expect(attrs.DateTimeAttr.coerce(undefined)).toBeUndefined();
+  });
+
+  it('converts numbers to Date objects', function() {
+    var d1 = new Date(2014, 11, 29), d2 = new Date(0);
+    expect(attrs.DateTimeAttr.coerce(d1.valueOf())).toEqual(d1);
+    expect(attrs.DateTimeAttr.coerce(d2.valueOf())).toEqual(d2);
+  });
+
+  it('converts strings to Date objects', function() {
+    expect(attrs.DateTimeAttr.coerce('2013-03-29T09:49:30Z')).toEqual(new Date(Date.UTC(2013, 2, 29, 9, 49, 30, 0)));
+  });
+
+  it('throws an exception when given something other than a number or string', function() {
+    expect(function() {
+      attrs.DateTimeAttr.coerce({});
+    }).toThrow(new Error("Ryno.DateTimeAttr#coerce: don't know how to coerce `[object Object]` to a Date"));
+  });
+});
+
+describe('DateTimeAttr#serialize', function() {
+  it('converts the given Date to an ISO8601 formatted string', function() {
+    var t = new Date(Date.UTC(2013, 2, 29, 9, 49, 30, 0) + (6 * 60 * 60 * 1000));
+    expect(attrs.DateTimeAttr.serialize(t)).toEqual('2013-03-29T15:49:30.000Z');
+  });
+
+  it('passes through null and undefined', function() {
+    expect(attrs.DateTimeAttr.serialize(null)).toBeNull();
+    expect(attrs.DateTimeAttr.serialize(undefined)).toBeUndefined();
+  });
+});

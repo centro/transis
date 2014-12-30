@@ -24,3 +24,37 @@ export var BooleanAttr = {
   coerce: function(v) { return !!v; },
   serialize: function(b) { return b; }
 };
+
+export var DateAttr = {
+  coerce: function(v) {
+    if (v == null || v instanceof Date) { return v; }
+    if (typeof v === 'number') { return new Date(v); }
+
+    if (typeof v !== 'string') {
+      throw new Error(`Ryno.DateAttr#coerce: don't know how to coerce \`${v}\` to a Date`);
+    }
+
+    return parsers.parseDate(v);
+  },
+
+  serialize: function(date) {
+    return date instanceof Date ? date.toJSON().replace(/T.*$/, '') : date;
+  }
+};
+
+export var DateTimeAttr = {
+  coerce: function(v) {
+    if (v == null || v instanceof Date) { return v; }
+    if (typeof v === 'number') { return new Date(v); }
+
+    if (typeof v !== 'string') {
+      throw new Error(`Ryno.DateTimeAttr#coerce: don't know how to coerce \`${v}\` to a Date`);
+    }
+
+    return parsers.parseDateTime(v);
+  },
+
+  serialize: function(date) {
+    return date instanceof Date ? date.toJSON() : date;
+  }
+};
