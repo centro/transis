@@ -1,32 +1,32 @@
 import * as parsers from "./parsers";
 
 export var IdentityAttr = {
-  coerce: function(v) { return v; },
-  serialize: function(v) { return v; }
+  coerce(v) { return v; },
+  serialize(v) { return v; }
 };
 
 export var StringAttr = {
-  coerce: function(v) { return v != null ? String(v) : v; },
-  serialize: function(s) { return s; }
+  coerce(v) { return v != null ? String(v) : v; },
+  serialize(s) { return s; }
 };
 
 export var NumberAttr = {
-  coerce: function(v) {
+  coerce(v) {
     if (typeof v === 'number') { return v; }
     else if (typeof v === 'string') { return parsers.parseNumber(v); }
     else { return null; }
   },
 
-  serialize: function(n) { return n; }
+  serialize(n) { return n; }
 };
 
 export var BooleanAttr = {
-  coerce: function(v) { return !!v; },
-  serialize: function(b) { return b; }
+  coerce(v) { return !!v; },
+  serialize(b) { return b; }
 };
 
 export var DateAttr = {
-  coerce: function(v) {
+  coerce(v) {
     if (v == null || v instanceof Date) { return v; }
     if (typeof v === 'number') { return new Date(v); }
 
@@ -37,13 +37,13 @@ export var DateAttr = {
     return parsers.parseDate(v);
   },
 
-  serialize: function(date) {
+  serialize(date) {
     return date instanceof Date ? date.toJSON().replace(/T.*$/, '') : date;
   }
 };
 
 export var DateTimeAttr = {
-  coerce: function(v) {
+  coerce(v) {
     if (v == null || v instanceof Date) { return v; }
     if (typeof v === 'number') { return new Date(v); }
 
@@ -54,7 +54,7 @@ export var DateTimeAttr = {
     return parsers.parseDateTime(v);
   },
 
-  serialize: function(date) {
+  serialize(date) {
     return date instanceof Date ? date.toJSON() : date;
   }
 };
