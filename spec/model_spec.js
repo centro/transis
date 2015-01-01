@@ -58,7 +58,7 @@ describe('Model', function () {
       expect(m.id).toBe(1);
       expect(function() {
         m.id = 9;
-      }).toThrow(new Error(`Ryno.Model#id=: overwriting a model's identity is not allowed: ${m}`));
+      }).toThrow(new Error(`BasicModel#id=: overwriting a model's identity is not allowed: ${m}`));
     });
   });
 
@@ -70,7 +70,7 @@ describe('Model', function () {
     it('throws an exception if given an unregistered attr name', function() {
       expect(function() {
         BasicModel.attr('x', 'foo');
-      }).toThrow(new Error('Ryno.Model.attr: unknown attribute type: `foo`'));
+      }).toThrow(new Error('BasicModel.attr: unknown attribute type: `foo`'));
     });
 
     it('defines a property on the class prototype with the given name', function() {

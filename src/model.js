@@ -31,8 +31,14 @@ class Model {
     }
 
     registeredClasses[name] = klass;
+    klass.displayName = name;
 
     return this;
+  }
+
+  // Public: Returns a string containing the class's name.
+  static toString() {
+    return this.displayName || this.name || '(Unknown)';
   }
 
   // Public: Returns an empty instance of the model class. An empty instance contains only an id
@@ -65,7 +71,7 @@ class Model {
   // Returns the receiver.
   static registerAttr(name, converter) {
     if (registeredAttrs[name]) {
-      throw new Error(`Ryno.Model.registerAttr: an attribute with the name \`${name}\` has already been defined`);
+      throw new Error(`${this}.registerAttr: an attribute with the name \`${name}\` has already been defined`);
     }
 
     registeredAttrs[name] = converter;
@@ -93,7 +99,7 @@ class Model {
     var converter = registeredAttrs[type], key = `__${name}__`, def = undefined;
 
     if (!converter) {
-      throw new Error(`Ryno.Model.attr: unknown attribute type: \`${type}\``);
+      throw new Error(`${this}.attr: unknown attribute type: \`${type}\``);
     }
 
     if (typeof converter === 'function') { converter = new converter(opts); }
@@ -121,7 +127,7 @@ class Model {
   get id() { return this.__id__; }
   set id(id) {
     if (this.__id__) {
-      throw new Error(`Ryno.Model#id=: overwriting a model's identity is not allowed: ${this}`);
+      throw new Error(`${this.constructor}#id=: overwriting a model's identity is not allowed: ${this}`);
     }
 
     this.__id__ = id;
@@ -132,9 +138,11 @@ class Model {
   get sourceState() { return this.__sourceState__; }
 
   toString() {
-    return `#<${this.constructor.name}:${this.id}>`;
+    return `#<${this.constructor}:${this.id}>`;
   }
 }
+
+Model.displayName = 'Ryno.Model';
 
 Model.NEW      = NEW;
 Model.EMPTY    = EMPTY;
