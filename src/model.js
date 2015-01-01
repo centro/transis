@@ -1,7 +1,7 @@
 import IdMap from "./id_map";
 import * as attrs from "./attrs";
 
-var classes = {}, registeredAttrs = {};
+var registeredClasses = {}, registeredAttrs = {};
 
 const NEW      = 'new';
 const EMPTY    = 'empty';
@@ -17,20 +17,20 @@ class Model {
   // name  - A string. This string can be used to reference the model class in associations.
   //
   // Returns the receiver.
-  static registerModel(klass, name = klass.name) {
+  static registerClass(klass, name = klass.name) {
     if (typeof klass !== 'function' || !(klass.prototype instanceof Model)) {
-      throw new Error(`Ryno.Model.registerModel: \`${klass}\` is not a subclass of Ryno.Model`);
+      throw new Error(`Ryno.Model.registerClass: \`${klass}\` is not a subclass of Ryno.Model`);
     }
 
     if (typeof name !== 'string' || name.length === 0) {
-      throw new Error(`Ryno.Model.registerModel: no name given for class: \`${klass}\``);
+      throw new Error(`Ryno.Model.registerClass: no name given for class: \`${klass}\``);
     }
 
-    if (name in classes) {
-      throw new Error(`Ryno.Model.registerModel: a class with name \`${name}\` has already been registered`);
+    if (name in registeredClasses) {
+      throw new Error(`Ryno.Model.registerClass: a class with name \`${name}\` has already been registered`);
     }
 
-    classes[name] = klass;
+    registeredClasses[name] = klass;
 
     return this;
   }
