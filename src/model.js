@@ -9,6 +9,80 @@ const LOADED   = 'loaded';
 const DELETED  = 'deleted';
 const NOTFOUND = 'notfound';
 
+// Internal: Checks to make sure the given object is of the type specified in the given association
+// descriptor.
+//
+// Returns nothing.
+// Throws `Error` if the given object isn't of the type specified in the association descriptor.
+function checkAssociatedType(desc, o) {
+  var klass = (typeof desc.klass === 'function') ? desc.klass : registeredClasses[desc.klass];
+
+  if (!klass) {
+    throw new Error(`${this.constructor}#checkAssociatedType: could not resolve model class: \`${desc.klass}\``);
+  }
+
+  if (!(o instanceof klass)) {
+    throw new Error(`${this.constructor}#${desc.name}=: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
+  }
+}
+
+// Internal: Called by an inverse association when a model was removed from the inverse side.
+// Updates the local side of the association.
+//
+// name  - The local side name of the association that was modified.
+// model - The model that was removed from the inverse side.
+//
+// Returns nothing.
+function inverseRemoved(name, model) {
+  var desc = this.associations[name];
+
+  if (!desc) {
+    throw new Error(`${this.constructor}#inverseRemoved: unknown association \`${name}\``);
+  }
+
+  if (desc.type === 'hasOne') {
+    hasOneSet.call(this, desc, undefined, false);
+  }
+}
+
+// Internal: Called by an inverse association when a model was added on the inverse side. Updates
+// the local side of the association.
+//
+// name  - The local side name of the association that was modified.
+// model - The model that was added on the inverse side.
+//
+// Returns nothing.
+function inverseAdded(name, model) {
+  var desc = this.associations[name];
+
+  if (!desc) {
+    throw new Error(`${this.constructor}#inverseAdded: unknown association \`${name}\``);
+  }
+
+  if (desc.type === 'hasOne') {
+    hasOneSet.call(this, desc, model, false);
+  }
+}
+
+// Internal: Sets the given object on a `hasOne` property.
+//
+// desc - An association descriptor.
+// v    - The value to set.
+// sync - Set to true to notify the inverse side of the association so that it can update itself.
+//
+// Returns nothing.
+// Throws `Error` if the given object isn't of the type specified in the association descriptor.
+function hasOneSet(desc, v, sync) {
+  var name = desc.name, key = `__${name}__`, prev = this[key], inv = desc.inverse;
+
+  if (v) { checkAssociatedType.call(this, desc, v); }
+
+  this[key] = v;
+
+  if (sync && inv && prev) { inverseRemoved.call(prev, inv, this); }
+  if (sync && inv && v) { inverseAdded.call(v, inv, this); }
+}
+
 class Model {
   // Public: Registers the given `Model` subclass using the given name. Model subclasses must be
   // registered when they are referenced as a string in either a `hasOne` or `hasMany` association.
@@ -38,7 +112,9 @@ class Model {
 
   // Public: Returns a string containing the class's name.
   static toString() {
-    return this.displayName || this.name || '(Unknown)';
+    if (this.hasOwnProperty('displayName')) { return this.displayName; }
+    if (this.hasOwnProperty('name')) { return this.name; }
+    else { return '(Unknown)'; }
   }
 
   // Public: Returns an empty instance of the model class. An empty instance contains only an id
@@ -95,7 +171,7 @@ class Model {
   //   default - Used as the value of the attribute when undefined.
   //
   // Returns the receiver.
-  static attr(name, type, opts) {
+  static attr(name, type, opts = {}) {
     var converter = registeredAttrs[type], key = `__${name}__`, def = undefined;
 
     if (!converter) {
@@ -103,7 +179,7 @@ class Model {
     }
 
     if (typeof converter === 'function') { converter = new converter(opts); }
-    if (opts && ('default' in opts)) { def = opts.default; }
+    if ('default' in opts) { def = opts.default; }
 
     Object.defineProperty(this.prototype, name, {
       get: function() {
@@ -113,6 +189,37 @@ class Model {
         this[key] = converter.coerce(v);
         this[`${name}BeforeCoercion`] = v;
       }
+    });
+
+    return this;
+  }
+
+  // Public: Defines a `hasOne` association on the receiver class. This method will generate a
+  // property with the given name that can be used to get or set the associated model.
+  //
+  // name  - A string representing the name of the association.
+  // klass - Either the constructor function of the associated model or a string containing the name
+  //         of the associated constructor function. Passing a string here is useful for the case
+  //         where you are defining an association where the associated constructor function has yet
+  //         to be defined. In order for this to work, the associated model class must be registered
+  //         with the given name using `Model.registerClass`.
+  // opts  - An object containing zero or more of the following keys (default: `{}`):
+  //   inverse - Used for establishing two way associations, this is the name of the property on the
+  //             associated object that points back to the receiver class.
+  //
+  // Returns the receiver.
+  static hasOne(name, klass, opts = {}) {
+    var descriptor = Object.assign({}, opts, {type: 'hasOne', name, klass});
+
+    if (!this.prototype.hasOwnProperty('associations')) {
+      this.prototype.associations = Object.create(this.prototype.associations);
+    }
+
+    this.prototype.associations[name] = descriptor;
+
+    Object.defineProperty(this.prototype, name, {
+      get: function() { return this[`__${name}__`]; },
+      set: function(v) { hasOneSet.call(this, descriptor, v, true); }
     });
 
     return this;
@@ -141,6 +248,8 @@ class Model {
     return `#<${this.constructor}:${this.id}>`;
   }
 }
+
+Model.prototype.associations = {};
 
 Model.displayName = 'Ryno.Model';
 

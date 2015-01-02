@@ -111,4 +111,52 @@ describe('Model', function () {
       expect(this.m.numBeforeCoercion).toBe('9');
     });
   });
+
+  describe('.hasOne', function() {
+    describe('with no inverse', function() {
+      class Bar extends Model {}
+      class Foo extends Model {}
+      Foo.hasOne('bar', Bar);
+
+      it('creates a property with the given name', function() {
+        expect('bar' in Foo.prototype).toBe(true);
+      });
+
+      it('initializes the property to undefined', function() {
+        expect((new Foo).bar).toBeUndefined();
+      });
+
+      it('throws an exception when setting an object of the wrong type', function() {
+        var f = new Foo, b = new BasicModel;
+        expect(function() {
+          f.bar = b;
+        }).toThrow(new Error(`Foo#bar=: expected an object of type \`Bar\` but received \`${b}\` instead`));
+      });
+    });
+
+    describe('with a hasOne inverse', function() {
+      class Bar extends Model {}
+      class Foo extends Model {}
+      Foo.hasOne('bar', Bar, {inverse: 'foo'});
+      Bar.hasOne('foo', Foo, {inverse: 'bar'});
+
+      it('sets the receiver as the inverse when setting', function() {
+        var f = new Foo, b = new Bar;
+
+        f.bar = b;
+        expect(b.foo).toBe(f);
+      });
+
+      it('clears the inverse side when set to null', function() {
+        var f = new Foo, b = new Bar;
+
+        f.bar = b;
+        expect(f.bar).toBe(b);
+        expect(b.foo).toBe(f);
+        f.bar = undefined;
+        expect(f.bar).toBeUndefined();
+        expect(b.foo).toBeUndefined();
+      });
+    });
+  });
 });
