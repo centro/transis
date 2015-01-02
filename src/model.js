@@ -1,3 +1,4 @@
+import pluralize from "pluralize";
 import IdMap from "./id_map";
 import * as attrs from "./attrs";
 
@@ -22,7 +23,7 @@ function checkAssociatedType(desc, o) {
   }
 
   if (!(o instanceof klass)) {
-    throw new Error(`${this.constructor}#${desc.name}=: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
+    throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
   }
 }
 
@@ -43,6 +44,9 @@ function inverseRemoved(name, model) {
   if (desc.type === 'hasOne') {
     hasOneSet.call(this, desc, undefined, false);
   }
+  else if (desc.type === 'hasMany') {
+    hasManyRemove.call(this, desc, [model], false);
+  }
 }
 
 // Internal: Called by an inverse association when a model was added on the inverse side. Updates
@@ -61,6 +65,9 @@ function inverseAdded(name, model) {
 
   if (desc.type === 'hasOne') {
     hasOneSet.call(this, desc, model, false);
+  }
+  else if (desc.type === 'hasMany') {
+    hasManyAdd.call(this, desc, [model], false);
   }
 }
 
@@ -82,6 +89,67 @@ function hasOneSet(desc, v, sync) {
   if (sync && inv && prev) { inverseRemoved.call(prev, inv, this); }
   if (sync && inv && v) { inverseAdded.call(v, inv, this); }
 }
+
+// Internal: Sets the given array on a `hasMany` property.
+//
+// desc - An association descriptor.
+// a    - An array of values to set.
+//
+// Returns nothing.
+// Throws `Error` if the given object isn't of the type specified in the association descriptor.
+function hasManySet(desc, a) {
+  var name = desc.name, prev = this[name], m;
+
+  for (m of a) { checkAssociatedType.call(this, desc, m); }
+
+  if (desc.inverse) {
+    for (m of prev) { inverseRemoved.call(m, desc.inverse, this); }
+    for (m of a) { inverseAdded.call(m, desc.inverse, this); }
+  }
+
+  this[`__${name}__`] = a;
+}
+
+// Internal: Adds the given models to a `hasMany` association.
+//
+// desc   - An association descriptor.
+// models - An array of models to add to the association.
+// sync   - Set to true to notify the inverse side of the association so that it can update itself.
+// Throws `Error` if the given object isn't of the type specified in the association descriptor.
+function hasManyAdd(desc, models, sync) {
+  var name = desc.name, prev = this[name].slice();
+
+  for (var m of models) {
+    checkAssociatedType.call(this, desc, m);
+    if (sync && desc.inverse) {
+      inverseAdded.call(m, desc.inverse, this);
+    }
+    this[name].push(m);
+  }
+}
+
+// Internal: Removes the given models from a `hasMany` association.
+//
+// desc   - An association descriptor.
+// models - An array of models to remove from the association.
+// sync   - Set to true to notify the inverse side of the association so that it can update itself.
+//
+// Returns nothing.
+function hasManyRemove(desc, models, sync) {
+  var name = desc.name, prev = this[name].slice(), i;
+
+  for (var m of models) {
+    if ((i = this[name].indexOf(m)) >= 0) {
+      if (sync && desc.inverse) {
+        inverseRemoved.call(m, desc.inverse, this);
+      }
+      this[name].splice(i, 1);
+    }
+  }
+}
+
+// Internal: Capitalizes the given word.
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 class Model {
   // Public: Registers the given `Model` subclass using the given name. Model subclasses must be
@@ -209,20 +277,73 @@ class Model {
   //
   // Returns the receiver.
   static hasOne(name, klass, opts = {}) {
-    var descriptor = Object.assign({}, opts, {type: 'hasOne', name, klass});
+    var desc;
 
     if (!this.prototype.hasOwnProperty('associations')) {
       this.prototype.associations = Object.create(this.prototype.associations);
     }
 
-    this.prototype.associations[name] = descriptor;
+    this.prototype.associations[name] = desc = Object.assign({}, opts, {
+      type: 'hasOne', name, klass
+    });
 
     Object.defineProperty(this.prototype, name, {
       get: function() { return this[`__${name}__`]; },
-      set: function(v) { hasOneSet.call(this, descriptor, v, true); }
+      set: function(v) { hasOneSet.call(this, desc, v, true); }
     });
 
     return this;
+  }
+
+  // Public: Defines a `hasMany` association on the receiver class. This method will generate a
+  // property with the given name that can be used to get or set an array of associated model
+  // objects. It will also generate methods that can be used to manipulate the array. A `hasMany`
+  // association with the name `widgets` would generate the following methods:
+  //
+  // addWidgets    - Adds one or more `Widget` models to the association array.
+  // removeWidgets - Removes one ore more `Widget` models from the association array.
+  // clearWidgets  - Empties the association array.
+  //
+  // Its important to use these generated methods to manipulate the array instead of manipulating it
+  // directly since they take care of syncing changes to the inverse side of the association when
+  // the association is two way.
+  //
+  // name  - A string representing the name of the association.
+  // klass - Either the constructor function of the associated model or a string containing the name
+  //         of the associated constructor function. Passing a string here is useful for the case
+  //         where you are defining an association where the associated constructor function has yet
+  //         to be defined. In order for this to work, the associated model class must be registered
+  //         with the given name using `Model.registerClass`.
+  // opts  - (see hasOne description)
+  //
+  // Returns the receiver.
+  static hasMany(name, klass, opts = {}) {
+    var cap = capitalize(name), desc;
+
+    if (!this.prototype.hasOwnProperty('associations')) {
+      this.prototype.associations = Object.create(this.prototype.associations);
+    }
+
+    this.prototype.associations[name] = desc = Object.assign({}, opts, {
+      type: 'hasMany', name, klass, singular: pluralize(name, 1)
+    });
+
+    Object.defineProperty(this.prototype, name, {
+      get: function() { return this[`__${name}__`] = this[`__${name}__`] || []; },
+      set: function(v) { hasManySet.call(this, desc, v); }
+    });
+
+    this.prototype[`add${cap}`] = function() {
+      return hasManyAdd.call(this, desc, Array.from(arguments), true);
+    };
+
+    this.prototype[`remove${cap}`] = function() {
+      return hasManyRemove.call(this, desc, Array.from(arguments), true);
+    };
+
+    this.prototype[`clear${cap}`] = function() {
+      return hasManySet.call(this, desc, []);
+    };
   }
 
   constructor(attrs) {

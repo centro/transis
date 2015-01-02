@@ -130,7 +130,7 @@ describe('Model', function () {
         var f = new Foo, b = new BasicModel;
         expect(function() {
           f.bar = b;
-        }).toThrow(new Error(`Foo#bar=: expected an object of type \`Bar\` but received \`${b}\` instead`));
+        }).toThrow(new Error(`Foo#bar: expected an object of type \`Bar\` but received \`${b}\` instead`));
       });
     });
 
@@ -156,6 +156,110 @@ describe('Model', function () {
         f.bar = undefined;
         expect(f.bar).toBeUndefined();
         expect(b.foo).toBeUndefined();
+      });
+    });
+
+    describe('with a hasMany inverse', function() {
+      class Foo extends Model {}
+      class Bar extends Model {}
+      Foo.hasOne('bar', Bar, {inverse: 'foos'});
+      Bar.hasMany('foos', Foo, {inverse: 'bar'});
+
+      it('adds the receiver to the inverse array when setting', function() {
+        var f1 = new Foo, f2 = new Foo, b = new Bar;
+
+        f1.bar = b;
+        expect(b.foos).toEqual([f1]);
+        f2.bar = b;
+        expect(b.foos).toEqual([f1, f2]);
+      });
+
+      it('removes the receiver from the inverse array when clearing', function() {
+        var f1 = new Foo, f2 = new Foo, b = new Bar;
+
+        f1.bar = b;
+        f2.bar = b;
+        expect(b.foos).toEqual([f1, f2]);
+        f1.bar = null;
+        expect(b.foos).toEqual([f2]);
+        f2.bar = null;
+        expect(b.foos).toEqual([]);
+      });
+    });
+  });
+
+  describe('.hasMany', function() {
+    describe('with no inverse', function() {
+      class Foo extends Model {}
+      class Bar extends Model {}
+      Foo.hasMany('bars', Bar);
+
+      it('creates a property with the given name', function() {
+        expect('bars' in Foo.prototype).toBe(true);
+      });
+
+      it('generates an "add<Name>" method', function() {
+        expect(typeof Foo.prototype.addBars).toBe('function');
+      });
+
+      it('generates a "remove<Name>" method', function() {
+        expect(typeof Foo.prototype.removeBars).toBe('function');
+      });
+
+      it('generates a "clear<Name>" method', function() {
+        expect(typeof Foo.prototype.clearBars).toBe('function');
+      });
+
+      it('initializes the property to an empty array', function() {
+        var f = new Foo;
+        expect(f.bars).toEqual([]);
+      });
+
+      it('throws an exception when setting models of the wrong type', function() {
+        var f = new Foo, b = new BasicModel;
+
+        expect(function() {
+          f.bars = [b];
+        }).toThrow(new Error(`Foo#bars: expected an object of type \`Bar\` but received \`${b}\` instead`));
+      });
+
+      describe('generated add method', function() {
+        it('adds the given model to the array', function() {
+          var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+          f.addBars(b1, b2);
+          expect(f.bars).toEqual([b1, b2]);
+        });
+
+        it('throws an exception when adding objects of the wrong type', function() {
+          var f = new Foo, b = new BasicModel;
+
+          expect(function() {
+            f.addBars(b);
+          }).toThrow(new Error(`Foo#bars: expected an object of type \`Bar\` but received \`${b}\` instead`));
+        });
+      });
+
+      describe('generated remove method', function() {
+        it('removes the given model from the array', function() {
+          var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+          f.bars = [b1, b2];
+          expect(f.bars).toEqual([b1, b2]);
+          f.removeBars(b2);
+          expect(f.bars).toEqual([b1]);
+        });
+      });
+
+      describe('generated clear method', function() {
+        it('removes all models from the array', function() {
+          var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+          f.bars = [b1, b2];
+          expect(f.bars).toEqual([b1, b2]);
+          f.clearBars(b2);
+          expect(f.bars).toEqual([]);
+        });
       });
     });
   });
