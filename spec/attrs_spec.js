@@ -1,4 +1,4 @@
-import "es6-shim";
+import "6to5/polyfill";
 import * as attrs from "../attrs";
 
 describe('IdentityAttr#coerce', function() {

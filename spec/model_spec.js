@@ -1,4 +1,4 @@
-import "es6-shim";
+import "6to5/polyfill";
 import Model from "../model";
 
 describe('Model', function () {
