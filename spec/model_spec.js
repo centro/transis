@@ -262,5 +262,130 @@ describe('Model', function () {
         });
       });
     });
+
+    describe('with a hasOne inverse', function() {
+      class Foo extends Model {}
+      class Bar extends Model {}
+      Foo.hasMany('bars', Bar, {inverse: 'foo'});
+      Bar.hasOne('foo', Foo, {inverse: 'bars'});
+
+      it('sets the hasOne side when adding to the hasMany side', function() {
+        var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+        expect(b1.foo).toBeUndefined();
+        expect(b2.foo).toBeUndefined();
+        f.addBars(b1);
+        expect(b1.foo).toBe(f);
+        expect(b2.foo).toBeUndefined();
+        f.addBars(b2);
+        expect(b1.foo).toBe(f);
+        expect(b2.foo).toBe(f);
+      });
+
+      it('sets the hasOne side when setting the hasMany side', function() {
+        var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+        expect(b1.foo).toBeUndefined();
+        expect(b2.foo).toBeUndefined();
+        f.bars = [b1, b2];
+        expect(b1.foo).toBe(f);
+        expect(b2.foo).toBe(f);
+      });
+
+      it('clears the hasOne side when removing from the hasMany side', function() {
+        var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+        f.addBars(b1, b2);
+        expect(b1.foo).toBe(f);
+        expect(b2.foo).toBe(f);
+        f.removeBars(b2);
+        expect(b1.foo).toBe(f);
+        expect(b2.foo).toBeUndefined();
+      });
+
+      it('clears the hasOne side when the hasMany side is cleared', function() {
+        var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+        f.addBars(b1, b2);
+        expect(b1.foo).toBe(f);
+        expect(b2.foo).toBe(f);
+        f.clearBars();
+        expect(b1.foo).toBeUndefined();
+        expect(b2.foo).toBeUndefined();
+      });
+
+      it('clears the hasOne side when the hasMany side is set to an empty array', function() {
+        var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+        f.addBars(b1, b2);
+        expect(b1.foo).toBe(f);
+        expect(b2.foo).toBe(f);
+        f.bars = [];
+        expect(b1.foo).toBeUndefined();
+        expect(b2.foo).toBeUndefined();
+      });
+    });
+
+    describe('with a hasMany inverse', function() {
+      class Foo extends Model {}
+      class Bar extends Model {}
+      Foo.hasMany('bars', Bar, {inverse: 'foos'});
+      Bar.hasMany('foos', Foo, {inverse: 'bars'});
+
+      it('adds the receiver on the inverse side when a model is added', function() {
+        var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+        expect(f.bars).toEqual([]);
+        expect(b1.foos).toEqual([]);
+        expect(b2.foos).toEqual([]);
+        f.addBars(b1);
+        expect(f.bars).toEqual([b1]);
+        expect(b1.foos).toEqual([f]);
+        expect(b2.foos).toEqual([]);
+        f.addBars(b2);
+        expect(f.bars).toEqual([b1, b2]);
+        expect(b1.foos).toEqual([f]);
+        expect(b2.foos).toEqual([f]);
+      });
+
+      it('adds the receiver on the inverse side when the association is set', function() {
+        var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+        f.bars = [b1, b2];
+        expect(f.bars).toEqual([b1, b2]);
+        expect(b1.foos).toEqual([f]);
+        expect(b2.foos).toEqual([f]);
+      });
+
+      it('removes the receiver from the inverse side of the previously associated models when the association is set', function() {
+        var f = new Foo, b1 = new Bar, b2 = new Bar, b3 = new Bar, b4 = new Bar;
+
+        f.bars = [b1, b2];
+        expect(f.bars).toEqual([b1, b2]);
+        expect(b1.foos).toEqual([f]);
+        expect(b2.foos).toEqual([f]);
+        f.bars = [b3, b4];
+        expect(f.bars).toEqual([b3, b4]);
+        expect(b1.foos).toEqual([]);
+        expect(b2.foos).toEqual([]);
+      });
+
+      it('removes the receiver from the inverse side when a model is removed', function() {
+        var f = new Foo, b1 = new Bar, b2 = new Bar;
+
+        f.addBars(b1, b2);
+        expect(f.bars).toEqual([b1, b2]);
+        expect(b1.foos).toEqual([f]);
+        expect(b2.foos).toEqual([f]);
+        f.removeBars(b2);
+        expect(f.bars).toEqual([b1]);
+        expect(b1.foos).toEqual([f]);
+        expect(b2.foos).toEqual([]);
+        b1.removeFoos(f);
+        expect(f.bars).toEqual([]);
+        expect(b1.foos).toEqual([]);
+        expect(b2.foos).toEqual([]);
+      });
+    });
   });
 });
