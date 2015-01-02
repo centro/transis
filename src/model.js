@@ -346,6 +346,67 @@ class Model {
     };
   }
 
+  // Public: Loads the given model attributes into the identity map. This method should be called by
+  // your data mapper(s) when new data is successfully retrieved.
+  //
+  // attrs - An object containing the attributes for a single model. If the attributes contain
+  //         references to defined associations, those associated objects will be loaded as well.
+  //
+  // Returns the loaded model instance.
+  // Throws `Error` if the given attributes do not contain an `id` attribute.
+  static load(attrs) {
+    var id = attrs.id, model;
+
+    if (!id) {
+      throw new Error(`${this}.load: an \`id\` attribute is required`);
+    }
+
+    attrs = Object.assign({}, attrs);
+    model = IdMap.get(this, id) || new this;
+    delete attrs.id;
+
+    // set non-association attributes
+    for (let k in attrs) {
+      if (k in model) { model[k] = attrs[k]; }
+    }
+
+    // set id if necessary
+    if (model.id === undefined) { model.id = id; }
+
+    model.__sourceState__ = LOADED;
+    model.__isBusy__      = false;
+
+    return model;
+  }
+
+  // Public: Retrieves a model from the identity map or creates a new empty model instance. If you
+  // want to get the model from the mapper, then use the `Model.get` method.
+  //
+  // id - The id of the model to get.
+  //
+  // Returns an instance of the receiver.
+  static local(id) { return IdMap.get(this, id) || this.empty(id); }
+
+  // Public: Gets a model instance, either from the identity map or from the mapper. If the model
+  // has already been loaded into the identity map, then it is simply returned, otherwise the data
+  // mapper's `get` method will be invoked and an empty model will be returned.
+  //
+  // id   - The id of the model to get.
+  // opts - An object containing zero or more of the following keys (default: `{}`):
+  //   refresh - When true, the mapper's get method will be called regardless of whether the model
+  //             exists in the identity map.
+  //
+  // Returns an instance of the receiver.
+  static get(id, opts = {}) {
+    var model = this.local(id), getOpts = Object.assign({}, opts);
+    delete getOpts.refresh;
+    // FIXME
+    //if (model.isEmpty || opts.refresh) {
+    //  mapperGet(model, getOpts)
+    //}
+    return model;
+  }
+
   constructor(attrs) {
     for (let k in attrs) {
       if (k in this) { this[k] = attrs[k]; }
@@ -364,6 +425,7 @@ class Model {
   }
 
   get sourceState() { return this.__sourceState__; }
+  get isBusy() { return this.__isBusy__; }
 
   toString() {
     return `#<${this.constructor}:${this.id}>`;

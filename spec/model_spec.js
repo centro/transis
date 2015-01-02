@@ -2,7 +2,16 @@ import "6to5/polyfill";
 import Model from "../model";
 
 describe('Model', function () {
+  var TestMapper = {
+    query: function() {},
+    get: function() {},
+    create: function() {},
+    update: function() {},
+    delete: function() {}
+  };
+
   class BasicModel extends Model {}
+  BasicModel.mapper = TestMapper;
   BasicModel.attr('str', 'string');
   BasicModel.attr('strWithDefault', 'string', {default: 'zzz'});
   BasicModel.attr('num', 'number');
@@ -385,6 +394,101 @@ describe('Model', function () {
         expect(f.bars).toEqual([]);
         expect(b1.foos).toEqual([]);
         expect(b2.foos).toEqual([]);
+      });
+    });
+  });
+
+  describe('.local', function() {
+    describe('for an id of a model that is already loaded into the identity map', function() {
+      it('returns a reference to the already existing model', function() {
+        var m = BasicModel.load({id: 1234, str: 'a', num: 2});
+        expect(BasicModel.local(1234)).toBe(m);
+      });
+    });
+
+    describe('for an id of a model that is not loaded into the identity map', function() {
+      it('returns an empty instance of the model', function() {
+        var m = BasicModel.local(4567);
+        expect(m.sourceState).toBe(Model.EMPTY);
+      });
+
+      it("does not invoke the mapper's get method", function() {
+        spyOn(BasicModel.mapper, 'get');
+        BasicModel.local(1122);
+        expect(BasicModel.mapper.get).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('.load', function() {
+    describe('given attributes containing an id not in the identity map', function() {
+      it('returns a new model instance with the given attributes', function() {
+        var m = BasicModel.load({id: 126, str: 's', num: 1});
+        expect(m instanceof BasicModel).toBe(true);
+        expect(m.id).toBe(126);
+        expect(m.str).toBe('s');
+        expect(m.num).toBe(1);
+      });
+
+      it('does not set non-attributes properties', function() {
+        var m = BasicModel.load({id: 126, str: 's', num: 1, blah: 'boo'});
+        expect('blah' in m).toBe(false);
+      });
+
+      it('adds the new model instance to the identity map', function() {
+        var m = BasicModel.load({id: 127, str: 's', num: 1});
+        expect(BasicModel.get(127)).toBe(m);
+      });
+
+      it('sets the sourceState to LOADED', function() {
+        var m = BasicModel.load({id: 128, str: 's', num: 1});
+        expect(m.sourceState).toBe(Model.LOADED);
+      });
+
+      it('sets isBusy to false', function() {
+        var m = BasicModel.load({id: 128, str: 's', num: 1});
+        expect(m.isBusy).toBe(false);
+      });
+    });
+
+    describe('given attributes containing an id that is in the identity map', function() {
+      it('updates and returns the model that is already in the identity map', function() {
+        var m1 = BasicModel.load({id: 200, str: 's1', num: 1}),
+            m2 = BasicModel.load({id: 200, str: 's2', num: 2});
+
+        expect(m2).toBe(m1);
+        expect(m2.str).toBe('s2');
+        expect(m2.num).toBe(2);
+      });
+
+      it('sets the sourceState to LOADED', function() {
+        var m = BasicModel.load({id: 201, str: 's', num: 1});
+
+        m.str = 'x';
+        BasicModel.load({id: 201, str: 's3'});
+        expect(m.sourceState).toBe(Model.LOADED);
+      });
+
+      describe('when the model in the identity map is empty', function() {
+        it('does not throw an exception', function() {
+          var m = BasicModel.empty(19);
+
+          expect(function() {
+            BasicModel.load({id: 19, str: 'x', num: 2});
+          }).not.toThrow();
+
+          expect(m.sourceState).toBe(Model.LOADED);
+          expect(m.str).toBe('x');
+          expect(m.num).toBe(2);
+        });
+      });
+    });
+
+    describe('given attributes that do not include an id', function() {
+      it('throws an exception', function() {
+        expect(function() {
+          BasicModel.load({str: 's'});
+        }).toThrow(new Error('BasicModel.load: an `id` attribute is required'));
       });
     });
   });
