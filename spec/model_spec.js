@@ -31,6 +31,7 @@ describe('Model', function () {
   Post.hasMany('tags', 'Tag', {inverse: 'posts'});
 
   class Tag extends Model {}
+  Model.registerClass(Tag);
   Tag.attr('name', 'string');
   Tag.hasMany('posts', 'Post', {inverse: 'tags'});
 
@@ -564,6 +565,128 @@ describe('Model', function () {
           expect(p.author).toBe(a);
           expect(a.posts).toEqual([p]);
         });
+      });
+    });
+
+    describe('given attributes containing a nested hasMany association', function() {
+      it('loads all of the nested models and hooks up associations', function() {
+        var p = Post.load({
+          id: 200, title: 'the title', body: 'the body',
+          tags: [{id: 10, name: 'tag a'}, {id: 11, name: 'tag b'}]
+        });
+
+        expect(p.tags[0].id).toBe(10);
+        expect(p.tags[0].name).toBe('tag a');
+        expect(p.tags[0].posts).toEqual([p]);
+        expect(p.tags[1].id).toBe(11);
+        expect(p.tags[1].name).toBe('tag b');
+        expect(p.tags[1].posts).toEqual([p]);
+      });
+
+      it('removes existing associations that are not present in the given attributes', function() {
+        var t1 = Tag.load({id: 12, name: 'tag a'}),
+            t2 = Tag.load({id: 13, name: 'tag b'}),
+            p  = Post.load({id: 150, title: 'the  title', body: 'the body', tags: [12, 13]});
+
+        expect(p.tags).toEqual([t1, t2]);
+        Post.load({id: 150, title: 'the title', body: 'the body', tags: [13]});
+        expect(p.tags).toEqual([t2]);
+      });
+
+      it('does not add a model to the hasMany association more than once', function() {
+        var p = Post.load({
+          id: 151, title: 'the title', body: 'the body',
+          tags: [{id: 30, name: 'tag a'}]
+        });
+
+        expect(p.tags.map((t) => t.id)).toEqual([30]);
+
+        Post.load({
+          id: 151, title: 'the title', body: 'the body',
+          tags: [{id: 30, name: 'tag a'}]
+        });
+
+        expect(p.tags.map((t) => t.id)).toEqual([30]);
+      });
+    });
+
+    describe('given attributes containing a list of id references to a hasMany association', function() {
+      describe('where the ids exist in the identity map', function() {
+        it('hooks up the associations', function() {
+          var t1 = Tag.load({id: 40, name: 'blah'}),
+              t2 = Tag.load({id: 41, name: 'stuff'});
+
+          expect(t1.posts).toEqual([]);
+          expect(t2.posts).toEqual([]);
+
+          var p = Post.load({id: 152, title: 'the title', body: 'the body', tags: [40, 41]});
+
+          expect(t1.posts).toEqual([p]);
+          expect(t2.posts).toEqual([p]);
+          expect(p.tags).toEqual([t1, t2]);
+        });
+      });
+
+      describe('where the id does not exist in the identity map', function() {
+        it('creates an empty instance of the associated models and hooks up the associations', function() {
+          var p = Post.load({id: 153, title: 'the title', body: 'the body', tags: [42, 43]});
+
+          expect(p.tags[0].id).toBe(42);
+          expect(p.tags[0].sourceState).toBe(Model.EMPTY);
+          expect(p.tags[0].posts).toEqual([p]);
+          expect(p.tags[1].id).toBe(43);
+          expect(p.tags[1].sourceState).toBe(Model.EMPTY);
+          expect(p.tags[1].posts).toEqual([p]);
+        });
+      });
+
+      describe('where the ids are indicated by a <singular name>Ids property', function() {
+        it('hooks up the associations', function() {
+          var t1 = Tag.load({id: 44, name: 'blah'}),
+              t2 = Tag.load({id: 45, name: 'stuff'});
+
+          expect(t1.posts).toEqual([]);
+          expect(t2.posts).toEqual([]);
+          var p = Post.load({id: 154, title: 'the title', body: 'the body', tagIds: [44, 45]});
+          expect(t1.posts).toEqual([p]);
+          expect(t2.posts).toEqual([p]);
+          expect(p.tags).toEqual([t1, t2]);
+        });
+      });
+
+      describe('where the ids are indicated by a <singular name>_ids property', function() {
+        it('hooks up the associations', function() {
+          var t1 = Tag.load({id: 46, name: 'blah'}),
+              t2 = Tag.load({id: 47, name: 'stuff'});
+
+          expect(t1.posts).toEqual([]);
+          expect(t2.posts).toEqual([]);
+          var p = Post.load({id: 155, title: 'the title', body: 'the body', tag_ids: [46, 47]});
+          expect(t1.posts).toEqual([p]);
+          expect(t2.posts).toEqual([p]);
+          expect(p.tags).toEqual([t1, t2]);
+        });
+      });
+    });
+
+    describe('given attributes containing a mixture of nested models and id references', function() {
+      it('creates empty instances for the ids and hooks up all associations', function() {
+        var t1 = Tag.load({id: 48, name: 'blah'}),
+            p  = Post.load({
+              id: 156, title: 'the title', body: 'the body',
+              tags: [48, {id: 49, name: 'foo'}, 50]
+            });
+                            
+        expect(p.tags[0].id).toBe(48);
+        expect(p.tags[0].sourceState).toBe(Model.LOADED);
+        expect(p.tags[0].posts).toEqual([p]);
+        expect(p.tags[1].id).toBe(49);
+        expect(p.tags[1].sourceState).toBe(Model.LOADED);
+        expect(p.tags[1].posts).toEqual([p]);
+        expect(p.tags[2].id).toBe(50);
+        expect(p.tags[2].sourceState).toBe(Model.EMPTY);
+        expect(p.tags[2].posts).toEqual([p]);
+        expect(p.tags.map((t) => t.id)).toEqual([48, 49, 50]);
       });
     });
   });

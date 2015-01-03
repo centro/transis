@@ -14,7 +14,7 @@ function resolveClass(name) {
   var klass = (typeof name === 'function') ? name : registeredClasses[name];
 
   if (!klass) {
-    throw new Error(`${this.constructor}#resolveClass: could not resolve model class: \`${name}\``);
+    throw new Error(`Ryno.Model#resolveClass: could not resolve model class: \`${name}\``);
   }
 
   return klass;
@@ -387,6 +387,14 @@ class Model {
         associated[name] = attrs[`${name}_id`];
         delete attrs[`${name}_id`];
       }
+      else if (desc.type === 'hasMany' && `${desc.singular}Ids` in attrs) {
+        associated[name] = attrs[`${desc.singular}Ids`];
+        delete attrs[`${desc.singular}Ids`];
+      }
+      else if (desc.type === 'hasMany' && `${desc.singular}_ids` in attrs) {
+        associated[name] = attrs[`${desc.singular}_ids`];
+        delete attrs[`${desc.singular}_ids`];
+      }
     }
 
     // set non-association attributes
@@ -407,6 +415,13 @@ class Model {
       if (associations[name].type === 'hasOne') {
         let other = typeof data === 'object' ? klass.load(data) : klass.local(data);
         model[name] = other;
+      }
+      else if (associations[name].type === 'hasMany') {
+        let others = [];
+        for (let o of data) {
+          others.push(typeof o === 'object' ? klass.load(o) : klass.local(o));
+        }
+        model[name] = others;
       }
     }
 
