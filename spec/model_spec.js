@@ -690,4 +690,25 @@ describe('Model', function () {
       });
     });
   });
+
+  describe('.loadAll', function() {
+    it('loads an array of model objects', function() {
+      var as = Author.loadAll([
+        {id: 110, first: 'Homer', last: 'Simpson'},
+        {id: 111, first: 'Bart', last: 'Simpson'},
+        {id: 112, first: 'Ned', last: 'Flanders'}
+      ]);
+
+      expect(as.length).toBe(3);
+      expect(as[0].id).toBe(110);
+      expect(as[0].first).toBe('Homer');
+      expect(as[0].last).toBe('Simpson');
+      expect(as[1].id).toBe(111);
+      expect(as[1].first).toBe('Bart');
+      expect(as[1].last).toBe('Simpson');
+      expect(as[2].id).toBe(112);
+      expect(as[2].first).toBe('Ned');
+      expect(as[2].last).toBe('Flanders');
+    });
+  });
 });

@@ -431,6 +431,13 @@ class Model {
     return model;
   }
 
+  // Public: Loads an array of attribute objects.
+  //
+  // objects - An array containing attribute hashes.
+  //
+  // Returns an array of loaded model instances.
+  static loadAll(objects) { return objects.map((object) => this.load(object)); }
+
   // Public: Retrieves a model from the identity map or creates a new empty model instance. If you
   // want to get the model from the mapper, then use the `Model.get` method.
   //
