@@ -17,6 +17,23 @@ describe('Model', function () {
   BasicModel.attr('num', 'number');
   Model.registerClass(BasicModel);
 
+  class Author extends Model {}
+  Model.registerClass(Author);
+  Author.attr('first', 'string');
+  Author.attr('last', 'string');
+  Author.hasMany('posts', 'Post', {inverse: 'author'});
+
+  class Post extends Model {}
+  Model.registerClass(Post);
+  Post.attr('title', 'string');
+  Post.attr('body', 'string');
+  Post.hasOne('author', 'Author', {inverse: 'posts'});
+  Post.hasMany('tags', 'Tag', {inverse: 'posts'});
+
+  class Tag extends Model {}
+  Tag.attr('name', 'string');
+  Tag.hasMany('posts', 'Post', {inverse: 'tags'});
+
   describe('.registerClass', function() {
     it('throws an exception when given something other than a Model subclass', function() {
       var x = {};
@@ -489,6 +506,64 @@ describe('Model', function () {
         expect(function() {
           BasicModel.load({str: 's'});
         }).toThrow(new Error('BasicModel.load: an `id` attribute is required'));
+      });
+    });
+
+    describe('given attributes containing a nested hasOne association', function() {
+      it('loads the nested model and hooks up the association', function() {
+        var p = Post.load({
+          id: 184, title: 'the title', body: 'the body',
+          author: {id: 9, first: 'Homer', last: 'Simpson'}
+        });
+
+        expect(p.author).toBe(Author.get(9));
+        expect(p.author.id).toBe(9);
+        expect(p.author.first).toBe('Homer');
+        expect(p.author.last).toBe('Simpson');
+      });
+    });
+
+    describe('given attributes containing an id reference to a hasOne association', function() {
+      describe('where the id exists in the identity map', function() {
+        it('hooks up the association', function() {
+          var a = Author.load({id: 11, first: 'Bar', last: 'Simpson'});
+
+          expect(a.posts).toEqual([]);
+          var p = Post.load({id: 185, author: 11});
+          expect(p.author).toBe(a);
+          expect(a.posts).toEqual([p]);
+        });
+      });
+
+      describe('where the id does not exist in the identity map', function() {
+        it('creates an empty instance of the associated object and hooks up the association', function() {
+          var p = Post.load({id: 186, author: 12});
+          expect(p.author.id).toBe(12);
+          expect(p.author.sourceState).toBe(Model.EMPTY);
+          expect(p.author.posts).toEqual([p]);
+        });
+      });
+
+      describe('where the id is indicated by a <name>Id property', function() {
+        it('hooks up the association', function() {
+          var a = Author.load({id: 13, first: 'Bar', last: 'Simpson'});
+
+          expect(a.posts).toEqual([]);
+          var p = Post.load({id: 187, authorId: 13});
+          expect(p.author).toBe(a);
+          expect(a.posts).toEqual([p]);
+        });
+      });
+
+      describe('where the id is indicated by a <name>_id property', function() {
+        it('hooks up the association', function() {
+          var a = Author.load({id: 14, first: 'Bar', last: 'Simpson'});
+
+          expect(a.posts).toEqual([]);
+          var p = Post.load({id: 188, author_id: 14});
+          expect(p.author).toBe(a);
+          expect(a.posts).toEqual([p]);
+        });
       });
     });
   });

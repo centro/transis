@@ -10,17 +10,23 @@ const LOADED   = 'loaded';
 const DELETED  = 'deleted';
 const NOTFOUND = 'notfound';
 
+function resolveClass(name) {
+  var klass = (typeof name === 'function') ? name : registeredClasses[name];
+
+  if (!klass) {
+    throw new Error(`${this.constructor}#resolveClass: could not resolve model class: \`${name}\``);
+  }
+
+  return klass;
+}
+
 // Internal: Checks to make sure the given object is of the type specified in the given association
 // descriptor.
 //
 // Returns nothing.
 // Throws `Error` if the given object isn't of the type specified in the association descriptor.
 function checkAssociatedType(desc, o) {
-  var klass = (typeof desc.klass === 'function') ? desc.klass : registeredClasses[desc.klass];
-
-  if (!klass) {
-    throw new Error(`${this.constructor}#checkAssociatedType: could not resolve model class: \`${desc.klass}\``);
-  }
+  var klass = resolveClass(desc.klass);
 
   if (!(o instanceof klass)) {
     throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
@@ -355,7 +361,7 @@ class Model {
   // Returns the loaded model instance.
   // Throws `Error` if the given attributes do not contain an `id` attribute.
   static load(attrs) {
-    var id = attrs.id, model;
+    var id = attrs.id, associations = this.prototype.associations, associated = {}, model;
 
     if (!id) {
       throw new Error(`${this}.load: an \`id\` attribute is required`);
@@ -365,6 +371,24 @@ class Model {
     model = IdMap.get(this, id) || new this;
     delete attrs.id;
 
+    // extract associated attributes
+    for (let name in associations) {
+      let desc = associations[name];
+
+      if (name in attrs) {
+        associated[name] = attrs[name]
+        delete attrs[name];
+      }
+      else if (desc.type === 'hasOne' && `${name}Id` in attrs) {
+        associated[name] = attrs[`${name}Id`];
+        delete attrs[`${name}Id`];
+      }
+      else if (desc.type === 'hasOne' && `${name}_id` in attrs) {
+        associated[name] = attrs[`${name}_id`];
+        delete attrs[`${name}_id`];
+      }
+    }
+
     // set non-association attributes
     for (let k in attrs) {
       if (k in model) { model[k] = attrs[k]; }
@@ -372,6 +396,19 @@ class Model {
 
     // set id if necessary
     if (model.id === undefined) { model.id = id; }
+
+    // load and set each association
+    for (let name in associated) {
+      let klass = resolveClass(associations[name].klass);
+      let data = associated[name];
+
+      if (!data) { continue; }
+
+      if (associations[name].type === 'hasOne') {
+        let other = typeof data === 'object' ? klass.load(data) : klass.local(data);
+        model[name] = other;
+      }
+    }
 
     model.__sourceState__ = LOADED;
     model.__isBusy__      = false;
