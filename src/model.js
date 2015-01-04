@@ -197,13 +197,14 @@ function callMapper(method, args) {
 //
 // Returns an empty array.
 function buildQueryArray(klass) {
-  var array = [], promise = Promise.resolve(), isBusy = false, queued;
+  var array = [], promise = Promise.resolve(), isBusy = false, error, queued;
 
   function flush() { if (queued) { array.query.apply(array, queued); queued = null; } }
 
   return Object.defineProperties(array, {
     modelClass: { get: function() { return klass; }, enumerable: false },
     isBusy: { get: function() { return isBusy; }, enumerable: false },
+    error: { get: function() { return error; }, enumerable: false },
     query: {
       value: function() {
         var args = Array.from(arguments);
@@ -217,12 +218,14 @@ function buildQueryArray(klass) {
             function(objects) {
               array.splice.apply(array, [0, array.length].concat(klass.loadAll(objects)));
               isBusy = false;
+              error = undefined;
               flush();
             },
-            function(error) {
+            function(e) {
               isBusy = false;
+              error = e;
               flush();
-              throw error;
+              throw e;
             }
           );
         }
@@ -533,6 +536,8 @@ class Model {
   //
   // modelClass - The receiver class of the call to `query`.
   // isBusy     - A boolean indicating whether the data mapper is currently loading the array.
+  // error      - This is set to the error object that the mapper rejects its promise with. It is
+  //              cleared whenever the mapper later resolves its promise.
   // query      - A method that can be invoked to trigger another call to the mapper's `query`
   //              method. If the array is busy when this method is called, the mapper's `query`
   //              method won't be invoked until the previous `query` completes.

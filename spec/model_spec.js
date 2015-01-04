@@ -821,6 +821,29 @@ describe('Model', function () {
         });
       });
 
+      it('sets the error property when the promise is rejected', function(done) {
+        this.a.query();
+        this.reject('foobar');
+        setTimeout(() => {
+          expect(this.a.error).toBe('foobar');
+          done();
+        });
+      });
+
+      it('clears the error property when the promise is resolved', function(done) {
+        this.a.query();
+        this.reject('foobar');
+        setTimeout(() => {
+          expect(this.a.error).toBe('foobar');
+          this.a.query();
+          this.resolve([]);
+          setTimeout(() => {
+            expect(this.a.error).toBeUndefined();
+            done();
+          });
+        });
+      });
+
       it('loads the resolved array of objects and replaces the contents of the array with the loaded models', function(done) {
         this.a.query();
         this.resolve([{id: 600, str: 's1'}, {id: 601, str: 's2'}]);
