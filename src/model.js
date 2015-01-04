@@ -10,6 +10,12 @@ const LOADED   = 'loaded';
 const DELETED  = 'deleted';
 const NOTFOUND = 'notfound';
 
+// Internal: Resolves the given class name from the classes registered via `Model.registerClass`.
+//
+// name - A string representing the name of a model class.
+//
+// Returns the resolved class constructor function.
+// Throws `Error` if a class with the given name is not registered.
 function resolveClass(name) {
   var klass = (typeof name === 'function') ? name : registeredClasses[name];
 
@@ -152,6 +158,83 @@ function hasManyRemove(desc, models, sync) {
       this[name].splice(i, 1);
     }
   }
+}
+
+// Internal: Invokes the given method on the receiver's mapper, ensuring that it returns a Thennable
+// (Promise-like) object.
+//
+// method - The method to invoke on the mapper.
+// args   - An array of arguments to pass to the mapper method.
+//
+// Returns the promise returned by the mapper.
+// Throws `Error` when the mapper is not defined.
+// Throws `Error` when the mapper does not implement the given method.
+// Throws `Error` when the mapper does not return a Thennable object.
+function callMapper(method, args) {
+  var promise;
+
+  if (!this.mapper) {
+    throw new Error(`${this}.callMapper: no mapper defined, assign one to \`${this}.mapper\``);
+  }
+
+  if (typeof this.mapper[method] !== 'function') {
+    throw new Error(`${this}.callMapper: mapper does not implement \`${method}\``);
+  }
+
+  promise = this.mapper[method].apply(this.mapper, args);
+
+  if (!promise || typeof promise.then !== 'function') {
+    throw new Error(`${this}.callMapper: mapper's \`${method}\` method did not return a Promise`);
+  }
+
+  return promise;
+}
+
+// Internal: Builds an array suitable for returning from the `Model.query` method. The array
+// returned is a normal javascript array with some additional properties added. See the docs for
+// `Model.query` for an explanation of the added properties.
+//
+// klass - The `Model` subclass `query` was called on.
+//
+// Returns an empty array.
+function buildQueryArray(klass) {
+  var array = [], promise = Promise.resolve(), isBusy = false, queued;
+
+  function flush() { if (queued) { array.query.apply(array, queued); queued = null; } }
+
+  return Object.defineProperties(array, {
+    modelClass: { get: function() { return klass; }, enumerable: false },
+    isBusy: { get: function() { return isBusy; }, enumerable: false },
+    query: {
+      value: function() {
+        var args = Array.from(arguments);
+
+        if (isBusy) {
+          queued = args;
+        }
+        else {
+          isBusy = true;
+          promise = callMapper.call(klass, 'query', args).then(
+            function(objects) {
+              array.splice.apply(array, [0, array.length].concat(klass.loadAll(objects)));
+              isBusy = false;
+              flush();
+            },
+            function(error) {
+              isBusy = false;
+              flush();
+              throw error;
+            }
+          );
+        }
+
+        return this;
+      },
+      enumerable: false
+    },
+    then: { value: function(f1, f2) { return promise.then(f1, f2); }, enumerable: false },
+    catch: { value: function(f) { return promise.catch(f); }, enumerable: false },
+  });
 }
 
 // Internal: Capitalizes the given word.
@@ -437,6 +520,33 @@ class Model {
   //
   // Returns an array of loaded model instances.
   static loadAll(objects) { return objects.map((object) => this.load(object)); }
+
+  // Public: Builds a query array, but does not actually invoke the mapper's `query` method. This is
+  // useful for cases where you want to initialize an empty query, but not yet run it.
+  //
+  // Returns an array.
+  static buildQuery() { return buildQueryArray(this); }
+
+  // Public: Builds and returns an array. The array is passed on to the data mapper's `query` method
+  // where it will have the opportunity to actually load the records asynchronously. The array
+  // returned is a regular javascript `Array` instance, but it has some additional properties added
+  // to it:
+  //
+  // modelClass - The receiver class of the call to `query`.
+  // isBusy     - A boolean indicating whether the data mapper is currently loading the array.
+  // query      - A method that can be invoked to trigger another call to the mapper's `query`
+  //              method. If the array is busy when this method is called, the mapper's `query`
+  //              method won't be invoked until the previous `query` completes.
+  // then       - Equivalent to `Promise.prototype.then`.
+  // catch      - Equivalent to `Promise.prototype.catch`.
+  //
+  // args... - Zero or more objects to pass along to the data mapper's `query`  method.
+  //
+  // Returns an array.
+  static query() {
+    var a = this.buildQuery();
+    return a.query.apply(a, arguments);
+  }
 
   // Public: Retrieves a model from the identity map or creates a new empty model instance. If you
   // want to get the model from the mapper, then use the `Model.get` method.
