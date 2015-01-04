@@ -8,7 +8,6 @@ const NEW      = 'new';
 const EMPTY    = 'empty';
 const LOADED   = 'loaded';
 const DELETED  = 'deleted';
-const NOTFOUND = 'notfound';
 
 // Internal: Resolves the given class name from the classes registered via `Model.registerClass`.
 //
@@ -569,17 +568,29 @@ class Model {
   static get(id, opts = {}) {
     var model = this.local(id), getOpts = Object.assign({}, opts);
     delete getOpts.refresh;
-    // FIXME
-    //if (model.isEmpty || opts.refresh) {
-    //  mapperGet(model, getOpts)
-    //}
+
+    if (model.isEmpty || opts.refresh) {
+      model.__isBusy__ = true;
+      model.__promise__ = callMapper.call(this, 'get', [id, getOpts])
+        .then((result) => {
+          model.__isBusy__ = false;
+          delete model.__error__;
+          this.load(result);
+        }, (error) => {
+          model.__isBusy__ = false;
+          model.__error__ = error;
+          throw error;
+        });
+    }
+
     return model;
   }
 
   constructor(attrs) {
-    for (let k in attrs) {
-      if (k in this) { this[k] = attrs[k]; }
-    }
+    for (let k in attrs) { if (k in this) { this[k] = attrs[k]; } }
+
+    this.__sourceState__ = NEW;
+    this.__isBusy__      = false;
   }
 
   get id() { return this.__id__; }
@@ -594,7 +605,9 @@ class Model {
   }
 
   get sourceState() { return this.__sourceState__; }
+  get isEmpty() { return this.sourceState === EMPTY; }
   get isBusy() { return this.__isBusy__; }
+  get error() { return this.__error__; }
 
   toString() {
     return `#<${this.constructor}:${this.id}>`;
@@ -609,7 +622,6 @@ Model.NEW      = NEW;
 Model.EMPTY    = EMPTY;
 Model.LOADED   = LOADED;
 Model.DELETED  = DELETED;
-Model.NOTFOUND = NOTFOUND;
 
 Model.registerAttr('identity', attrs.IdentityAttr);
 Model.registerAttr('string', attrs.StringAttr);

@@ -11,7 +11,6 @@ describe('Model', function () {
   };
 
   class BasicModel extends Model {}
-  BasicModel.mapper = TestMapper;
   BasicModel.attr('str', 'string');
   BasicModel.attr('strWithDefault', 'string', {default: 'zzz'});
   BasicModel.attr('num', 'number');
@@ -34,6 +33,10 @@ describe('Model', function () {
   Model.registerClass(Tag);
   Tag.attr('name', 'string');
   Tag.hasMany('posts', 'Post', {inverse: 'tags'});
+
+  beforeEach(function() {
+    BasicModel.mapper = TestMapper;
+  });
 
   describe('.registerClass', function() {
     it('throws an exception when given something other than a Model subclass', function() {
@@ -768,7 +771,7 @@ describe('Model', function () {
       var _this = this;
 
       BasicModel.mapper = {
-        query: function(a) {
+        query: function() {
           return new Promise(function(resolve, reject) {
             _this.resolve = resolve;
             _this.reject = reject;
@@ -954,4 +957,118 @@ describe('Model', function () {
       });
     });
   });
+
+  describe('.get', function() {
+    beforeEach(function() {
+      var _this = this;
+
+      BasicModel.mapper = {
+        get: function(id) {
+          return new Promise(function(resolve, reject) {
+            _this.resolve = resolve;
+            _this.reject = reject;
+          });
+        }
+      };
+
+      spyOn(BasicModel.mapper, 'get').and.callThrough();
+    });
+
+    describe('for an id of a model that is already loaded into the identity map', function() {
+      it('returns the model in the identity map', function() {
+        var m = BasicModel.load({id: 700, str: 'a', num: 2});
+        expect(BasicModel.get(700)).toBe(m);
+      });
+
+      it("invokes the mapper's get method when the refresh option is set", function() {
+        var m = BasicModel.load({id: 700, str: 'a', num: 2});
+        BasicModel.get(700, {refresh: true});
+        expect(BasicModel.mapper.get).toHaveBeenCalledWith(700, {});
+      });
+    });
+
+    describe('for an id of a model that is not in the identity map', function() {
+      it("invokes the mapper's get method", function() {
+        var m = BasicModel.get(701);
+        expect(BasicModel.mapper.get).toHaveBeenCalledWith(701, {});
+      });
+
+      it("forwards options on to the mapper's get method", function() {
+        var m = BasicModel.get(702, {foo: 1, bar: 2});
+        expect(BasicModel.mapper.get).toHaveBeenCalledWith(702, {foo: 1, bar: 2});
+      });
+
+      it('returns an EMPTY instance with isBusy set to true', function() {
+        var m = BasicModel.get(703);
+        expect(m.sourceState).toBe(Model.EMPTY);
+        expect(m.isBusy).toBe(true);
+      });
+
+      it('sets the sourceState to LOADED and isBusy to false when the mapper resolves the promise', function(done) {
+        var m = BasicModel.get(704);
+        expect(m.sourceState).toBe(Model.EMPTY);
+        this.resolve({id: 704, str: 'foo'});
+        setTimeout(function() {
+          expect(m.sourceState).toBe(Model.LOADED);
+          expect(m.isBusy).toBe(false);
+          done();
+        });
+      });
+
+      it('loads the resolved object', function(done) {
+        var m = BasicModel.get(705);
+        expect(m.sourceState).toBe(Model.EMPTY);
+        this.resolve({id: 705, str: 'abc', num: 21});
+        setTimeout(function() {
+          expect(m.str).toBe('abc');
+          expect(m.num).toBe(21);
+          done();
+        });
+      });
+
+      it('does not set the sourceState to LOADED when the mapper rejects the promise', function(done) {
+        var m = BasicModel.get(706);
+        expect(m.sourceState).toBe(Model.EMPTY);
+        this.reject('error!');
+        setTimeout(function() {
+          expect(m.sourceState).toBe(Model.EMPTY);
+          done();
+        });
+      });
+
+      it('sets isBusy to false when the mapper rejects the promise', function(done) {
+        var m = BasicModel.get(707);
+        expect(m.isBusy).toBe(true);
+        this.reject('error!');
+        setTimeout(function() {
+          expect(m.isBusy).toBe(false);
+          done();
+        });
+      });
+
+      it('sets the error property when the mapper rejects the promise', function(done) {
+        var m = BasicModel.get(708);
+        this.reject('error!');
+        setTimeout(function() {
+          expect(m.error).toBe('error!');
+          done();
+        });
+      });
+
+      it('clears the error property when the mapper resolves the promise', function(done) {
+        var m = BasicModel.get(708);
+        this.reject('blah');
+        setTimeout(() => {
+          expect(m.error).toBe('blah');
+          BasicModel.get(708);
+          this.resolve({id: 708, str: 'asdf'});
+          setTimeout(() => {
+            expect(m.error).toBeUndefined();
+            done();
+          });
+        });
+      });
+    });
+  });
 });
+
