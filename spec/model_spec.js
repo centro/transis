@@ -1093,5 +1093,54 @@ describe('Model', function () {
       });
     });
   });
+
+  describe('#get', function() {
+    beforeEach(function() {
+      var _this = this;
+
+      BasicModel.mapper = {
+        get: function(id) {
+          return new Promise(function(resolve, reject) {
+            _this.resolve = resolve;
+            _this.reject = reject;
+          });
+        }
+      };
+
+      spyOn(BasicModel.mapper, 'get').and.callThrough();
+    });
+
+    it("calls the mapper's get method", function() {
+      var m = BasicModel.load({id: 750, str: 'x', num: 4});
+
+      m.get();
+      expect(BasicModel.mapper.get).toHaveBeenCalledWith(750, {});
+    });
+
+    it('forwards the given options to the mapper', function() {
+      var m = BasicModel.load({id: 751, str: 'x', num: 4});
+
+      m.get({x: 1, y: 2});
+      expect(BasicModel.mapper.get).toHaveBeenCalledWith(751, {x: 1, y: 2});
+    });
+
+    it('throws an exception when the model is NEW', function() {
+      var m = new BasicModel;
+
+      expect(m.isNew).toBe(true);
+      expect(function() {
+        m.get();
+      }).toThrow(new Error(`BasicModel#get: can't get a model in the NEW state: ${m}`));
+    });
+
+    it('throws an exception when the mode is BUSY', function() {
+      var m = BasicModel.get(752);
+
+      expect(m.isBusy).toBe(true);
+      expect(function() {
+        m.get();
+      }).toThrow(new Error(`BasicModel#get: can't get a model in the EMPTY-BUSY state: ${m}`));
+    });
+  });
 });
 

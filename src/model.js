@@ -610,12 +610,36 @@ class Model {
   }
 
   get sourceState() { return this.__sourceState__; }
+  get isNew() { return this.sourceState === NEW; }
   get isEmpty() { return this.sourceState === EMPTY; }
+  get isLoaded() { return this.sourceState === LOADED; }
+  get isDeleted() { return this.sourceState === DELETED; }
   get isBusy() { return this.__isBusy__; }
   get error() { return this.__error__; }
 
+  // Public: Refreshes the model by getting it from the data mapper.
+  //
+  // opts - An object to forward along to the mapper (default: `{}`).
+  //
+  // Returns the receiver.
+  // Throws `Error` if the receiver is not LOADED or is BUSY.
+  get(opts = {}) {
+    if ((!this.isLoaded && !this.isEmpty) || this.isBusy) {
+      throw new Error(`${this.constructor}#get: can't get a model in the ${this.stateString()} state: ${this}`);
+    }
+
+    return this.constructor.get(this.id, Object.assign({}, opts, {refresh: true}));
+  }
+
+  // Public: Returns a string representation of the model's current state.
+  stateString() {
+    var a = [this.sourceState.toUpperCase()];
+    if (this.isBusy) { a.push('BUSY'); }
+    return a.join('-');
+  }
+
   toString() {
-    return `#<${this.constructor}:${this.id}>`;
+    return `#<${this.constructor} (${this.stateString()}):${this.id}>`;
   }
 }
 
