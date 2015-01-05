@@ -1154,5 +1154,267 @@ describe('Model', function () {
       // FIXME
     });
   });
+
+  describe('#save', function() {
+    describe('on a NEW model', function() {
+      beforeEach(function() {
+        var _this = this;
+
+        BasicModel.mapper = {
+          create: function(model) {
+            return new Promise(function(resolve, reject) {
+              _this.resolve = resolve;
+              _this.reject = reject;
+            });
+          },
+        };
+
+        spyOn(BasicModel.mapper, 'create').and.callThrough();
+
+        this.model = new BasicModel;
+      });
+
+      it("invokes the mapper's create method with the receiver", function() {
+        this.model.save();
+        expect(BasicModel.mapper.create).toHaveBeenCalledWith(this.model, {});
+      });
+
+      it("forwards the options on to the mapper's create method", function() {
+        this.model.save({a: 1, b: 2});
+        expect(BasicModel.mapper.create).toHaveBeenCalledWith(this.model, {a: 1, b: 2});
+      });
+
+      it('sets isBusy to true', function() {
+        expect(this.model.isBusy).toBe(false);
+        this.model.save();
+        expect(this.model.isBusy).toBe(true);
+      });
+
+      it('sets isBusy to false when the mapper resolves the promise', function(done) {
+        this.model.save();
+        expect(this.model.isBusy).toBe(true);
+        this.resolve({id: 123});
+        setTimeout(() => {
+          expect(this.model.isBusy).toBe(false);
+          done();
+        });
+      });
+
+      it('sets sourceState to LOADED when the mapper resolves the promise', function(done) {
+        this.model.save();
+        expect(this.model.sourceState).toBe(Model.NEW);
+        this.resolve({id: 123});
+        setTimeout(() => {
+          expect(this.model.sourceState).toBe(Model.LOADED);
+          done();
+        });
+      });
+
+      it('loads the resolved attributes', function(done) {
+        this.model.save();
+        this.resolve({id: 123, str: 'the string', num: 6});
+        setTimeout(() => {
+          expect(this.model.id).toBe(123);
+          expect(this.model.str).toBe('the string');
+          expect(this.model.num).toBe(6);
+          done();
+        });
+      });
+
+      it('does not change the sourceState when the mapper rejects the promise', function(done) {
+        this.model.save();
+        expect(this.model.sourceState).toBe(Model.NEW);
+        this.reject('failed');
+        setTimeout(() => {
+          expect(this.model.sourceState).toBe(Model.NEW);
+          done();
+        });
+      });
+
+      it('sets isBusy to false when the mapper rejects the promise', function(done) {
+        this.model.save();
+        expect(this.model.isBusy).toBe(true);
+        this.reject('failed');
+        setTimeout(() => {
+          expect(this.model.isBusy).toBe(false);
+          done();
+        });
+      });
+
+      it('sets the error property when the mapper rejects the promise', function(done) {
+        this.model.save();
+        this.reject('failed');
+        setTimeout(() => {
+          expect(this.model.error).toBe('failed');
+          done();
+        });
+      });
+
+      it('clears the error property when the mapper resolves the promise', function(done) {
+        this.model.save();
+        this.reject('failed');
+        setTimeout(() => {
+          expect(this.model.error).toBe('failed');
+          this.model.save();
+          this.resolve({id: 123});
+          setTimeout(() => {
+            expect(this.model.error).toBeUndefined();
+            done();
+          });
+        });
+      });
+    });
+
+    describe('on a LOADED model', function() {
+      beforeEach(function() {
+        var _this = this;
+
+        BasicModel.mapper = {
+          update: function(model) {
+            return new Promise(function(resolve, reject) {
+              _this.resolve = resolve;
+              _this.reject = reject;
+            });
+          },
+        };
+
+        spyOn(BasicModel.mapper, 'update').and.callThrough();
+
+        this.model = BasicModel.load({id: 800, str: 'abc', num: 12});
+      });
+
+      it("invokes the mapper's update method", function() {
+        this.model.save();
+        expect(BasicModel.mapper.update).toHaveBeenCalledWith(this.model, {});
+      });
+
+      it("forwards the options on to the mapper's update method", function() {
+        this.model.save({a: 1, b: 2});
+        expect(BasicModel.mapper.update).toHaveBeenCalledWith(this.model, {a: 1, b: 2});
+      });
+
+      it('throws an exception when the model is BUSY', function() {
+        this.model.save();
+        expect(this.model.isBusy).toBe(true);
+        expect(() => {
+          this.model.save();
+        }).toThrow(new Error(`BasicModel#save: can't save a model in the LOADED-BUSY state: ${this.model}`));
+      });
+
+      it('sets isBusy to true', function() {
+        expect(this.model.isBusy).toBe(false);
+        this.model.save();
+        expect(this.model.isBusy).toBe(true);
+      });
+
+      it('sets isBusy to false when the mapper resolves the promise', function(done) {
+        this.model.save();
+        expect(this.model.isBusy).toBe(true);
+        this.resolve({id: 800});
+        setTimeout(() => {
+          expect(this.model.isBusy).toBe(false);
+          done();
+        });
+      });
+
+      it('loads the resolved attributes', function(done) {
+        this.model.save();
+        this.resolve({id: 800, str: 'xyz', num: 14});
+        setTimeout(() => {
+          expect(this.model.str).toBe('xyz');
+          expect(this.model.num).toBe(14);
+          done();
+        });
+      });
+
+      it('sets isBusy to false when the mapper rejects the promise', function(done) {
+        this.model.save();
+        expect(this.model.isBusy).toBe(true);
+        this.reject('no');
+        setTimeout(() => {
+          expect(this.model.isBusy).toBe(false);
+          done();
+        });
+      });
+
+      it('sets the error property when the mapper rejects the promise', function(done) {
+        this.model.save();
+        expect(this.model.error).toBeUndefined();
+        this.reject('no');
+        setTimeout(() => {
+          expect(this.model.error).toBe('no');
+          done();
+        });
+      });
+
+      it('clears the error property when the mapper resolves the promise', function(done) {
+        this.model.save();
+        expect(this.model.error).toBeUndefined();
+        this.reject('no');
+        setTimeout(() => {
+          expect(this.model.error).toBe('no');
+          this.model.save();
+          this.resolve({id: 800});
+          setTimeout(() => {
+            expect(this.model.error).toBeUndefined();
+            done();
+          });
+        });
+      });
+    });
+
+    describe('on an EMPTY model', function() {
+      it('throws an exception', function() {
+        var m = BasicModel.empty(12);
+
+        expect(function() {
+          m.save();
+        }).toThrow(new Error(`BasicModel#save: can't save a model in the EMPTY state: ${m}`));
+      });
+    });
+
+    describe('on a DELETED model', function() {
+      it('throws an exception', function() {
+        // FIXME
+      });
+    });
+  });
+
+  describe('#load', function() {
+    it('sets the given id on the receiver and loads the attributes', function() {
+      var a = new Author;
+
+      a.load({id: 5, first: 'Homer', last: 'Simpson'});
+      expect(a.sourceState).toBe(Model.LOADED);
+      expect(a.id).toBe(5);
+      expect(a.first).toBe('Homer');
+      expect(a.last).toBe('Simpson');
+    });
+
+    it('loads the attributes when not given an id', function() {
+      var a = Author.load({id: 3, first: 'Homer', last: 'Simpson'});
+
+      a.load({first: 'Ned', last: 'Flanders'});
+      expect(a.id).toBe(3);
+      expect(a.first).toBe('Ned');
+      expect(a.last).toBe('Flanders');
+    });
+
+    it('throws an exception for a NEW model when given attributes without an id', function() {
+      var a = new Author;
+
+      expect(function() {
+        a.load({first: 'Bart', last: 'Simpson'});
+      }).toThrow(new Error('Author#load: an `id` attribute is required'));
+    });
+
+    it("throws an exception when given attributes with an id that does not match the receiver's id", function() {
+      var a = Author.load({id: 3, first: 'Homer', last: 'Simpson'});
+
+      expect(function() {
+        a.load({id: 4, first: 'Bart', last: 'Simpson'});
+      }).toThrow(new Error('Author#load: received attributes with id `4` but model already has id `3`'));
+    });
+  });
 });
 

@@ -509,7 +509,6 @@ class Model {
     }
 
     model.__sourceState__ = LOADED;
-    model.__isBusy__      = false;
 
     return model;
   }
@@ -624,6 +623,57 @@ class Model {
     }
 
     return this.constructor.get(this.id, Object.assign({}, opts, {refresh: true}));
+  }
+
+  // Public: Saves the model by invoking either the `create` or `update` method on the model's data
+  // mapper. The `create` method is invoked if the model is in the `NEW` state and `create`
+  // otherwise.
+  //
+  // opts - An object to forward on to the mapper (default: `{}`).
+  //
+  // Returns the receiver.
+  // Throws `Error` if the receiver is not NEW or LOADED or is currently busy.
+  save(opts = {}) {
+    if ((!this.isNew && !this.isLoaded) || this.isBusy) {
+      throw new Error(`${this.constructor}#save: can't save a model in the ${this.stateString()} state: ${this}`);
+    }
+
+    this.__isBusy__ = true;
+
+    this.__promise__ = callMapper.call(this.constructor, this.isNew ? 'create' : 'update', [this, opts])
+      .then((attrs) => {
+        this.__isBusy__ = false;
+        delete this.__error__;
+        this.load(attrs);
+      }, (error) => {
+        this.__isBusy__ = false;
+        this.__error__ = error;
+      });
+
+    return this;
+  }
+
+  // Public: Loads the given attributes into the model. This method simply ensure's that the
+  // receiver has its `id` set and then delegates to `Model.load`.
+  //
+  // Returns the receiver.
+  load(attrs) {
+    var id = attrs.id;
+
+    if (id == null && this.id == null) {
+      throw new Error(`${this.constructor}#load: an \`id\` attribute is required`);
+    }
+
+    if (id != null && this.id != null && id !== this.id) {
+      throw new Error(`${this.constructor}#load: received attributes with id \`${id}\` but model already has id \`${this.id}\``);
+    }
+
+    if (this.id == null) { this.id = id; }
+
+    attrs.id = this.id;
+    this.constructor.load(attrs);
+
+    return this;
   }
 
   // Public: Returns a string representation of the model's current state.
