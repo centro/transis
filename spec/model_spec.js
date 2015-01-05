@@ -1,5 +1,6 @@
 import "6to5/polyfill";
 import Model from "../model";
+import IdMap from "../id_map";
 
 describe('Model', function () {
   var TestMapper = {
@@ -37,6 +38,8 @@ describe('Model', function () {
   beforeEach(function() {
     BasicModel.mapper = TestMapper;
   });
+
+  afterEach(function() { IdMap.clear(); });
 
   describe('.registerClass', function() {
     it('throws an exception when given something other than a Model subclass', function() {
@@ -1124,6 +1127,11 @@ describe('Model', function () {
       expect(BasicModel.mapper.get).toHaveBeenCalledWith(751, {x: 1, y: 2});
     });
 
+    it('returns the receiver', function() {
+      var m = BasicModel.load({id: 752, str: 'x', num: 4});
+      expect(m.get()).toBe(m);
+    });
+
     it('throws an exception when the model is NEW', function() {
       var m = new BasicModel;
 
@@ -1133,13 +1141,17 @@ describe('Model', function () {
       }).toThrow(new Error(`BasicModel#get: can't get a model in the NEW state: ${m}`));
     });
 
-    it('throws an exception when the mode is BUSY', function() {
-      var m = BasicModel.get(752);
+    it('throws an exception when the model is BUSY', function() {
+      var m = BasicModel.get(753);
 
       expect(m.isBusy).toBe(true);
       expect(function() {
         m.get();
       }).toThrow(new Error(`BasicModel#get: can't get a model in the EMPTY-BUSY state: ${m}`));
+    });
+
+    it('throws an exception when the model is DELETED', function() {
+      // FIXME
     });
   });
 });
