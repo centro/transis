@@ -237,6 +237,31 @@ function buildQueryArray(klass) {
   });
 }
 
+// Internal: Callback for a successful model deletion. Updates the model's state, removes it from
+// the identity map, and removes removes it from any associations its currently participating in.
+function mapperDeleteSuccess() {
+  IdMap.delete(this);
+  this.__isBusy__ = false;
+  this.__sourceState__ = DELETED;
+  delete this.__error__;
+
+  for (let name in this.associations) {
+    let desc = this.associations[name];
+    if (!desc.inverse) { continue; }
+    if (desc.type === 'hasOne') {
+      let m;
+      if (m = this[name]) {
+        inverseRemoved.call(m, desc.inverse, this);
+      }
+    }
+    else if (desc.type === 'hasMany') {
+      for (let m of this[name].slice(0)) {
+        inverseRemoved.call(m, desc.inverse, this);
+      }
+    }
+  }
+}
+
 // Internal: Capitalizes the given word.
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -649,6 +674,37 @@ class Model {
         this.__isBusy__ = false;
         this.__error__ = error;
       });
+
+    return this;
+  }
+
+  // Public: Deletes the model by passing it to the data mapper's `delete` method.
+  //
+  // opts - An object to forward on to the mapper (default: `{}`).
+  //
+  // Returns the receiver.
+  // Throws `Error` if the model is currently busy.
+  delete(opts = {}) {
+    if (this.isDeleted) { return this; }
+
+    if (this.isBusy) {
+      throw new Error(`${this.constructor}#delete: can't delete a model in the ${this.stateString()} state: ${this}`);
+    }
+
+    if (this.isNew) {
+      mapperDeleteSuccess.call(this);
+    }
+    else {
+      this.__isBusy__ = true;
+
+      this.__promise__ = callMapper.call(this.constructor, 'delete', [this, opts])
+        .then(() => {
+          mapperDeleteSuccess.call(this);
+        }, (error) => {
+          this.__isBusy__ = false;
+          this.__error__ = error;
+        });
+    }
 
     return this;
   }

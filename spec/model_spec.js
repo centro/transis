@@ -1374,9 +1374,166 @@ describe('Model', function () {
     });
 
     describe('on a DELETED model', function() {
-      it('throws an exception', function() {
-        // FIXME
+      beforeEach(function() {
+        var _this = this;
+
+        BasicModel.mapper.delete = function() {
+          return new Promise(function(resolve) {
+            _this.deleteResolve = resolve;
+          });
+        };
       });
+
+      it('throws an exception', function(done) {
+        var m = BasicModel.load({id: 801});
+        m.delete();
+        this.deleteResolve();
+        setTimeout(function() {
+          expect(m.sourceState).toBe(Model.DELETED);
+          expect(function() {
+            m.save();
+          }).toThrow(new Error(`BasicModel#save: can't save a model in the DELETED state: ${m}`));
+          done();
+        });
+      });
+    });
+  });
+
+  describe('#delete', function() {
+    beforeEach(function() {
+      var _this = this;
+
+      BasicModel.mapper = {
+        get: function(id) { return new Promise(function() {}); },
+        delete: function(model) {
+          return new Promise(function(resolve, reject) {
+            _this.resolve = resolve;
+            _this.reject = reject;
+          });
+        },
+      };
+
+      spyOn(BasicModel.mapper, 'delete').and.callThrough();
+
+      this.model = BasicModel.load({id: 123});
+    });
+
+    it("invokes the mapper's delete method", function() {
+      this.model.delete();
+      expect(BasicModel.mapper.delete).toHaveBeenCalledWith(this.model, {});
+    });
+
+    it("passes along the options to the mapper's delete method", function() {
+      this.model.delete({x: 9, y: 7});
+      expect(BasicModel.mapper.delete).toHaveBeenCalledWith(this.model, {x: 9, y: 7});
+    });
+
+    it('sets isBusy to true', function() {
+      expect(this.model.isBusy).toBe(false);
+      this.model.delete();
+      expect(this.model.isBusy).toBe(true);
+    });
+
+    it('sets isBusy to false when the mapper resolves its promise', function(done) {
+      this.model.delete();
+      expect(this.model.isBusy).toBe(true);
+      this.resolve();
+      setTimeout(() => {
+        expect(this.model.isBusy).toBe(false);
+        done();
+      });
+    });
+
+    it('sets sourceState to DELETED when the mapper resolves its promise', function(done) {
+      this.model.delete();
+      expect(this.model.sourceState).toBe(Model.LOADED);
+      this.resolve();
+      setTimeout(() => {
+        expect(this.model.sourceState).toBe(Model.DELETED);
+        done();
+      });
+    });
+
+    it('removes the model from the identity map when the mapper resolves its promise', function(done) {
+      this.model.delete();
+      expect(BasicModel.get(this.model.id)).toBe(this.model);
+      this.resolve();
+      setTimeout(() => {
+        var m = BasicModel.get(this.model.id);
+        expect(m).not.toBe(this.model);
+        expect(m.isEmpty).toBe(true);
+        done();
+      });
+    });
+
+    it('removes the model from any associations when the mapper resolves the promise', function(done) {
+      Post.mapper = BasicModel.mapper;
+
+      var p = Post.load({
+        id: 184, title: 'the title', body: 'the body',
+        author: {id: 9, first: 'Homer', last: 'Simpson'},
+        tags: [{id: 18, name: 'the tag'}]
+      });
+
+      var a = p.author;
+      var t = p.tags[0];
+
+      expect(a.posts).toEqual([p]);
+      expect(t.posts).toEqual([p]);
+      p.delete();
+      this.resolve();
+      setTimeout(() => {
+        expect(a.posts).toEqual([]);
+        expect(t.posts).toEqual([]);
+        done();
+      });
+    });
+
+    it('sets isBusy to false when the mapper rejects its promise', function(done) {
+      this.model.delete();
+      expect(this.model.isBusy).toBe(true);
+      this.reject();
+      setTimeout(() => {
+        expect(this.model.isBusy).toBe(false);
+        done();
+      });
+    });
+
+    it('does not change the sourceState when the mapper rejects its promise', function(done) {
+      this.model.delete();
+      expect(this.model.sourceState).toBe(Model.LOADED);
+      this.reject();
+      setTimeout(() => {
+        expect(this.model.sourceState).toBe(Model.LOADED);
+        done();
+      });
+    });
+
+    it("does not invoke the mapper's delete method when the model is in the NEW state", function() {
+      var model = new BasicModel;
+
+      model.delete();
+      expect(BasicModel.mapper.delete).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when the model state is DELETED', function(done) {
+      this.model.delete();
+      this.resolve();
+      setTimeout(() => {
+        BasicModel.mapper.delete.calls.reset();
+        expect(this.model.sourceState).toBe(Model.DELETED);
+        this.model.delete();
+        expect(BasicModel.mapper.delete).not.toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('throws an exception when the model is BUSY', function() {
+      this.model.delete();
+      expect(this.model.isBusy).toBe(true);
+      expect(() => {
+        this.model.delete();
+      }).toThrow(new Error(`BasicModel#delete: can't delete a model in the LOADED-BUSY state: ${this.model}`));
     });
   });
 
