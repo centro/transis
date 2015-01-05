@@ -199,22 +199,20 @@ function callMapper(method, args) {
 function buildQueryArray(klass) {
   var array = [], promise = Promise.resolve(), isBusy = false, error, queued;
 
-  function flush() { if (queued) { array.query.apply(array, queued); queued = null; } }
+  function flush() { if (queued) { array.query(queued); queued = null; } }
 
   return Object.defineProperties(array, {
     modelClass: { get: function() { return klass; }, enumerable: false },
     isBusy: { get: function() { return isBusy; }, enumerable: false },
     error: { get: function() { return error; }, enumerable: false },
     query: {
-      value: function() {
-        var args = Array.from(arguments);
-
+      value: function(opts = {}) {
         if (isBusy) {
-          queued = args;
+          queued = opts;
         }
         else {
           isBusy = true;
-          promise = callMapper.call(klass, 'query', args).then(
+          promise = callMapper.call(klass, 'query', [opts]).then(
             function(objects) {
               array.splice.apply(array, [0, array.length].concat(klass.loadAll(objects)));
               isBusy = false;
@@ -544,13 +542,10 @@ class Model {
   // then       - Equivalent to `Promise.prototype.then`.
   // catch      - Equivalent to `Promise.prototype.catch`.
   //
-  // args... - Zero or more objects to pass along to the data mapper's `query`  method.
+  // opts - An object to forward along to the mapper (default: `{}`).
   //
   // Returns an array.
-  static query() {
-    var a = this.buildQuery();
-    return a.query.apply(a, arguments);
-  }
+  static query(opts = {}) { return this.buildQuery().query(opts); }
 
   // Public: Retrieves a model from the identity map or creates a new empty model instance. If you
   // want to get the model from the mapper, then use the `Model.get` method.

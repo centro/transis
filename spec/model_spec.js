@@ -787,12 +787,12 @@ describe('Model', function () {
     describe('#query', function() {
       it('invokes the query method on the data mapper', function() {
         this.a.query();
-        expect(BasicModel.mapper.query).toHaveBeenCalledWith();
+        expect(BasicModel.mapper.query).toHaveBeenCalledWith({});
       });
 
-      it('forwards any arguments on to the data mapper', function() {
-        this.a.query('foo', 'bar', 'baz');
-        expect(BasicModel.mapper.query).toHaveBeenCalledWith('foo', 'bar', 'baz');
+      it('forwards the first argument to the data mapper', function() {
+        this.a.query({foo: 9, bar: 'baz'});
+        expect(BasicModel.mapper.query).toHaveBeenCalledWith({foo: 9, bar: 'baz'});
       });
 
       it('sets the isBusy property', function() {
