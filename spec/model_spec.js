@@ -110,14 +110,14 @@ describe('Model', function () {
       expect('str' in BasicModel.prototype).toBe(true);
     });
 
-    it('defines a property that sets a private property based on the given name', function() {
-      expect(this.m.__str__).toBeUndefined();
+    it('defines a property that sets its value on the attrs object', function() {
+      expect(this.m.attrs.str).toBeUndefined();
       this.m.str = 'abc';
-      expect(this.m.__str__).toBe('abc');
+      expect(this.m.attrs.str).toBe('abc');
     });
 
-    it('defines a property that gets a private property based on the given name', function() {
-      this.m.__str__ = 'xyz';
+    it('defines a property that gets its value from the attrs object', function() {
+      this.m.attrs.str = 'xyz';
       expect(this.m.str).toBe('xyz');
     });
 

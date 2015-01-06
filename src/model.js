@@ -4,10 +4,10 @@ import * as attrs from "./attrs";
 
 var registeredClasses = {}, registeredAttrs = {};
 
-const NEW      = 'new';
-const EMPTY    = 'empty';
-const LOADED   = 'loaded';
-const DELETED  = 'deleted';
+const NEW     = 'new';
+const EMPTY   = 'empty';
+const LOADED  = 'loaded';
+const DELETED = 'deleted';
 
 // Internal: Resolves the given class name from the classes registered via `Model.registerClass`.
 //
@@ -354,7 +354,7 @@ class Model {
   //
   // Returns the receiver.
   static attr(name, type, opts = {}) {
-    var converter = registeredAttrs[type], key = `__${name}__`, def = undefined;
+    var converter = registeredAttrs[type], def = undefined;
 
     if (!converter) {
       throw new Error(`${this}.attr: unknown attribute type: \`${type}\``);
@@ -365,10 +365,10 @@ class Model {
 
     Object.defineProperty(this.prototype, name, {
       get: function() {
-        return this[key] === undefined ? def : this[key];
+        return this.attrs[name] === undefined ? def : this.attrs[name];
       },
       set: function(v) {
-        this[key] = converter.coerce(v);
+        this.attrs[name] = converter.coerce(v);
         this[`${name}BeforeCoercion`] = v;
       }
     });
@@ -611,11 +611,12 @@ class Model {
   }
 
   constructor(attrs) {
-    for (let k in attrs) { if (k in this) { this[k] = attrs[k]; } }
-
+    this.attrs           = {};
     this.__sourceState__ = NEW;
     this.__isBusy__      = false;
     this.__promise__     = Promise.resolve();
+
+    for (let k in attrs) { if (k in this) { this[k] = attrs[k]; } }
   }
 
   get id() { return this.__id__; }
@@ -770,10 +771,10 @@ Model.prototype.associations = {};
 
 Model.displayName = 'Ryno.Model';
 
-Model.NEW      = NEW;
-Model.EMPTY    = EMPTY;
-Model.LOADED   = LOADED;
-Model.DELETED  = DELETED;
+Model.NEW     = NEW;
+Model.EMPTY   = EMPTY;
+Model.LOADED  = LOADED;
+Model.DELETED = DELETED;
 
 Model.registerAttr('identity', attrs.IdentityAttr);
 Model.registerAttr('string', attrs.StringAttr);
