@@ -1537,6 +1537,97 @@ describe('Model', function () {
     });
   });
 
+  describe('#then', function() {
+    beforeEach(function() {
+      this.onFulfilled = jasmine.createSpy('onFulfilled');
+      this.onRejected = jasmine.createSpy('onRejected');
+    });
+
+    describe('on a NEW model', function() {
+      it('invokes the fulfillment callback immediately', function(done) {
+        var m = new BasicModel;
+        m.then(this.onFulfilled, this.onRejected);
+        setTimeout(() => {
+          expect(this.onFulfilled).toHaveBeenCalledWith(undefined);
+          done();
+        });
+      });
+    });
+
+    describe('on a BUSY model', function() {
+      beforeEach(function() {
+        var _this = this;
+
+        BasicModel.mapper.get = function() {
+          return new Promise(function(resolve, reject) {
+            _this.resolve = resolve;
+            _this.reject  = reject;
+          });
+        };
+      });
+
+      it('invokes the fulfillment callback when the mapper resolves the pending promise', function(done) {
+        var m = BasicModel.get(19);
+        expect(m.isBusy).toBe(true);
+        m.then(this.onFulfilled, this.onRejected);
+        this.resolve({id: 19});
+        setTimeout(() => {
+          expect(this.onFulfilled).toHaveBeenCalledWith(undefined);
+          done();
+        });
+      });
+
+      it('returns a new promise that is resolved with the return value of the fulfillment handler', function(done) {
+        var m = BasicModel.get(19);
+        var p = m.then(function() { return 'foo'; });
+        var spy = jasmine.createSpy();
+        p.then(spy);
+        this.resolve({id: 19});
+        setTimeout(() => {
+          expect(spy).toHaveBeenCalledWith('foo');
+          done();
+        });
+      });
+
+      it('invokes the rejected callback when the mapper rejects the pending promise', function(done) {
+        var m = BasicModel.get(19);
+        expect(m.isBusy).toBe(true);
+        m.then(this.onFulfilled, this.onRejected);
+        this.reject('blah');
+        setTimeout(() => {
+          expect(this.onRejected).toHaveBeenCalledWith('blah');
+          done();
+        });
+      });
+    });
+  });
+
+  describe('#catch', function() {
+    beforeEach(function() {
+      var _this = this;
+
+      BasicModel.mapper.get = function() {
+        return new Promise(function(resolve, reject) {
+          _this.resolve = resolve;
+          _this.reject  = reject;
+        });
+      };
+
+      this.onRejected = jasmine.createSpy('onRejected');
+    });
+
+    it('invokes the callback when the mapper rejects the pending promise', function(done) {
+      var m = BasicModel.get(19);
+      expect(m.isBusy).toBe(true);
+      m.catch(this.onRejected);
+      this.reject('blah');
+      setTimeout(() => {
+        expect(this.onRejected).toHaveBeenCalledWith('blah');
+        done();
+      });
+    });
+  });
+
   describe('#load', function() {
     it('sets the given id on the receiver and loads the attributes', function() {
       var a = new Author;

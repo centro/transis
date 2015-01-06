@@ -615,6 +615,7 @@ class Model {
 
     this.__sourceState__ = NEW;
     this.__isBusy__      = false;
+    this.__promise__     = Promise.resolve();
   }
 
   get id() { return this.__id__; }
@@ -708,6 +709,27 @@ class Model {
 
     return this;
   }
+
+  // Public: Registers fulfillment and rejection handlers on the latest promise object returned by
+  // the model's mapper. If the model has yet to interact with the mapper, then the `onFulfilled`
+  // handler is invoked immediately.
+  //
+  // When resolved, the `onFulfilled` handler is called with no arguments. When rejected, the
+  // `onFulfilled` handler is called with the error message from the mapper.
+  //
+  // onFulfilled - A function to be invoked when the latest promise from the mapper is resolved.
+  // onRejected  - A function to be invoked when the latest promise from the mapper is rejected.
+  //
+  // Returns a new `Promise` that will be resolved with the return value of `onFulfilled`.
+  then(onFulfilled, onRejected) { return this.__promise__.then(onFulfilled, onRejected); }
+
+  // Public: Registers a rejection handler on the latest promise object returned by the model's
+  // mapper.
+  //
+  // onRejected  - A function to be invoked when the latest promise from the mapper is rejected.
+  //
+  // Returns a new `Promise` that is resolved to the return value of the callback if it is called.
+  catch(onRejected) { return this.__promise__.catch(onRejected); }
 
   // Public: Loads the given attributes into the model. This method simply ensure's that the
   // receiver has its `id` set and then delegates to `Model.load`.
