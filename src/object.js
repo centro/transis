@@ -8,7 +8,7 @@ class RynoObject {
       get: null,
       set: null,
       readonly: false,
-      def: undefined
+      default: undefined
     }, opts);
 
     if (!this.prototype.hasOwnProperty('__props__')) {
@@ -38,7 +38,7 @@ class RynoObject {
     }
 
     value = descriptor.get ? descriptor.get.call(this) : this[key];
-    value = (value === undefined) ? descriptor.def : value;
+    value = (value === undefined) ? descriptor.default : value;
 
     return value;
   }

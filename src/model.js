@@ -351,27 +351,24 @@ class Model extends RynoObject {
   //        registered with `Model.registerAttr`).
   // opts - An object containing properties to pass to the attribute's converter object (default:
   //        `{}`).
-  //   default - Used as the value of the attribute when undefined.
   //
   // Returns the receiver.
   static attr(name, type, opts = {}) {
-    var converter = registeredAttrs[type], def = undefined;
+    var converter = registeredAttrs[type];
 
     if (!converter) {
       throw new Error(`${this}.attr: unknown attribute type: \`${type}\``);
     }
 
     if (typeof converter === 'function') { converter = new converter(opts); }
-    if ('default' in opts) { def = opts.default; }
 
-    Object.defineProperty(this.prototype, name, {
-      get: function() {
-        return this.attrs[name] === undefined ? def : this.attrs[name];
-      },
+    this.prop(name, {
+      get: function() { return this.attrs[name]; },
       set: function(v) {
         this.attrs[name] = converter.coerce(v);
         this[`${name}BeforeCoercion`] = v;
-      }
+      },
+      default: 'default' in opts ? opts.default : undefined
     });
 
     return this;

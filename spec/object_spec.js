@@ -16,7 +16,7 @@ Test.prop('ro', {
 });
 
 Test.prop('def', {
-  def: 'hello'
+  default: 'hello'
 });
 
 describe('Ryno.Object', function() {
@@ -49,8 +49,8 @@ describe('Ryno.Object', function() {
         expect(t.num).toBe(12);
       });
 
-      describe('with the def option', function() {
-        it('returns the value of the def option when the property has not yet been set', function() {
+      describe('with the default option', function() {
+        it('returns the value of the default option when the property has not yet been set', function() {
           expect(t.def).toBe('hello');
         });
 
