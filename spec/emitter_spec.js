@@ -359,6 +359,15 @@ describe('Emitter', function() {
     it('returns the receiver', function() {
       expect(f.emit('change')).toBe(f);
     });
+
+    it('does not emit events for other objects', function() {
+      f.on('foo', 'methHandler1');
+      b.on('foo', 'methHandler1');
+
+      f.emit('foo');
+      expect(f.methHandler1).toHaveBeenCalled();
+      expect(b.methHandler1).not.toHaveBeenCalled();
+    });
   });
 });
 

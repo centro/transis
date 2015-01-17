@@ -13,10 +13,10 @@ function trigger(reg, event, data) {
 
 var Emitter = {
   on: function(event, handler, opts = {}) {
-    var reg;
+    var reg, events;
 
-    regs[this] = regs[this] || {};
-    regs[this][event] = regs[this][event] || [];
+    regs.set(this, events = (regs.get(this) || {}));
+    events[event] = events[event] || [];
 
     opts = Object.assign({
       observer: this,
@@ -32,7 +32,7 @@ var Emitter = {
       once: opts.once
     };
 
-    regs[this][event].push(reg);
+    events[event].push(reg);
 
     if (opts.fire) { trigger(reg, event); }
 
@@ -42,12 +42,12 @@ var Emitter = {
   off: function(event, handler, opts = {}) {
     var keys, rs, i, j, n;
 
-    if (!regs[this]) { return this; }
+    if (!regs.get(this)) { return this; }
 
-    keys = event ? [event] : Object.keys(regs[this]);
+    keys = event ? [event] : Object.keys(regs.get(this));
 
     for (i = 0, n = keys.length; i < n; i++) {
-      if (!(rs = regs[this][keys[i]])) { continue; }
+      if (!(rs = regs.get(this)[keys[i]])) { continue; }
 
       for (j = rs.length - 1; j >= 0; j--) {
         if (handler && handler !== rs[j].handler) { continue; }
@@ -56,7 +56,7 @@ var Emitter = {
         rs.splice(j, 1);
       }
 
-      if (rs.length === 0) { delete regs[this][keys[i]]; }
+      if (rs.length === 0) { delete regs.get(this)[keys[i]]; }
     }
 
     return this;
@@ -65,7 +65,7 @@ var Emitter = {
   emit: function(event, data) {
     var keys, parts, rs, n, i, j;
 
-    if (!regs[this]) { return this; }
+    if (!regs.get(this)) { return this; }
 
     keys = [event, '*'];
 
@@ -77,7 +77,7 @@ var Emitter = {
     }
 
     for (i = 0, n = keys.length; i < n; i++) {
-      if (!(rs = regs[this][keys[i]])) { continue; }
+      if (!(rs = regs.get(this)[keys[i]])) { continue; }
 
       for (j = rs.length - 1; j >= 0; j--) {
         trigger(rs[j], event, data);
