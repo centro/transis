@@ -112,11 +112,11 @@ function hasOneSet(desc, v, sync) {
 function hasManySet(desc, a) {
   var name = desc.name, prev = this[name], m;
 
-  for (m of a) { checkAssociatedType.call(this, desc, m); }
+  a.forEach((m) => { checkAssociatedType.call(this, desc, m); })
 
   if (desc.inverse) {
-    for (m of prev) { inverseRemoved.call(m, desc.inverse, this); }
-    for (m of a) { inverseAdded.call(m, desc.inverse, this); }
+    prev.forEach((m) => { inverseRemoved.call(m, desc.inverse, this); });
+    a.forEach((m) => { inverseAdded.call(m, desc.inverse, this); });
   }
 
   this[`__${name}__`] = a;
@@ -131,13 +131,13 @@ function hasManySet(desc, a) {
 function hasManyAdd(desc, models, sync) {
   var name = desc.name, prev = this[name].slice();
 
-  for (var m of models) {
+  models.forEach((m) => {
     checkAssociatedType.call(this, desc, m);
     if (sync && desc.inverse) {
       inverseAdded.call(m, desc.inverse, this);
     }
     this[name].push(m);
-  }
+  });
 }
 
 // Internal: Removes the given models from a `hasMany` association.
@@ -150,14 +150,14 @@ function hasManyAdd(desc, models, sync) {
 function hasManyRemove(desc, models, sync) {
   var name = desc.name, prev = this[name].slice(), i;
 
-  for (var m of models) {
+  models.forEach((m) => {
     if ((i = this[name].indexOf(m)) >= 0) {
       if (sync && desc.inverse) {
         inverseRemoved.call(m, desc.inverse, this);
       }
       this[name].splice(i, 1);
     }
-  }
+  });
 }
 
 // Internal: Invokes the given method on the receiver's mapper, ensuring that it returns a Thennable
@@ -256,9 +256,9 @@ function mapperDeleteSuccess() {
       }
     }
     else if (desc.type === 'hasMany') {
-      for (let m of this[name].slice(0)) {
+      this[name].slice(0).forEach((m) => {
         inverseRemoved.call(m, desc.inverse, this);
-      }
+      });
     }
   }
 }
@@ -527,9 +527,9 @@ class Model extends RynoObject {
       }
       else if (associations[name].type === 'hasMany') {
         let others = [];
-        for (let o of data) {
+        data.forEach((o) => {
           others.push(typeof o === 'object' ? klass.load(o) : klass.local(o));
-        }
+        });
         model[name] = others;
       }
     }

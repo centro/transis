@@ -1,4 +1,4 @@
-import "6to5/polyfill";
+import "es6-shim";
 import Model from "../model";
 import IdMap from "../id_map";
 

@@ -1,4 +1,4 @@
-import "6to5/polyfill";
+import "es6-shim";
 import * as parsers from "../parsers";
 
 describe('parseNumber', function() {
