@@ -1,5 +1,6 @@
 import pluralize from "pluralize";
 import IdMap from "./id_map";
+import RynoObject from "./object";
 import * as attrs from "./attrs";
 
 var registeredClasses = {}, registeredAttrs = {};
@@ -265,7 +266,7 @@ function mapperDeleteSuccess() {
 // Internal: Capitalizes the given word.
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-class Model {
+class Model extends RynoObject {
   // Public: Registers the given `Model` subclass using the given name. Model subclasses must be
   // registered when they are referenced as a string in either a `hasOne` or `hasMany` association.
   //
