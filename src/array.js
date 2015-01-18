@@ -1,4 +1,5 @@
 import RynoObject from "./object";
+import * as util from "./util";
 
 var {slice, splice} = Array.prototype;
 
@@ -8,6 +9,27 @@ function onElementEvent(event, data) {
 }
 
 class RynoArray extends RynoObject {
+  // Public: Returns a new `Ryno.Array` containing the given arguments as contents.
+  //
+  // Returns a new `Ryno.Array`.
+  static A() {
+    var a = new RynoArray;
+    a.push.apply(a, arguments);
+    return a;
+  }
+
+  // Public: Returns a new `Ryno.Array` containing the contents of the given array-like object.
+  //
+  // a - Any array-like object (a native array, `Arguments` object, or `Ryno.Array` instance).
+  //
+  // Returns a new `Ryno.Array`.
+  static from(a) {
+    var b = new RynoArray(a.length), i, n;
+    if (a instanceof RynoArray) { a = a.__elements__; }
+    for (i = 0, n = a.length; i < n; i++) { b.__elements__[i] = a[i]; }
+    return b;
+  }
+
   constructor() {
     var elements = slice.call(arguments), i, n;
 
@@ -28,6 +50,26 @@ class RynoArray extends RynoObject {
   }
 
   get length() { return this.__elements__.length; }
+
+  at(i, v) {
+    var length = this.length;
+
+    if (i < 0) { i = length + i; }
+
+    if (arguments.length === 1) {
+      return (i >= 0 && i < length) ? this.__elements__[i] : undefined;
+    }
+    else {
+      this.splice(i, 1, v);
+      return v;
+    }
+  }
+
+  eq(other) {
+    if (other instanceof RynoArray) { return util.eq(this.__elements__, other.__elements__); }
+    if (other instanceof Array) { return util.eq(this.__elements__, other); }
+    return false;
+  }
 
   splice(i, n) {
     var added = slice.call(arguments, 2), index = i < 0 ? this.length + i : i, removed, j, m;
@@ -54,7 +96,7 @@ class RynoArray extends RynoObject {
 
     this.emit('splice', {array: this, i: index, n, added, removed});
 
-    return removed;
+    return RynoArray.from(removed);
   }
 
   push() {
