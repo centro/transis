@@ -3,6 +3,18 @@ import Emitter from "./emitter";
 var objectId = 0;
 
 class RynoObject {
+  // Public: Defines a property on the class's prototype. Properties defined with this method are
+  // observable using the `Ryno.Object#on` method. When changed, they emit `change:<name>` events.
+  // The object being changed and the old value of the property are passed along in the event.
+  //
+  // name - A string containing the name of the property.
+  // opts - An object containing one or more of the following keys:
+  //   get      - A custom property getter function.
+  //   set      - A custom property setter function.
+  //   readonly - Makes the property readonly. Should only be used with the `get` option.
+  //   default  - Specify a default value for the property.
+  //
+  // Returns the receiver.
   static prop(name, opts = {}) {
     var descriptor = Object.assign({
       get: null,
@@ -30,6 +42,11 @@ class RynoObject {
   // Public: Returns a number that can be used to uniquely identify the receiver object.
   get objectId() { return this.__objectId__ = this.__objectId__ || ++objectId; }
 
+  // Internal: Returns the current value of the given property or the default value if it is not
+  // defined.
+  //
+  // Returns the value of the property.
+  // Throws `Error` if there is no property with the given name.
   getProp(name) {
     var descriptor = this.__props__ && this.__props__[name], key = `__${name}`, value;
 
@@ -43,6 +60,11 @@ class RynoObject {
     return value;
   }
 
+  // Internal: Sets the value of the given property and emits a `change:<name>` event.
+  //
+  // Returns nothing.
+  // Throws `Error` if there is no property with the given name.
+  // Throws `TypeError` if the property is readonly.
   setProp(name, value) {
     var descriptor = this.__props__ && this.__props__[name],
         key        = `__${name}`,
