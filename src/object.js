@@ -42,6 +42,15 @@ class RynoObject {
   // Public: Returns a number that can be used to uniquely identify the receiver object.
   get objectId() { return this.__objectId__ = this.__objectId__ || ++objectId; }
 
+  // Public: Indicates whether the receiver is equal to the given object. The default implementation
+  // simply does an identity comparison using the `===` operator. You'll likely want to override
+  // this method in your sub-types in order to perform a more meaningful comparison.
+  //
+  // o - An object to compare against the receiver.
+  //
+  // Returns a `true` if the objects are equal and `false` otherwise.
+  eq(other) { return this === other; }
+
   // Internal: Returns the current value of the given property or the default value if it is not
   // defined.
   //
