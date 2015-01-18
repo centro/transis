@@ -16,7 +16,7 @@
     "6to5": "1.15.0",
     "browserify": "7.0.2",
     "es6-shim": "^0.22.2",
-    "jasmine-node": "2.0.0-beta4",
+    "jasmine": "^2.1.1",
     "karma": "^0.12.24",
     "karma-browserify": "^1.0.1",
     "karma-chrome-launcher": "^0.1.5",
