@@ -39,6 +39,10 @@ class RynoObject {
     return this;
   }
 
+  constructor(props = {}) {
+    for (let k in props) { if (k in this) { this[k] = props[k]; } }
+  }
+
   // Public: Returns a number that can be used to uniquely identify the receiver object.
   get objectId() { return this.__objectId__ = this.__objectId__ || ++objectId; }
 

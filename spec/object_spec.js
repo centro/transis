@@ -109,6 +109,22 @@ describe('Ryno.Object', function() {
     });
   });
 
+  describe('constructor', function() {
+    it('sets the given props on the new instance', function() {
+      var t = new Test({str: 'abc', num: 9});
+
+      expect(t.str).toBe('abc');
+      expect(t.num).toBe(9);
+    });
+
+    it('does not set keys that are not defined props', function() {
+      var t = new Test({str: 'abc', num: 9, blah: 'baz'});
+
+      expect('blah' in t).toBe(false);
+      expect(t.blah).toBeUndefined();
+    });
+  });
+
   describe('#objectId', function() {
     it('returns a unique id for each instance of Ryno.Object', function() {
       var o1 = new RynoObject, o2 = new RynoObject, o3 = new RynoObject;
