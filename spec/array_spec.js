@@ -51,6 +51,24 @@ describe('Array', function() {
     });
   });
 
+  describe('.wrap', function() {
+    it('creates a new Ryno.Array with the given array as the backing __elements__', function() {
+      var a = [1,2,3];
+
+      expect(RynoArray.wrap(a).__elements__).toBe(a);
+    });
+
+    it('throws a TypeError exception when given a non-array', function() {
+      expect(function() {
+        RynoArray.wrap({});
+      }).toThrow(new TypeError(`Ryno.Array.wrap: expected a native array but received \`${{}}\` instead`));
+
+      expect(function() {
+        RynoArray.wrap(4);
+      }).toThrow(new TypeError(`Ryno.Array.wrap: expected a native array but received \`${4}\` instead`));
+    });
+  });
+
   describe('constructor', function() {
     it('creates an array of the given size when passed a single number', function() {
       var a = new RynoArray(3);
@@ -414,6 +432,32 @@ describe('Array', function() {
 
     it('returns undefined when called on an empty array', function() {
       expect(A().shift()).toBeUndefined();
+    });
+  });
+
+  describe('#concat', function() {
+    var a;
+
+    beforeEach(function() { a = A(1,2,3); });
+
+    it('returns a new array containing the receiver and the given arguments', function() {
+      expect(A(1,2,3).concat(4,5,6)).toEqual(A(1,2,3,4,5,6));
+    });
+
+    it('returns a new array comprising the receiver joined with the given Ryno.Array', function() {
+      expect(A(1,2,3).concat(A(4,5,6))).toEqual(A(1,2,3,4,5,6));
+    });
+
+    it('returns a new array comprising the receiver joined with the given native array', function() {
+      expect(A(1,2,3).concat([4,5,6])).toEqual(A(1,2,3,4,5,6));
+    });
+
+    it('works with multiple arguments of different types', function() {
+      expect(A(1,2,3).concat([4,5], 6, A(7,8), 9)).toEqual(A(1,2,3,4,5,6,7,8,9));
+    });
+
+    it('returns an instance of Ryno.Array', function() {
+      expect(A(1,2,3).concat(4,5,6) instanceof RynoArray).toBe(true);
     });
   });
 });

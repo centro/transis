@@ -1,7 +1,7 @@
 import RynoObject from "./object";
 import * as util from "./util";
 
-var {slice, splice} = Array.prototype;
+var {slice, splice, concat} = Array.prototype;
 
 function onElementChange(event, data) {
   var ns = event.split(':')[1];
@@ -27,6 +27,21 @@ class RynoArray extends RynoObject {
     var b = new RynoArray(a.length), i, n;
     if (a instanceof RynoArray) { a = a.__elements__; }
     for (i = 0, n = a.length; i < n; i++) { b.__elements__[i] = a[i]; }
+    return b;
+  }
+
+  // Public: Wraps a native array with a `Ryno.Array`.
+  //
+  // a - A native array object.
+  //
+  // Returns a new `Ryno.Array`.
+  static wrap(a) {
+    if (!Array.isArray(a)) {
+      throw new TypeError(`Ryno.Array.wrap: expected a native array but received \`${a}\` instead`);
+    }
+
+    var b = new RynoArray;
+    b.__elements__ = a;
     return b;
   }
 
@@ -166,6 +181,20 @@ class RynoArray extends RynoObject {
   //
   // Returns the first element in the array or `undefined` if the array length is 0.
   shift() { return this.length > 0 ? this.splice(0, 1).at(0) : undefined; }
+
+  // Public: Returns a new `Ryno.Array` comprised of the receiver joined with the array(s) or
+  // value(s) provided as arguments.
+  //
+  // ...value - Arrays or values to concatenate into the new array.
+  //
+  // Returns a new `Basis.Array`.
+  concat() {
+    var args = slice.call(arguments).map(function(arg) {
+      return arg instanceof RynoArray ? arg.__elements__ : arg;
+    });
+
+    return RynoArray.wrap(concat.apply(this.__elements__, args));
+  }
 
   toString() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
