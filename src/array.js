@@ -354,6 +354,14 @@ class RynoArray extends RynoObject {
     return this;
   }
 
+  // Public: Clears the array by removing all elements.
+  //
+  // Returns the receiver.
+  clear() {
+    this.splice(0, this.length);
+    return this;
+  }
+
   toString() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
   }

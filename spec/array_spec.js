@@ -676,4 +676,13 @@ describe('Array', function() {
       expect(a).toEqual(A(10, 11, 12, 13));
     });
   });
+
+  describe('#clear', function() {
+    it('removes all elements from the array', function() {
+      var a = A(1,2,3);
+
+      expect(a.clear()).toBe(a);
+      expect(a).toEqual(A());
+    });
+  });
 });
