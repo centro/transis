@@ -580,6 +580,33 @@ describe('Array', function() {
     });
   });
 
+  describe('#some', function() {
+    it('returns true when some element of the array passes the test function', function() {
+      expect(A(1,2,3,4,5).some(function(x) { return x === 3; })).toBe(true);
+    });
+
+    it('returns false when no elements of the array pass the test function', function() {
+      expect(A(1,2,3,4,5).some(function(x) { return x === 6; })).toBe(false);
+    });
+
+    it('stops processing the array as soon as an element is found that passes the test', function() {
+      var spy = jasmine.createSpy().and.callFake(function(x) { return x === 3; });
+
+      expect(A(1,2,3,4,5,6,7,8,9).some(spy)).toBe(true);
+      expect(spy.calls.count()).toBe(3);
+    });
+
+    it('passes the current element, index, and array to the test function', function() {
+      var a = A('a', 'b', 'c'),
+          spy = jasmine.createSpy().and.callFake(function(x) { return false; });
+
+      expect(a.some(spy)).toBe(false);
+      expect(spy).toHaveBeenCalledWith('a', 0, a);
+      expect(spy).toHaveBeenCalledWith('b', 1, a);
+      expect(spy).toHaveBeenCalledWith('c', 2, a);
+    });
+  });
+
   describe('#reduce', function() {
     it('applies the given function to each element in the array', function() {
       expect(A(1,2,3,4,5).reduce(function(acc, x) { return acc + x; }), 0).toBe(15);
