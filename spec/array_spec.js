@@ -264,5 +264,15 @@ describe('Array', function() {
     it('returns an instance of Ryno.Array', function() {
       expect(A(0, 1, 2).splice(0) instanceof RynoArray).toBe(true);
     });
+
+    it('emits a splice event with the array, index, num removed, added, and removed elements', function() {
+      var a = A('a', 'b', 'c', 'd', 'e'), spy = jasmine.createSpy();
+
+      a.on('splice', spy);
+      a.splice(2, 2, 'C', 'D');
+      expect(spy).toHaveBeenCalledWith('splice', {
+        array: a, i: 2, n: 2, removed: ['c', 'd'], added: ['C', 'D']
+      });
+    });
   });
 });
