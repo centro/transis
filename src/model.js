@@ -120,7 +120,7 @@ function hasManySet(desc, a) {
     a.forEach((m) => { inverseAdded.call(m, desc.inverse, this); });
   }
 
-  this[`__${name}__`] = (a instanceof Array) ? RynoArray.wrap(a) : a;
+  this[name].replace(a);
 }
 
 // Internal: Adds the given models to a `hasMany` association.
