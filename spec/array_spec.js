@@ -1,5 +1,6 @@
 import "es6-shim";
 import RynoArray from "../array";
+import RynoObject from "../object";
 
 var A = RynoArray.A;
 
@@ -273,6 +274,41 @@ describe('Array', function() {
       expect(spy).toHaveBeenCalledWith('splice', {
         array: a, i: 2, n: 2, removed: ['c', 'd'], added: ['C', 'D']
       });
+    });
+  });
+
+  describe('change events', function() {
+    var a, spy;
+
+    class Test extends RynoObject {}
+    Test.prop('x');
+    Test.prop('y');
+
+    beforeEach(function() {
+      a = A(new Test({x: 1, y: 'a'}), new Test({x: 2, y: 'b'}), new Test({x: 3, y: 'c'}));
+      spy = jasmine.createSpy();
+
+      a.on('elementChange:*', spy);
+    });
+
+    it('emits an elementChange event when a property on an element of the array changes', function() {
+      a.at(0).x = 10;
+      expect(spy).toHaveBeenCalledWith('elementChange:x', {array: a, object: a.at(0), old: 1});
+      a.at(1).y = 'foo';
+      expect(spy).toHaveBeenCalledWith('elementChange:y', {array: a, object: a.at(1), old: 'b'});
+    });
+
+    it('emits an elementChange event when an added element changes', function() {
+      var t = new Test({x: 4, y: 'd'});
+      a.push(t);
+      t.y = 'e';
+      expect(spy).toHaveBeenCalledWith('elementChange:y', {array: a, object: t, old: 'd'});
+    });
+
+    it('does not emit an elementChange event when a removed element changes', function() {
+      var t = a.pop();
+      t.y = 'e';
+      expect(spy).not.toHaveBeenCalled();
     });
   });
 });

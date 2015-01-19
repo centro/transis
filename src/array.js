@@ -3,9 +3,9 @@ import * as util from "./util";
 
 var {slice, splice} = Array.prototype;
 
-function onElementEvent(event, data) {
+function onElementChange(event, data) {
   var ns = event.split(':')[1];
-  this.emit(`elementChange:${ns}`, data);
+  this.emit(`elementChange:${ns}`, Object.assign({array: this}, data));
 }
 
 class RynoArray extends RynoObject {
@@ -84,13 +84,13 @@ class RynoArray extends RynoObject {
 
     for (j = 0, m = removed.length; j < m; j++) {
       if (removed[j] instanceof RynoObject) {
-        removed[j].off('change:*', onElementEvent, {observer: this});
+        removed[j].off('change:*', onElementChange, {observer: this});
       }
     }
 
     for (j = 0, m = added.length; j < m; j++) {
       if (added[j] instanceof RynoObject) {
-        added[j].on('change:*', onElementEvent, {observer: this});
+        added[j].on('change:*', onElementChange, {observer: this});
       }
     }
 
@@ -111,9 +111,9 @@ class RynoArray extends RynoObject {
     return this.length;
   }
 
-  pop() { return this.length > 0 ? this.splice(-1, 1)[0] : undefined; }
+  pop() { return this.length > 0 ? this.splice(-1, 1).at(0) : undefined; }
 
-  shift() {  return this.length > 0 ? this.splice(0, 1)[0] : undefined; }
+  shift() {  return this.length > 0 ? this.splice(0, 1).at(0) : undefined; }
 
   toString() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
