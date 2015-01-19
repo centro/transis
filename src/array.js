@@ -69,6 +69,9 @@ class RynoArray extends RynoObject {
   // Public: Returns the current length of the array.
   get length() { return this.__elements__.length; }
 
+  // Public: Returns the backing native array.
+  get native() { return this.__elements__; }
+
   // Public: Element reference and assignment method. When given one argument, returns the item at
   // the specified index. When passed, two arguments, the second argument is set as the item at the
   // index indicated by the first.
