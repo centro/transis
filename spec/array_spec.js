@@ -492,4 +492,20 @@ describe('Array', function() {
       expect(spy.calls.mostRecent().object).toBe(o);
     });
   });
+
+  describe('#filter', function() {
+    it('returns a new array with all elements that pass the given test function', function() {
+      expect(A(1,2,3,4,5).filter(function(x) { return x % 2 === 0; })).toEqual(A(2,4));
+    });
+
+    it('returns an instance of Ryno.Array', function() {
+      expect(A(1,2,3,4,5).filter(function(x) { return x % 2 === 0; }) instanceof RynoArray).toBe(true);
+    });
+
+    it('executes the given function in the context of the second argument', function() {
+      var spy = jasmine.createSpy(), o = {};
+      A(1,2,3).filter(spy, o); 
+      expect(spy.calls.mostRecent().object).toBe(o);
+    });
+  });
 });

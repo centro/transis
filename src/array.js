@@ -1,7 +1,7 @@
 import RynoObject from "./object";
 import * as util from "./util";
 
-var {slice, splice, concat, map} = Array.prototype;
+var {slice, splice, concat, map, filter} = Array.prototype;
 
 function onElementChange(event, data) {
   var ns = event.split(':')[1];
@@ -221,6 +221,18 @@ class RynoArray extends RynoObject {
   // Returns a new `Ryno.Array`.
   map() {
     return RynoArray.wrap(map.apply(this.__elements__, arguments));
+  }
+
+  // Public: Creates a new array with all elements that pass the test implemented by the provided
+  // function.
+  //
+  // callback - Function to test each element of the array. Return true to keep the element and
+  //            false to discard.
+  // thisArg  - Value to use as this when invoking callback.
+  //
+  // Returns a new `Ryno.Array`.
+  filter() {
+    return RynoArray.wrap(filter.apply(this.__elements__, arguments));
   }
 
   toString() {
