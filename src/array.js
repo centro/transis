@@ -1,7 +1,7 @@
 import RynoObject from "./object";
 import * as util from "./util";
 
-var {slice, splice, concat} = Array.prototype;
+var {slice, splice, concat, map} = Array.prototype;
 
 function onElementChange(event, data) {
   var ns = event.split(':')[1];
@@ -207,6 +207,20 @@ class RynoArray extends RynoObject {
   // Returns a new `Ryno.Array`.
   slice() {
     return RynoArray.wrap(slice.apply(this.__elements__, arguments));
+  }
+
+  // Public: Creates a new array with the results of calling the given function on every element in
+  // the array.
+  //
+  // callback - Function that produces a new element of the array. It takes three arguments:
+  //   current - The current element being processed.
+  //   index   - The index of the current element.
+  //   array   - The array map was called on.
+  // thisArg  - Value to use as this when invoking callback.
+  //
+  // Returns a new `Ryno.Array`.
+  map() {
+    return RynoArray.wrap(map.apply(this.__elements__, arguments));
   }
 
   toString() {

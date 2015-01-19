@@ -476,4 +476,20 @@ describe('Array', function() {
       expect(A(1,2,3,4,5).slice() instanceof RynoArray).toBe(true);
     });
   });
+
+  describe('#map', function() {
+    it('returns a new array with the results of calling the given function on each element of the receiver', function() {
+      expect(A(1,2,3).map(function(x) { return x * 2; })).toEqual(A(2,4,6));
+    });
+
+    it('returns an instance of Ryno.Array', function() {
+      expect(A(1,2,3).map(function(x) { return x * 2; }) instanceof RynoArray).toBe(true);
+    });
+
+    it('executes the given function in the context of the second argument', function() {
+      var spy = jasmine.createSpy(), o = {};
+      A(1,2,3).map(spy, o); 
+      expect(spy.calls.mostRecent().object).toBe(o);
+    });
+  });
 });
