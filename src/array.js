@@ -135,21 +135,37 @@ class RynoArray extends RynoObject {
     return RynoArray.from(removed);
   }
 
+  // Public: Adds one or more elements to the end of the array and returns the new length.
+  //
+  // ...elements - One or more objects to add to the end of the array.
+  //
+  // Returns the new length of the array.
   push() {
     var args = slice.call(arguments);
     this.splice.apply(this, [this.length, 0].concat(args));
     return this.length;
   }
 
+  // Public: Adds one or more elements to the beginning of the array and returns the new length.
+  //
+  // ...elements - One or more objects to add to the beginning of the array.
+  //
+  // Returns the new length of the array.
   unshift() {
     var args = slice.call(arguments);
     this.splice.apply(this, [0, 0].concat(args));
     return this.length;
   }
 
+  // Public: Removes the last element from the array and returns the element.
+  //
+  // Returns the last element in the array or `undefined` if the array length is 0.
   pop() { return this.length > 0 ? this.splice(-1, 1).at(0) : undefined; }
 
-  shift() {  return this.length > 0 ? this.splice(0, 1).at(0) : undefined; }
+  // Public: Removes the first element from the array and returns the element.
+  //
+  // Returns the first element in the array or `undefined` if the array length is 0.
+  shift() { return this.length > 0 ? this.splice(0, 1).at(0) : undefined; }
 
   toString() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;

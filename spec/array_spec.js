@@ -346,4 +346,74 @@ describe('Array', function() {
       expect(spy).not.toHaveBeenCalled();
     });
   });
+
+  describe('#push', function() {
+    it('appends the given object(s) to the end of the array', function() {
+      var a = A(1,2,3);
+      a.push(4);
+      expect(a).toEqual([1,2,3,4]);
+      a.push(10,11,12);
+      expect(a).toEqual([1,2,3,4,10,11,12]);
+    });
+
+    it('returns the new length of the array', function() {
+      var a = A(1,2,3);
+      expect(a.push(4)).toBe(4);
+      expect(a.push(5,6,7)).toBe(7);
+    });
+  });
+
+  describe('#pop', function() {
+    it('returns the object at the end of the array', function() {
+      expect(A(1,2,3).pop()).toBe(3);
+      expect(A('a', 'b', 'c').pop()).toBe('c');
+    });
+
+    it('removes the object at the end of the array from the array', function() {
+      var a = A(1,2,3,4,5);
+      expect(a.pop()).toBe(5);
+      expect(a).toEqual([1,2,3,4]);
+      expect(a.pop()).toBe(4);
+      expect(a).toEqual([1,2,3]);
+    });
+
+    it('returns undefined when called on an empty array', function() {
+      expect(A().pop()).toBeUndefined();
+    });
+  });
+
+  describe('#unshift', function() {
+    it('prepends the given object(s) to the beginning of the array', function() {
+      var a = A(1,2,3);
+      a.unshift(4);
+      expect(a).toEqual([4,1,2,3]);
+      a.unshift(10,11,12);
+      expect(a).toEqual([10,11,12,4,1,2,3]);
+    });
+
+    it('returns the new length of the array', function() {
+      var a = A(1,2,3);
+      expect(a.unshift(4)).toBe(4);
+      expect(a.unshift(5,6,7)).toBe(7);
+    });
+  });
+
+  describe('#shift', function() {
+    it('returns the object at the beginning of the array', function() {
+      expect(A(1,2,3).shift()).toBe(1);
+      expect(A('a', 'b', 'c').shift()).toBe('a');
+    });
+
+    it('removes the object at the beginning of the array from the array', function() {
+      var a = A(1,2,3,4,5);
+      expect(a.shift()).toBe(1);
+      expect(a).toEqual([2,3,4,5]);
+      expect(a.shift()).toBe(2);
+      expect(a).toEqual([3,4,5]);
+    });
+
+    it('returns undefined when called on an empty array', function() {
+      expect(A().shift()).toBeUndefined();
+    });
+  });
 });
