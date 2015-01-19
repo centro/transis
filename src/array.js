@@ -344,6 +344,16 @@ class RynoArray extends RynoObject {
     return this.__elements__.join(sep);
   }
 
+  // Public: Replaces the contents of the receiver with the contents of the given array.
+  //
+  // a - A `Ryno.Array` or native array.
+  //
+  // Returns the receiver.
+  replace(a) {
+    this.splice.apply(this, new RynoArray(0, this.length).concat(a).__elements__);
+    return this;
+  }
+
   toString() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
   }

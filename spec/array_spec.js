@@ -662,4 +662,18 @@ describe('Array', function() {
       expect(A(1,2,3).join()).toBe('1,2,3');
     });
   });
+
+  describe('#replace', function() {
+    it('replaces the contents of the receiver with the given `Ryno.Array` contents', function() {
+      var a = A(1,2,3);
+      a.replace(A('foo', 'bar'));
+      expect(a).toEqual(A('foo', 'bar'));
+    });
+
+    it('replaces the contents of the receiver with the given native array contents', function() {
+      var a = A(1,2,3);
+      a.replace([10, 11, 12, 13]);
+      expect(a).toEqual(A(10, 11, 12, 13));
+    });
+  });
 });
