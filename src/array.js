@@ -274,6 +274,32 @@ class RynoArray extends RynoObject {
     return i === -1 ? undefined : this.at(i);
   }
 
+  // Public: Applies the given function against an accumulator and each element of the array in
+  // order to reduce it to a single value.
+  //
+  // f   - Function to apply to each element of the array. It is passed the following arguments:
+  //   acc     - The current accumulator value.
+  //   current - The current element being processed.
+  //   index   - The index of the current element.
+  //   array   - The array `reduce` was called on.
+  // init - Initial value of the accumulator, if this is not provided then the first element of the
+  //        array is used.
+  //
+  // Returns the final value of the accumulator.
+  reduce(f, init) {
+    var acc = arguments.length > 1 ? init : this.__elements__[0];
+
+    if (this.length === 0 && arguments.length < 2) {
+      throw new TypeError(`Ryno.Array#reduce: reduce of an empty array with no initial value`);
+    }
+
+    for (let i = arguments.length > 1 ? 0 : 1, n = this.length; i < n; i++) {
+      acc = f(acc, this.__elements__[i], i, this);
+    }
+
+    return acc;
+  }
+
   toString() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
   }

@@ -579,4 +579,32 @@ describe('Array', function() {
       expect(spy.calls.argsFor(2)).toEqual(['c', 2, a]);
     });
   });
+
+  describe('#reduce', function() {
+    it('applies the given function to each element in the array', function() {
+      expect(A(1,2,3,4,5).reduce(function(acc, x) { return acc + x; }), 0).toBe(15);
+    });
+
+    it('uses the first element of the array as the initial value when one is not provided', function() {
+      expect(A(1,2,3,4,5).reduce(function(acc, x) { return acc + x; })).toBe(15);
+    });
+
+    it('passes the accumulator, current value, index, and array to the function', function() {
+      var a = A('a', 'b', 'c'), spy = jasmine.createSpy().and.returnValue('x');
+      a.reduce(spy, 'x');
+      expect(spy).toHaveBeenCalledWith('x', 'a', 0, a);
+      expect(spy).toHaveBeenCalledWith('x', 'b', 1, a);
+      expect(spy).toHaveBeenCalledWith('x', 'c', 2, a);
+    });
+
+    it('returns the inital value when the array is empty', function() {
+      expect(A().reduce(function() {}, 9)).toBe(9);
+    });
+
+    it('throws a TypeError when the array is empty and no initial value is provided', function() {
+      expect(function() {
+        A().reduce(function() {});
+      }).toThrow(new TypeError(`Ryno.Array#reduce: reduce of an empty array with no initial value`));
+    });
+  });
 });
