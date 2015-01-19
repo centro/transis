@@ -216,7 +216,7 @@ class RynoArray extends RynoObject {
   //   current - The current element being processed.
   //   index   - The index of the current element.
   //   array   - The array map was called on.
-  // thisArg  - Value to use as this when invoking callback.
+  // ctx      - Value to use as this when invoking callback.
   //
   // Returns a new `Ryno.Array`.
   map() {
@@ -228,11 +228,50 @@ class RynoArray extends RynoObject {
   //
   // callback - Function to test each element of the array. Return true to keep the element and
   //            false to discard.
-  // thisArg  - Value to use as this when invoking callback.
+  // ctx      - Value to use as this when invoking callback.
   //
   // Returns a new `Ryno.Array`.
   filter() {
     return RynoArray.wrap(filter.apply(this.__elements__, arguments));
+  }
+
+  // Public: Returns the first index at which the given element can be found in the array using a
+  // strict equality (`===`) test. If the element is not found, then `-1` is returned.
+  //
+  // e - The element to search for.
+  // i - The index at which to start the search (default: `0`).
+  //
+  // Returns the index at which the element is found or `-1` if its not found.
+  indexOf(e, i) {
+    return this.__elements__.indexOf(e, i);
+  }
+
+  // Public: Returns the first index of the array which satisfies the given testing function.
+  //
+  // f    - Function to execute on each value of the array. Its passed the current item, index, and
+  //        array.
+  // ctx  - Object used as `this` when executing `callback` (default: `null`).
+  //
+  // Returns the index of the first item that satisfies the testing function or `-1` if one is not
+  //   found.
+  findIndex(f, ctx = null) {
+    for (let i = 0, n = this.length; i < n; i++) {
+      if (f.call(ctx, this.at(i), i, this)) { return i; }
+    }
+
+    return -1;
+  }
+
+  // Public: Returns the first item of the array which satisfies the given testing function.
+  //
+  // f    - Function to execute on each value of the array. Its passed the current item, index, and
+  //        array.
+  // ctx  - Object used as `this` when executing `callback` (default: `null`).
+  //
+  // Returns the first item that satisfies the testing function or `undefined` if one is not found.
+  find(f, ctx = null) {
+    var i = this.findIndex(f, ctx);
+    return i === -1 ? undefined : this.at(i);
   }
 
   toString() {

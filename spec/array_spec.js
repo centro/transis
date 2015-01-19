@@ -508,4 +508,75 @@ describe('Array', function() {
       expect(spy.calls.mostRecent().object).toBe(o);
     });
   });
+
+  describe('#indexOf', function() {
+    it('returns the index of the given search element in the array', function() {
+      expect(A('a', 'b', 'c', 'd').indexOf('b')).toBe(1);
+      expect(A('a', 'b', 'c', 'd').indexOf('c')).toBe(2);
+    });
+
+    it('returns -1 if the given search element is not in the array', function() {
+      expect(A('a', 'b', 'c', 'd').indexOf('e')).toBe(-1);
+    });
+
+    it('starts the search from the given start index', function() {
+      expect(A('foo', 'bar', 'baz', 'foo', 'quux').indexOf('foo', 1)).toBe(3);
+    });
+
+    it('works with a negative start index', function() {
+      expect(A('foo', 'bar', 'baz', 'foo', 'quux', 'foo').indexOf('foo', -2)).toBe(5);
+    });
+  });
+
+  describe('#findIndex', function() {
+    it('returns the index of the first item in the array for which the given function returns true', function() {
+      expect(A(0,1,2,3).findIndex(function(x) { return x === 0; })).toBe(0);
+      expect(A(0,1,2,3).findIndex(function(x) { return x === 2; })).toBe(2);
+      expect(A(0,1,2,1).findIndex(function(x) { return x === 1; })).toBe(1);
+    });
+
+    it('returns `-1` if function never returns true', function() {
+      expect(A(0,1,2,3).findIndex(function(x) { return x === 4; })).toBe(-1);
+    });
+
+    it('invokes the function in the context of the second argument', function() {
+      var a = A(0,1,2), spy = jasmine.createSpy(), o = {};
+      a.findIndex(spy, o);
+      expect(spy.calls.mostRecent().object).toBe(o);
+    });
+
+    it('passes the item, index, and array to the given function', function() {
+      var a = A('a', 'b', 'c'), spy = jasmine.createSpy();
+      a.findIndex(spy);
+      expect(spy.calls.argsFor(0)).toEqual(['a', 0, a]);
+      expect(spy.calls.argsFor(1)).toEqual(['b', 1, a]);
+      expect(spy.calls.argsFor(2)).toEqual(['c', 2, a]);
+    });
+  });
+
+  describe('#find', function() {
+    it('returns the the first item in the array for which the given function returns true', function() {
+      expect(A('a', 'b', 'c', 'd').find(function(x) { return x === 'a'; })).toBe('a');
+      expect(A('a', 'b', 'c', 'd').find(function(x) { return x === 'c'; })).toBe('c');
+      expect(A('a', 'b', 'c', 'd').find(function(x) { return x === 'b'; })).toBe('b');
+    });
+
+    it('returns `undefined` if function never returns true', function() {
+      expect(A('a', 'b', 'c', 'd').find(function(x) { return x === 'e'; })).toBeUndefined();
+    });
+
+    it('invokes the function in the context of the second argument', function() {
+      var a = A(0,1,2), spy = jasmine.createSpy(), o = {};
+      a.find(spy, o);
+      expect(spy.calls.mostRecent().object).toBe(o);
+    });
+
+    it('passes the item, index, and array to the given function', function() {
+      var a = A('a', 'b', 'c'), spy = jasmine.createSpy();
+      a.find(spy);
+      expect(spy.calls.argsFor(0)).toEqual(['a', 0, a]);
+      expect(spy.calls.argsFor(1)).toEqual(['b', 1, a]);
+      expect(spy.calls.argsFor(2)).toEqual(['c', 2, a]);
+    });
+  });
 });
