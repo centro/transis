@@ -131,6 +131,41 @@ describe('Array', function() {
     });
   });
 
+  describe('#eq', function() {
+    it('returns `false` if any corresponding items are not equal', function() {
+      expect(A('a', 'b', 'c').eq(A('a', 'b', 'd'))).toBe(false);
+      expect(A(NaN).eq(A(NaN))).toBe(false);
+    });
+
+    it('returns `true` if all corresponding items are equal', function() {
+      expect(A().eq(A())).toBe(true);
+      expect(A(1,2,3).eq(A(1,2,3))).toBe(true);
+    });
+
+    it('works with native arrays', function() {
+      expect(A(1,2,3).eq([1,2,3])).toBe(true);
+      expect(A().eq([])).toBe(true);
+      expect(A(1,2,3).eq([1,2,3,4])).toBe(false);
+      expect(A(1,2,3,4).eq([1,2,3])).toBe(false);
+    });
+
+    it('handles recursive arrays', function() {
+      var a1 = A(A(1)), a2 = A(A(1));
+
+      a1.at(1, a1);
+      a2.at(1, a2);
+
+      expect(a1.eq(a2)).toBe(true);
+      expect(a2.eq(a1)).toBe(true);
+    });
+
+    it("returns `false` when given an argument that is not a regular array or Ryno.Array", function() {
+      expect((A()).eq("foo")).toBe(false);
+      expect((A()).eq({})).toBe(false);
+      expect((A()).eq(new RynoObject)).toBe(false);
+    });
+  });
+
   describe('#splice', function() {
     var a;
 
