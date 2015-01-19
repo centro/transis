@@ -607,4 +607,22 @@ describe('Array', function() {
       }).toThrow(new TypeError(`Ryno.Array#reduce: reduce of an empty array with no initial value`));
     });
   });
+
+  describe('#forEach', function() {
+    it('executes the given function once for each element in the array', function() {
+      var a = A('a', 'b', 'c'), spy = jasmine.createSpy();
+
+      a.forEach(spy);
+      expect(spy).toHaveBeenCalledWith('a', 0, a);
+      expect(spy).toHaveBeenCalledWith('b', 1, a);
+      expect(spy).toHaveBeenCalledWith('c', 2, a);
+    });
+
+    it('executes the function in the context of the second argument', function() {
+      var a = A('a', 'b', 'c'), spy = jasmine.createSpy(), o = {};
+
+      a.forEach(spy, o);
+      expect(spy.calls.mostRecent().object).toBe(o);
+    });
+  });
 });

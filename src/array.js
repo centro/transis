@@ -303,6 +303,21 @@ class RynoArray extends RynoObject {
     return acc;
   }
 
+  // Public: Executes the given function once for every element in the array.
+  //
+  // f   - Function to execute for each element of the array. It is passed the following arguments:
+  //   current - The current element of the array.
+  //   index   - The index of the current element.
+  //   array   - The array `forEach` was called on.
+  // ctx - Object used as `this` when executing `f` (default: `null`).
+  forEach(f, ctx = null) {
+    for (let i = 0, n = this.length; i < n; i++) {
+      f.call(ctx, this.__elements__[i], i, this);
+    }
+
+    return undefined;
+  }
+
   toString() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
   }
