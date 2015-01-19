@@ -196,6 +196,19 @@ class RynoArray extends RynoObject {
     return RynoArray.wrap(concat.apply(this.__elements__, args));
   }
 
+  // Public: Returns a shallow copy of a portion of an array into a new array.
+  //
+  // begin - Index at which to begin extraction. A negative index indicates an offset from the end
+  //         of the array. If omitted, slice begins from index 0.
+  // end   - Index at which to end extraction. Extracts up to but not including this index. A
+  //         negative index indicates an offset from the end of the array. If omitted, slice
+  //         extracts through the end of the array.
+  //
+  // Returns a new `Ryno.Array`.
+  slice() {
+    return RynoArray.wrap(slice.apply(this.__elements__, arguments));
+  }
+
   toString() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
   }

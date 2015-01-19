@@ -460,4 +460,20 @@ describe('Array', function() {
       expect(A(1,2,3).concat(4,5,6) instanceof RynoArray).toBe(true);
     });
   });
+
+  describe('#slice', function() {
+    it('returns a shallow copy of the portion of the array indicated by the given beginning and end index', function() {
+      expect(A(0,1,2,3,4,5).slice()).toEqual(A(0,1,2,3,4,5));
+      expect(A(0,1,2,3,4,5).slice(0,1)).toEqual(A(0));
+      expect(A(0,1,2,3,4,5).slice(0,3)).toEqual(A(0,1,2));
+      expect(A(0,1,2,3,4,5).slice(1,2)).toEqual(A(1));
+      expect(A(0,1,2,3,4,5).slice(2,3)).toEqual(A(2));
+      expect(A(0,1,2,3,4,5).slice(2,4)).toEqual(A(2,3));
+      expect(A(0,1,2,3,4,5).slice(1,4)).toEqual(A(1,2,3));
+    });
+
+    it('returns an instance of Ryno.Array', function() {
+      expect(A(1,2,3,4,5).slice() instanceof RynoArray).toBe(true);
+    });
+  });
 });
