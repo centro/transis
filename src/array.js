@@ -335,6 +335,15 @@ class RynoArray extends RynoObject {
     return undefined;
   }
 
+  // Public: Joins all of the elements of the array into a string.
+  //
+  // sep - The string to use as the separator (default: `","`).
+  //
+  // Returns a string.
+  join(sep = ',') {
+    return this.__elements__.join(sep);
+  }
+
   toString() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
   }

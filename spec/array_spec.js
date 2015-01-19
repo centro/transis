@@ -652,4 +652,14 @@ describe('Array', function() {
       expect(spy.calls.mostRecent().object).toBe(o);
     });
   });
+
+  describe('#join', function() {
+    it('joins the elements of the array into a string using the given separator', function() {
+      expect(A(1,2,3).join(' + ')).toBe('1 + 2 + 3');
+    });
+
+    it('defaults to using "," as the separator', function() {
+      expect(A(1,2,3).join()).toBe('1,2,3');
+    });
+  });
 });
