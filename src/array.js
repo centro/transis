@@ -30,6 +30,8 @@ class RynoArray extends RynoObject {
     return b;
   }
 
+  // Public: The `Ryno.Array` constructor. With a single number argument, an array is created with
+  // the same length. In every other case, the array is initialized with the given arguments.
   constructor() {
     var elements = slice.call(arguments), i, n;
 
@@ -49,8 +51,22 @@ class RynoArray extends RynoObject {
     super();
   }
 
+  // Public: Returns the current length of the array.
   get length() { return this.__elements__.length; }
 
+  // Public: Element reference and assignment method. When given one argument, returns the item at
+  // the specified index. When passed, two arguments, the second argument is set as the item at the
+  // index indicated by the first.
+  //
+  // Negative indices can be passed to reference elements from the end of the array (-1 is the last
+  // element in the array).
+  //
+  // i - A number representing an index in the array.
+  // v - A value to set at the given index (optional).
+  //
+  // Returns the value at the given index when passed one argument. Returns `undefined` if the index
+  //   is out of range.
+  // Returns `v` when given two arguments.
   at(i, v) {
     var length = this.length;
 
@@ -65,12 +81,32 @@ class RynoArray extends RynoObject {
     }
   }
 
+  // Public: `Ryno.Array` equality test. This method performs an element-wise comparison between the
+  // receiver and the given array.
+  //
+  // other - A `Ryno.Array` or native array to compare to the receiver.
+  //
+  // Returns `true` if the arrays are equal and `false` otherwise.
   eq(other) {
     if (other instanceof RynoArray) { return util.eq(this.__elements__, other.__elements__); }
     if (other instanceof Array) { return util.eq(this.__elements__, other); }
     return false;
   }
 
+  // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
+  // made through this method. In addition to making the mutation, this method also emits `splice`
+  // events.
+  //
+  // The `splice` events contain the array that was mutated, the index at which the mutation starts,
+  // the number of elements removed, and native arrays containing the removed and added elements.
+  //
+  // i        - The index to start the mutation, may be negative.
+  // n        - The number of items to remove, starting from `i`. If not given, then all items
+  //            starting from `i` are removed.
+  // ...items - Zero or more items to add to the array, starting at index `i`.
+  //
+  // Returns a new `Ryno.Array` containing the elements removed.
+  // Throws `Error` when given an index that is out of range.
   splice(i, n) {
     var added = slice.call(arguments, 2), index = i < 0 ? this.length + i : i, removed, j, m;
 
