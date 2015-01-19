@@ -1,6 +1,9 @@
 import "es6-shim";
 import Model from "../model";
 import IdMap from "../id_map";
+import RynoArray from "../array";
+
+var A = RynoArray.A;
 
 describe('Model', function () {
   var TestMapper = {
@@ -202,9 +205,9 @@ describe('Model', function () {
         var f1 = new Foo, f2 = new Foo, b = new Bar;
 
         f1.bar = b;
-        expect(b.foos).toEqual([f1]);
+        expect(b.foos).toEqual(A(f1));
         f2.bar = b;
-        expect(b.foos).toEqual([f1, f2]);
+        expect(b.foos).toEqual(A(f1, f2));
       });
 
       it('removes the receiver from the inverse array when clearing', function() {
@@ -212,11 +215,11 @@ describe('Model', function () {
 
         f1.bar = b;
         f2.bar = b;
-        expect(b.foos).toEqual([f1, f2]);
+        expect(b.foos).toEqual(A(f1, f2));
         f1.bar = null;
-        expect(b.foos).toEqual([f2]);
+        expect(b.foos).toEqual(A(f2));
         f2.bar = null;
-        expect(b.foos).toEqual([]);
+        expect(b.foos).toEqual(A());
       });
     });
   });
@@ -245,7 +248,7 @@ describe('Model', function () {
 
       it('initializes the property to an empty array', function() {
         var f = new Foo;
-        expect(f.bars).toEqual([]);
+        expect(f.bars).toEqual(A());
       });
 
       it('throws an exception when setting models of the wrong type', function() {
@@ -261,7 +264,7 @@ describe('Model', function () {
           var f = new Foo, b1 = new Bar, b2 = new Bar;
 
           f.addBars(b1, b2);
-          expect(f.bars).toEqual([b1, b2]);
+          expect(f.bars).toEqual(A(b1, b2));
         });
 
         it('throws an exception when adding objects of the wrong type', function() {
@@ -277,10 +280,10 @@ describe('Model', function () {
         it('removes the given model from the array', function() {
           var f = new Foo, b1 = new Bar, b2 = new Bar;
 
-          f.bars = [b1, b2];
-          expect(f.bars).toEqual([b1, b2]);
+          f.bars = A(b1, b2);
+          expect(f.bars).toEqual(A(b1, b2));
           f.removeBars(b2);
-          expect(f.bars).toEqual([b1]);
+          expect(f.bars).toEqual(A(b1));
         });
       });
 
@@ -289,9 +292,9 @@ describe('Model', function () {
           var f = new Foo, b1 = new Bar, b2 = new Bar;
 
           f.bars = [b1, b2];
-          expect(f.bars).toEqual([b1, b2]);
-          f.clearBars(b2);
-          expect(f.bars).toEqual([]);
+          expect(f.bars).toEqual(A(b1, b2));
+          f.clearBars();
+          expect(f.bars).toEqual(A());
         });
       });
     });
@@ -320,7 +323,7 @@ describe('Model', function () {
 
         expect(b1.foo).toBeUndefined();
         expect(b2.foo).toBeUndefined();
-        f.bars = [b1, b2];
+        f.bars = A(b1, b2);
         expect(b1.foo).toBe(f);
         expect(b2.foo).toBe(f);
       });
@@ -368,56 +371,56 @@ describe('Model', function () {
       it('adds the receiver on the inverse side when a model is added', function() {
         var f = new Foo, b1 = new Bar, b2 = new Bar;
 
-        expect(f.bars).toEqual([]);
-        expect(b1.foos).toEqual([]);
-        expect(b2.foos).toEqual([]);
+        expect(f.bars).toEqual(A());
+        expect(b1.foos).toEqual(A());
+        expect(b2.foos).toEqual(A());
         f.addBars(b1);
-        expect(f.bars).toEqual([b1]);
-        expect(b1.foos).toEqual([f]);
-        expect(b2.foos).toEqual([]);
+        expect(f.bars).toEqual(A(b1));
+        expect(b1.foos).toEqual(A(f));
+        expect(b2.foos).toEqual(A());
         f.addBars(b2);
-        expect(f.bars).toEqual([b1, b2]);
-        expect(b1.foos).toEqual([f]);
-        expect(b2.foos).toEqual([f]);
+        expect(f.bars).toEqual(A(b1, b2));
+        expect(b1.foos).toEqual(A(f));
+        expect(b2.foos).toEqual(A(f));
       });
 
       it('adds the receiver on the inverse side when the association is set', function() {
         var f = new Foo, b1 = new Bar, b2 = new Bar;
 
-        f.bars = [b1, b2];
-        expect(f.bars).toEqual([b1, b2]);
-        expect(b1.foos).toEqual([f]);
-        expect(b2.foos).toEqual([f]);
+        f.bars = A(b1, b2);
+        expect(f.bars).toEqual(A(b1, b2));
+        expect(b1.foos).toEqual(A(f));
+        expect(b2.foos).toEqual(A(f));
       });
 
       it('removes the receiver from the inverse side of the previously associated models when the association is set', function() {
         var f = new Foo, b1 = new Bar, b2 = new Bar, b3 = new Bar, b4 = new Bar;
 
         f.bars = [b1, b2];
-        expect(f.bars).toEqual([b1, b2]);
-        expect(b1.foos).toEqual([f]);
-        expect(b2.foos).toEqual([f]);
+        expect(f.bars).toEqual(A(b1, b2));
+        expect(b1.foos).toEqual(A(f));
+        expect(b2.foos).toEqual(A(f));
         f.bars = [b3, b4];
-        expect(f.bars).toEqual([b3, b4]);
-        expect(b1.foos).toEqual([]);
-        expect(b2.foos).toEqual([]);
+        expect(f.bars).toEqual(A(b3, b4));
+        expect(b1.foos).toEqual(A());
+        expect(b2.foos).toEqual(A());
       });
 
       it('removes the receiver from the inverse side when a model is removed', function() {
         var f = new Foo, b1 = new Bar, b2 = new Bar;
 
         f.addBars(b1, b2);
-        expect(f.bars).toEqual([b1, b2]);
-        expect(b1.foos).toEqual([f]);
-        expect(b2.foos).toEqual([f]);
+        expect(f.bars).toEqual(A(b1, b2));
+        expect(b1.foos).toEqual(A(f));
+        expect(b2.foos).toEqual(A(f));
         f.removeBars(b2);
-        expect(f.bars).toEqual([b1]);
-        expect(b1.foos).toEqual([f]);
-        expect(b2.foos).toEqual([]);
+        expect(f.bars).toEqual(A(b1));
+        expect(b1.foos).toEqual(A(f));
+        expect(b2.foos).toEqual(A());
         b1.removeFoos(f);
-        expect(f.bars).toEqual([]);
-        expect(b1.foos).toEqual([]);
-        expect(b2.foos).toEqual([]);
+        expect(f.bars).toEqual(A());
+        expect(b1.foos).toEqual(A());
+        expect(b2.foos).toEqual(A());
       });
     });
   });
@@ -581,12 +584,12 @@ describe('Model', function () {
           tags: [{id: 10, name: 'tag a'}, {id: 11, name: 'tag b'}]
         });
 
-        expect(p.tags[0].id).toBe(10);
-        expect(p.tags[0].name).toBe('tag a');
-        expect(p.tags[0].posts).toEqual([p]);
-        expect(p.tags[1].id).toBe(11);
-        expect(p.tags[1].name).toBe('tag b');
-        expect(p.tags[1].posts).toEqual([p]);
+        expect(p.tags.at(0).id).toBe(10);
+        expect(p.tags.at(0).name).toBe('tag a');
+        expect(p.tags.at(0).posts).toEqual(A(p));
+        expect(p.tags.at(1).id).toBe(11);
+        expect(p.tags.at(1).name).toBe('tag b');
+        expect(p.tags.at(1).posts).toEqual(A(p));
       });
 
       it('removes existing associations that are not present in the given attributes', function() {
@@ -622,14 +625,14 @@ describe('Model', function () {
           var t1 = Tag.load({id: 40, name: 'blah'}),
               t2 = Tag.load({id: 41, name: 'stuff'});
 
-          expect(t1.posts).toEqual([]);
-          expect(t2.posts).toEqual([]);
+          expect(t1.posts).toEqual(A());
+          expect(t2.posts).toEqual(A());
 
           var p = Post.load({id: 152, title: 'the title', body: 'the body', tags: [40, 41]});
 
-          expect(t1.posts).toEqual([p]);
-          expect(t2.posts).toEqual([p]);
-          expect(p.tags).toEqual([t1, t2]);
+          expect(t1.posts).toEqual(A(p));
+          expect(t2.posts).toEqual(A(p));
+          expect(p.tags).toEqual(A(t1, t2));
         });
       });
 
@@ -637,12 +640,12 @@ describe('Model', function () {
         it('creates an empty instance of the associated models and hooks up the associations', function() {
           var p = Post.load({id: 153, title: 'the title', body: 'the body', tags: [42, 43]});
 
-          expect(p.tags[0].id).toBe(42);
-          expect(p.tags[0].sourceState).toBe(Model.EMPTY);
-          expect(p.tags[0].posts).toEqual([p]);
-          expect(p.tags[1].id).toBe(43);
-          expect(p.tags[1].sourceState).toBe(Model.EMPTY);
-          expect(p.tags[1].posts).toEqual([p]);
+          expect(p.tags.at(0).id).toBe(42);
+          expect(p.tags.at(0).sourceState).toBe(Model.EMPTY);
+          expect(p.tags.at(0).posts).toEqual(A(p));
+          expect(p.tags.at(1).id).toBe(43);
+          expect(p.tags.at(1).sourceState).toBe(Model.EMPTY);
+          expect(p.tags.at(1).posts).toEqual(A(p));
         });
       });
 
@@ -683,15 +686,15 @@ describe('Model', function () {
               tags: [48, {id: 49, name: 'foo'}, 50]
             });
                             
-        expect(p.tags[0].id).toBe(48);
-        expect(p.tags[0].sourceState).toBe(Model.LOADED);
-        expect(p.tags[0].posts).toEqual([p]);
-        expect(p.tags[1].id).toBe(49);
-        expect(p.tags[1].sourceState).toBe(Model.LOADED);
-        expect(p.tags[1].posts).toEqual([p]);
-        expect(p.tags[2].id).toBe(50);
-        expect(p.tags[2].sourceState).toBe(Model.EMPTY);
-        expect(p.tags[2].posts).toEqual([p]);
+        expect(p.tags.at(0).id).toBe(48);
+        expect(p.tags.at(0).sourceState).toBe(Model.LOADED);
+        expect(p.tags.at(0).posts).toEqual(A(p));
+        expect(p.tags.at(1).id).toBe(49);
+        expect(p.tags.at(1).sourceState).toBe(Model.LOADED);
+        expect(p.tags.at(1).posts).toEqual(A(p));
+        expect(p.tags.at(2).id).toBe(50);
+        expect(p.tags.at(2).sourceState).toBe(Model.EMPTY);
+        expect(p.tags.at(2).posts).toEqual(A(p));
         expect(p.tags.map((t) => t.id)).toEqual([48, 49, 50]);
       });
     });
@@ -1476,15 +1479,15 @@ describe('Model', function () {
       });
 
       var a = p.author;
-      var t = p.tags[0];
+      var t = p.tags.at(0);
 
-      expect(a.posts).toEqual([p]);
-      expect(t.posts).toEqual([p]);
+      expect(a.posts).toEqual(A(p));
+      expect(t.posts).toEqual(A(p));
       p.delete();
       this.resolve();
       setTimeout(() => {
-        expect(a.posts).toEqual([]);
-        expect(t.posts).toEqual([]);
+        expect(a.posts).toEqual(A());
+        expect(t.posts).toEqual(A());
         done();
       });
     });

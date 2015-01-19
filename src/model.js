@@ -1,6 +1,7 @@
 import pluralize from "pluralize";
 import IdMap from "./id_map";
 import RynoObject from "./object";
+import RynoArray from "./array";
 import * as attrs from "./attrs";
 
 var registeredClasses = {}, registeredAttrs = {};
@@ -119,7 +120,7 @@ function hasManySet(desc, a) {
     a.forEach((m) => { inverseAdded.call(m, desc.inverse, this); });
   }
 
-  this[`__${name}__`] = a;
+  this[`__${name}__`] = (a instanceof Array) ? RynoArray.wrap(a) : a;
 }
 
 // Internal: Adds the given models to a `hasMany` association.
@@ -440,8 +441,8 @@ class Model extends RynoObject {
       type: 'hasMany', name, klass, singular: pluralize(name, 1)
     });
 
-    Object.defineProperty(this.prototype, name, {
-      get: function() { return this[`__${name}__`] = this[`__${name}__`] || []; },
+    this.prop(name, {
+      get: function() { return this[`__${name}__`] = this[`__${name}__`] || new RynoArray; },
       set: function(v) { hasManySet.call(this, desc, v); }
     });
 
@@ -454,7 +455,7 @@ class Model extends RynoObject {
     };
 
     this.prototype[`clear${cap}`] = function() {
-      return hasManySet.call(this, desc, []);
+      return hasManySet.call(this, desc, new RynoArray);
     };
   }
 
