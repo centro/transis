@@ -19,8 +19,9 @@ build/spec/%.js: spec/%.js
 	@mkdir -p build/spec
 	./node_modules/.bin/6to5 -m commonInterop $< -o $@
 
+SPEC ?=
 spec_node: ryno $(ES5_SPECS)
-	./node_modules/.bin/jasmine
+	./node_modules/.bin/jasmine $(SPEC)
 
 spec_browser: build/ryno.js $(ES5_SPECS)
 	./node_modules/karma/bin/karma start ./spec/karma.js

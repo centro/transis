@@ -2,6 +2,7 @@ import pluralize from "pluralize";
 import IdMap from "./id_map";
 import RynoObject from "./object";
 import RynoArray from "./array";
+import QueryArray from "./query_array";
 import * as attrs from "./attrs";
 
 var registeredClasses = {}, registeredAttrs = {};
@@ -158,84 +159,6 @@ function hasManyRemove(desc, models, sync) {
       }
       this[name].splice(i, 1);
     }
-  });
-}
-
-// Internal: Invokes the given method on the receiver's mapper, ensuring that it returns a Thennable
-// (Promise-like) object.
-//
-// method - The method to invoke on the mapper.
-// args   - An array of arguments to pass to the mapper method.
-//
-// Returns the promise returned by the mapper.
-// Throws `Error` when the mapper is not defined.
-// Throws `Error` when the mapper does not implement the given method.
-// Throws `Error` when the mapper does not return a Thennable object.
-function callMapper(method, args) {
-  var promise;
-
-  if (!this.mapper) {
-    throw new Error(`${this}.callMapper: no mapper defined, assign one to \`${this}.mapper\``);
-  }
-
-  if (typeof this.mapper[method] !== 'function') {
-    throw new Error(`${this}.callMapper: mapper does not implement \`${method}\``);
-  }
-
-  promise = this.mapper[method].apply(this.mapper, args);
-
-  if (!promise || typeof promise.then !== 'function') {
-    throw new Error(`${this}.callMapper: mapper's \`${method}\` method did not return a Promise`);
-  }
-
-  return promise;
-}
-
-// Internal: Builds an array suitable for returning from the `Model.query` method. The array
-// returned is a normal javascript array with some additional properties added. See the docs for
-// `Model.query` for an explanation of the added properties.
-//
-// klass - The `Model` subclass `query` was called on.
-//
-// Returns an empty array.
-function buildQueryArray(klass) {
-  var array = [], promise = Promise.resolve(), isBusy = false, error, queued;
-
-  function flush() { if (queued) { array.query(queued); queued = null; } }
-
-  return Object.defineProperties(array, {
-    modelClass: { get: function() { return klass; }, enumerable: false },
-    isBusy: { get: function() { return isBusy; }, enumerable: false },
-    error: { get: function() { return error; }, enumerable: false },
-    query: {
-      value: function(opts = {}) {
-        if (isBusy) {
-          queued = opts;
-        }
-        else {
-          isBusy = true;
-          promise = callMapper.call(klass, 'query', [opts]).then(
-            function(objects) {
-              array.splice.apply(array, [0, array.length].concat(klass.loadAll(objects)));
-              isBusy = false;
-              error = undefined;
-              flush();
-            },
-            function(e) {
-              isBusy = false;
-              error = e;
-              flush();
-              throw e;
-            }
-          );
-        }
-
-        return this;
-      },
-      enumerable: false
-    },
-    then: { value: function(f1, f2) { return promise.then(f1, f2); }, enumerable: false },
-    catch: { value: function(f) { return promise.catch(f); }, enumerable: false },
   });
 }
 
@@ -544,30 +467,17 @@ class Model extends RynoObject {
   // Returns an array of loaded model instances.
   static loadAll(objects) { return objects.map((object) => this.load(object)); }
 
-  // Public: Builds a query array, but does not actually invoke the mapper's `query` method. This is
-  // useful for cases where you want to initialize an empty query, but not yet run it.
+  // Public: Creates a new `Ryno.QueryArray` but does not invoke its `query` method. This is useful
+  // for cases where you want to initialize an empty query, but not yet run it.
   //
-  // Returns an array.
-  static buildQuery() { return buildQueryArray(this); }
+  // Returns a new `Ryno.QueryArray`.
+  static buildQuery() { return new QueryArray(this); }
 
-  // Public: Builds and returns an array. The array is passed on to the data mapper's `query` method
-  // where it will have the opportunity to actually load the records asynchronously. The array
-  // returned is a regular javascript `Array` instance, but it has some additional properties added
-  // to it:
+  // Public: Creates a new `Ryno.QueryArray` and invokes its `query` method with the given options.
   //
-  // modelClass - The receiver class of the call to `query`.
-  // isBusy     - A boolean indicating whether the data mapper is currently loading the array.
-  // error      - This is set to the error object that the mapper rejects its promise with. It is
-  //              cleared whenever the mapper later resolves its promise.
-  // query      - A method that can be invoked to trigger another call to the mapper's `query`
-  //              method. If the array is busy when this method is called, the mapper's `query`
-  //              method won't be invoked until the previous `query` completes.
-  // then       - Equivalent to `Promise.prototype.then`.
-  // catch      - Equivalent to `Promise.prototype.catch`.
+  // opts - An options object to pass to the `Ryno.QueryArray#query` method (default: `{}`).
   //
-  // opts - An object to forward along to the mapper (default: `{}`).
-  //
-  // Returns an array.
+  // Returns a new `Ryno.QueryArray`.
   static query(opts = {}) { return this.buildQuery().query(opts); }
 
   // Public: Retrieves a model from the identity map or creates a new empty model instance. If you
@@ -594,7 +504,7 @@ class Model extends RynoObject {
 
     if (model.isEmpty || opts.refresh) {
       model.__isBusy__ = true;
-      model.__promise__ = callMapper.call(this, 'get', [id, getOpts])
+      model.__promise__ = this._callMapper('get', [id, getOpts])
         .then((result) => {
           model.__isBusy__ = false;
           delete model.__error__;
@@ -607,6 +517,36 @@ class Model extends RynoObject {
     }
 
     return model;
+  }
+
+  // Internal: Invokes the given method on the receiver's mapper, ensuring that it returns a
+  // Thennable (Promise-like) object.
+  //
+  // method - The method to invoke on the mapper.
+  // args   - An array of arguments to pass to the mapper method.
+  //
+  // Returns the promise returned by the mapper.
+  // Throws `Error` when the mapper is not defined.
+  // Throws `Error` when the mapper does not implement the given method.
+  // Throws `Error` when the mapper does not return a Thennable object.
+  static _callMapper(method, args) {
+    var promise;
+
+    if (!this.mapper) {
+      throw new Error(`${this}._callMapper: no mapper defined, assign one to \`${this}.mapper\``);
+    }
+
+    if (typeof this.mapper[method] !== 'function') {
+      throw new Error(`${this}._callMapper: mapper does not implement \`${method}\``);
+    }
+
+    promise = this.mapper[method].apply(this.mapper, args);
+
+    if (!promise || typeof promise.then !== 'function') {
+      throw new Error(`${this}._callMapper: mapper's \`${method}\` method did not return a Promise`);
+    }
+
+    return promise;
   }
 
   constructor(attrs) {
@@ -666,7 +606,7 @@ class Model extends RynoObject {
 
     this.__isBusy__ = true;
 
-    this.__promise__ = callMapper.call(this.constructor, this.isNew ? 'create' : 'update', [this, opts])
+    this.__promise__ = this.constructor._callMapper(this.isNew ? 'create' : 'update', [this, opts])
       .then((attrs) => {
         this.__isBusy__ = false;
         delete this.__error__;
@@ -698,7 +638,7 @@ class Model extends RynoObject {
     else {
       this.__isBusy__ = true;
 
-      this.__promise__ = callMapper.call(this.constructor, 'delete', [this, opts])
+      this.__promise__ = this.constructor._callMapper('delete', [this, opts])
         .then(() => {
           mapperDeleteSuccess.call(this);
         }, (error) => {
