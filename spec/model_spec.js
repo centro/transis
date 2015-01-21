@@ -226,18 +226,6 @@ describe('Model', function () {
         expect('bars' in Foo.prototype).toBe(true);
       });
 
-      it('generates an "add<Name>" method', function() {
-        expect(typeof Foo.prototype.addBars).toBe('function');
-      });
-
-      it('generates a "remove<Name>" method', function() {
-        expect(typeof Foo.prototype.removeBars).toBe('function');
-      });
-
-      it('generates a "clear<Name>" method', function() {
-        expect(typeof Foo.prototype.clearBars).toBe('function');
-      });
-
       it('initializes the property to an empty array', function() {
         var f = new Foo;
         expect(f.bars).toEqual(A());
@@ -251,42 +239,13 @@ describe('Model', function () {
         }).toThrow(new Error(`Foo#bars: expected an object of type \`Bar\` but received \`${b}\` instead`));
       });
 
-      describe('generated add method', function() {
-        it('adds the given model to the array', function() {
-          var f = new Foo, b1 = new Bar, b2 = new Bar;
-
-          f.addBars(b1, b2);
-          expect(f.bars).toEqual(A(b1, b2));
-        });
-
+      describe('adding models', function() {
         it('throws an exception when adding objects of the wrong type', function() {
           var f = new Foo, b = new BasicModel;
 
           expect(function() {
-            f.addBars(b);
+            f.bars.push(b);
           }).toThrow(new Error(`Foo#bars: expected an object of type \`Bar\` but received \`${b}\` instead`));
-        });
-      });
-
-      describe('generated remove method', function() {
-        it('removes the given model from the array', function() {
-          var f = new Foo, b1 = new Bar, b2 = new Bar;
-
-          f.bars = A(b1, b2);
-          expect(f.bars).toEqual(A(b1, b2));
-          f.removeBars(b2);
-          expect(f.bars).toEqual(A(b1));
-        });
-      });
-
-      describe('generated clear method', function() {
-        it('removes all models from the array', function() {
-          var f = new Foo, b1 = new Bar, b2 = new Bar;
-
-          f.bars = [b1, b2];
-          expect(f.bars).toEqual(A(b1, b2));
-          f.clearBars();
-          expect(f.bars).toEqual(A());
         });
       });
     });
@@ -302,10 +261,10 @@ describe('Model', function () {
 
         expect(b1.foo).toBeUndefined();
         expect(b2.foo).toBeUndefined();
-        f.addBars(b1);
+        f.bars.push(b1);
         expect(b1.foo).toBe(f);
         expect(b2.foo).toBeUndefined();
-        f.addBars(b2);
+        f.bars.push(b2);
         expect(b1.foo).toBe(f);
         expect(b2.foo).toBe(f);
       });
@@ -323,10 +282,10 @@ describe('Model', function () {
       it('clears the hasOne side when removing from the hasMany side', function() {
         var f = new Foo, b1 = new Bar, b2 = new Bar;
 
-        f.addBars(b1, b2);
+        f.bars.push(b1, b2);
         expect(b1.foo).toBe(f);
         expect(b2.foo).toBe(f);
-        f.removeBars(b2);
+        f.bars.splice(f.bars.indexOf(b2), 1);
         expect(b1.foo).toBe(f);
         expect(b2.foo).toBeUndefined();
       });
@@ -334,10 +293,10 @@ describe('Model', function () {
       it('clears the hasOne side when the hasMany side is cleared', function() {
         var f = new Foo, b1 = new Bar, b2 = new Bar;
 
-        f.addBars(b1, b2);
+        f.bars.push(b1, b2);
         expect(b1.foo).toBe(f);
         expect(b2.foo).toBe(f);
-        f.clearBars();
+        f.bars.clear();
         expect(b1.foo).toBeUndefined();
         expect(b2.foo).toBeUndefined();
       });
@@ -345,7 +304,7 @@ describe('Model', function () {
       it('clears the hasOne side when the hasMany side is set to an empty array', function() {
         var f = new Foo, b1 = new Bar, b2 = new Bar;
 
-        f.addBars(b1, b2);
+        f.bars.push(b1, b2);
         expect(b1.foo).toBe(f);
         expect(b2.foo).toBe(f);
         f.bars = [];
@@ -366,11 +325,11 @@ describe('Model', function () {
         expect(f.bars).toEqual(A());
         expect(b1.foos).toEqual(A());
         expect(b2.foos).toEqual(A());
-        f.addBars(b1);
+        f.bars.push(b1);
         expect(f.bars).toEqual(A(b1));
         expect(b1.foos).toEqual(A(f));
         expect(b2.foos).toEqual(A());
-        f.addBars(b2);
+        f.bars.push(b2);
         expect(f.bars).toEqual(A(b1, b2));
         expect(b1.foos).toEqual(A(f));
         expect(b2.foos).toEqual(A(f));
@@ -401,15 +360,15 @@ describe('Model', function () {
       it('removes the receiver from the inverse side when a model is removed', function() {
         var f = new Foo, b1 = new Bar, b2 = new Bar;
 
-        f.addBars(b1, b2);
+        f.bars.push(b1, b2);
         expect(f.bars).toEqual(A(b1, b2));
         expect(b1.foos).toEqual(A(f));
         expect(b2.foos).toEqual(A(f));
-        f.removeBars(b2);
+        f.bars.splice(f.bars.indexOf(b2), 1);
         expect(f.bars).toEqual(A(b1));
         expect(b1.foos).toEqual(A(f));
         expect(b2.foos).toEqual(A());
-        b1.removeFoos(f);
+        b1.foos.splice(b1.foos.indexOf(f), 1);
         expect(f.bars).toEqual(A());
         expect(b1.foos).toEqual(A());
         expect(b2.foos).toEqual(A());

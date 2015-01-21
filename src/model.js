@@ -3,6 +3,7 @@ import IdMap from "./id_map";
 import RynoObject from "./object";
 import RynoArray from "./array";
 import QueryArray from "./query_array";
+import HasManyArray from "./has_many_array";
 import * as attrs from "./attrs";
 
 var registeredClasses = {}, registeredAttrs = {};
@@ -22,7 +23,7 @@ function resolveClass(name) {
   var klass = (typeof name === 'function') ? name : registeredClasses[name];
 
   if (!klass) {
-    throw new Error(`Ryno.Model#resolveClass: could not resolve model class: \`${name}\``);
+    throw new Error(`Ryno.Model.resolveClass: could not resolve model class: \`${name}\``);
   }
 
   return klass;
@@ -41,50 +42,6 @@ function checkAssociatedType(desc, o) {
   }
 }
 
-// Internal: Called by an inverse association when a model was removed from the inverse side.
-// Updates the local side of the association.
-//
-// name  - The local side name of the association that was modified.
-// model - The model that was removed from the inverse side.
-//
-// Returns nothing.
-function inverseRemoved(name, model) {
-  var desc = this.associations[name];
-
-  if (!desc) {
-    throw new Error(`${this.constructor}#inverseRemoved: unknown association \`${name}\``);
-  }
-
-  if (desc.type === 'hasOne') {
-    hasOneSet.call(this, desc, undefined, false);
-  }
-  else if (desc.type === 'hasMany') {
-    hasManyRemove.call(this, desc, [model], false);
-  }
-}
-
-// Internal: Called by an inverse association when a model was added on the inverse side. Updates
-// the local side of the association.
-//
-// name  - The local side name of the association that was modified.
-// model - The model that was added on the inverse side.
-//
-// Returns nothing.
-function inverseAdded(name, model) {
-  var desc = this.associations[name];
-
-  if (!desc) {
-    throw new Error(`${this.constructor}#inverseAdded: unknown association \`${name}\``);
-  }
-
-  if (desc.type === 'hasOne') {
-    hasOneSet.call(this, desc, model, false);
-  }
-  else if (desc.type === 'hasMany') {
-    hasManyAdd.call(this, desc, [model], false);
-  }
-}
-
 // Internal: Sets the given object on a `hasOne` property.
 //
 // desc - An association descriptor.
@@ -94,72 +51,20 @@ function inverseAdded(name, model) {
 // Returns nothing.
 // Throws `Error` if the given object isn't of the type specified in the association descriptor.
 function hasOneSet(desc, v, sync) {
-  var name = desc.name, key = `__${name}__`, prev = this[key], inv = desc.inverse;
+  var name  = desc.name,
+      k     = `__${name}`,
+      prev  = this[k],
+      inv   = desc.inverse,
+      klass = resolveClass(desc.klass);
 
-  if (v) { checkAssociatedType.call(this, desc, v); }
-
-  this[key] = v;
-
-  if (sync && inv && prev) { inverseRemoved.call(prev, inv, this); }
-  if (sync && inv && v) { inverseAdded.call(v, inv, this); }
-}
-
-// Internal: Sets the given array on a `hasMany` property.
-//
-// desc - An association descriptor.
-// a    - An array of values to set.
-//
-// Returns nothing.
-// Throws `Error` if the given object isn't of the type specified in the association descriptor.
-function hasManySet(desc, a) {
-  var name = desc.name, prev = this[name], m;
-
-  a.forEach((m) => { checkAssociatedType.call(this, desc, m); })
-
-  if (desc.inverse) {
-    prev.forEach((m) => { inverseRemoved.call(m, desc.inverse, this); });
-    a.forEach((m) => { inverseAdded.call(m, desc.inverse, this); });
+  if (v && !(v instanceof klass)) {
+    throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${klass}\` but received \`${v}\` instead`);
   }
 
-  this[name].replace(a);
-}
+  this[k] = v;
 
-// Internal: Adds the given models to a `hasMany` association.
-//
-// desc   - An association descriptor.
-// models - An array of models to add to the association.
-// sync   - Set to true to notify the inverse side of the association so that it can update itself.
-// Throws `Error` if the given object isn't of the type specified in the association descriptor.
-function hasManyAdd(desc, models, sync) {
-  var name = desc.name, prev = this[name].slice();
-
-  models.forEach((m) => {
-    checkAssociatedType.call(this, desc, m);
-    if (sync && desc.inverse) {
-      inverseAdded.call(m, desc.inverse, this);
-    }
-    this[name].push(m);
-  });
-}
-
-// Internal: Removes the given models from a `hasMany` association.
-//
-// desc   - An association descriptor.
-// models - An array of models to remove from the association.
-// sync   - Set to true to notify the inverse side of the association so that it can update itself.
-//
-// Returns nothing.
-function hasManyRemove(desc, models, sync) {
-  var name = desc.name, prev = this[name].slice(), i;
-
-  models.forEach((m) => {
-    if ((i = this[name].indexOf(m)) >= 0) {
-      if (sync && desc.inverse) {
-        inverseRemoved.call(m, desc.inverse, this);
-      }
-      this[name].splice(i, 1);
-    }
-  });
+  if (sync && inv && prev) { prev._inverseRemoved(inv, this); }
+  if (sync && inv && v) { v._inverseAdded(inv, this); }
 }
 
 // Internal: Callback for a successful model deletion. Updates the model's state, removes it from
@@ -176,12 +81,12 @@ function mapperDeleteSuccess() {
     if (desc.type === 'hasOne') {
       let m;
       if (m = this[name]) {
-        inverseRemoved.call(m, desc.inverse, this);
+        m._inverseRemoved(desc.inverse, this);
       }
     }
     else if (desc.type === 'hasMany') {
       this[name].slice(0).forEach((m) => {
-        inverseRemoved.call(m, desc.inverse, this);
+        m._inverseRemoved(desc.inverse, this);
       });
     }
   }
@@ -319,7 +224,7 @@ class Model extends RynoObject {
     });
 
     Object.defineProperty(this.prototype, name, {
-      get: function() { return this[`__${name}__`]; },
+      get: function() { return this[`__${name}`]; },
       set: function(v) { hasOneSet.call(this, desc, v, true); }
     });
 
@@ -349,7 +254,7 @@ class Model extends RynoObject {
   //
   // Returns the receiver.
   static hasMany(name, klass, opts = {}) {
-    var cap = capitalize(name), desc;
+    var cap = capitalize(name), k = `__${name}`, desc;
 
     if (!this.prototype.hasOwnProperty('associations')) {
       this.prototype.associations = Object.create(this.prototype.associations);
@@ -360,21 +265,13 @@ class Model extends RynoObject {
     });
 
     this.prop(name, {
-      get: function() { return this[`__${name}__`] = this[`__${name}__`] || new RynoArray; },
-      set: function(v) { hasManySet.call(this, desc, v); }
+      get: function() {
+        if (this[k]) { return this[k]; }
+        desc.klass = resolveClass(desc.klass);
+        return this[k] = new HasManyArray(this, desc);
+      },
+      set: function(a) { this[k].replace(a); }
     });
-
-    this.prototype[`add${cap}`] = function() {
-      return hasManyAdd.call(this, desc, Array.from(arguments), true);
-    };
-
-    this.prototype[`remove${cap}`] = function() {
-      return hasManyRemove.call(this, desc, Array.from(arguments), true);
-    };
-
-    this.prototype[`clear${cap}`] = function() {
-      return hasManySet.call(this, desc, new RynoArray);
-    };
   }
 
   // Public: Loads the given model attributes into the identity map. This method should be called by
@@ -698,6 +595,50 @@ class Model extends RynoObject {
 
   toString() {
     return `#<${this.constructor} (${this.stateString()}):${this.id}>`;
+  }
+
+  // Internal: Called by an inverse association when a model was removed from the inverse side.
+  // Updates the local side of the association.
+  //
+  // name  - The local side name of the association that was modified.
+  // model - The model that was removed from the inverse side.
+  //
+  // Returns nothing.
+  _inverseRemoved(name, model) {
+    var desc = this.associations[name];
+
+    if (!desc) {
+      throw new Error(`${this.constructor}#inverseRemoved: unknown association \`${name}\``);
+    }
+
+    if (desc.type === 'hasOne') {
+      hasOneSet.call(this, desc, undefined, false);
+    }
+    else if (desc.type === 'hasMany') {
+      this[desc.name]._inverseRemove(model);
+    }
+  }
+
+  // Internal: Called by an inverse association when a model was added on the inverse side. Updates
+  // the local side of the association.
+  //
+  // name  - The local side name of the association that was modified.
+  // model - The model that was added on the inverse side.
+  //
+  // Returns nothing.
+  _inverseAdded(name, model) {
+    var desc = this.associations[name];
+
+    if (!desc) {
+      throw new Error(`${this.constructor}#inverseAdded: unknown association \`${name}\``);
+    }
+
+    if (desc.type === 'hasOne') {
+      hasOneSet.call(this, desc, model, false);
+    }
+    else if (desc.type === 'hasMany') {
+      this[desc.name]._inverseAdd(model);
+    }
   }
 }
 
