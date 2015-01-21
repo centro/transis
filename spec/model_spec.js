@@ -18,23 +18,23 @@ describe('Model', function () {
   BasicModel.attr('str', 'string');
   BasicModel.attr('strWithDefault', 'string', {default: 'zzz'});
   BasicModel.attr('num', 'number');
-  Model.registerClass(BasicModel);
+  BasicModel.register();
 
   class Author extends Model {}
-  Model.registerClass(Author);
+  Author.register();
   Author.attr('first', 'string');
   Author.attr('last', 'string');
   Author.hasMany('posts', 'Post', {inverse: 'author'});
 
   class Post extends Model {}
-  Model.registerClass(Post);
+  Post.register();
   Post.attr('title', 'string');
   Post.attr('body', 'string');
   Post.hasOne('author', 'Author', {inverse: 'posts'});
   Post.hasMany('tags', 'Tag', {inverse: 'posts'});
 
   class Tag extends Model {}
-  Model.registerClass(Tag);
+  Tag.register();
   Tag.attr('name', 'string');
   Tag.hasMany('posts', 'Post', {inverse: 'tags'});
 
@@ -44,31 +44,23 @@ describe('Model', function () {
 
   afterEach(function() { IdMap.clear(); });
 
-  describe('.registerClass', function() {
-    it('throws an exception when given something other than a Model subclass', function() {
-      var x = {};
-
-      expect(function() {
-        Model.registerClass(x, 'x');
-      }).toThrow(new Error(`Ryno.Model.registerClass: \`${x}\` is not a subclass of Ryno.Model`));
-    });
-
+  describe('.register', function() {
     it('throws an exception when given a null name', function() {
       class A extends Model {}
 
       expect(function() {
-        Model.registerClass(A, null);
-      }).toThrow(new Error(`Ryno.Model.registerClass: no name given for class: \`${A}\``));
+        A.register(null);
+      }).toThrow(new Error(`Ryno.Model.register: no name given for class: \`${A}\``));
     });
 
     it('throws an exception when given a name that has already been registered', function() {
       class A1 extends Model {}
       class A2 extends Model {}
 
-      Model.registerClass(A1, 'A');
+      A1.register('A');
       expect(function() {
-        Model.registerClass(A2, 'A');
-      }).toThrow(new Error("Ryno.Model.registerClass: a class with name `A` has already been registered"));
+        A2.register('A');
+      }).toThrow(new Error("Ryno.Model.register: a class with name `A` has already been registered"));
     });
   });
 

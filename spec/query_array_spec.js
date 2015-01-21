@@ -6,7 +6,7 @@ describe('QueryArray', function () {
   class Test extends Model {}
   Test.attr('str', 'string');
   Test.attr('num', 'number');
-  Model.registerClass(Test);
+  Test.register();
 
   beforeEach(function() {
     var _this = this;

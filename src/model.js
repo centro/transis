@@ -12,7 +12,7 @@ const EMPTY   = 'empty';
 const LOADED  = 'loaded';
 const DELETED = 'deleted';
 
-// Internal: Resolves the given class name from the classes registered via `Model.registerClass`.
+// Internal: Resolves the given class name from the classes registered via `Model.register`.
 //
 // name - A string representing the name of a model class.
 //
@@ -191,28 +191,23 @@ function mapperDeleteSuccess() {
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 class Model extends RynoObject {
-  // Public: Registers the given `Model` subclass using the given name. Model subclasses must be
+  // Public: Registers the `Model` subclass using the given name. Model subclasses must be
   // registered when they are referenced as a string in either a `hasOne` or `hasMany` association.
   //
-  // klass - A subclass of `Model`.
-  // name  - A string. This string can be used to reference the model class in associations.
+  // name - A string. This string can be used to reference the model class in associations.
   //
   // Returns the receiver.
-  static registerClass(klass, name = klass.name) {
-    if (typeof klass !== 'function' || !(klass.prototype instanceof Model)) {
-      throw new Error(`Ryno.Model.registerClass: \`${klass}\` is not a subclass of Ryno.Model`);
-    }
-
+  static register(name = this.name) {
     if (typeof name !== 'string' || name.length === 0) {
-      throw new Error(`Ryno.Model.registerClass: no name given for class: \`${klass}\``);
+      throw new Error(`Ryno.Model.register: no name given for class: \`${this}\``);
     }
 
-    if (name in registeredClasses) {
-      throw new Error(`Ryno.Model.registerClass: a class with name \`${name}\` has already been registered`);
+    if (name in registeredClasses && registeredClasses[name] !== this) {
+      throw new Error(`Ryno.Model.register: a class with name \`${name}\` has already been registered`);
     }
 
-    registeredClasses[name] = klass;
-    klass.displayName = name;
+    registeredClasses[name] = this;
+    this.displayName = name;
 
     return this;
   }
@@ -306,7 +301,7 @@ class Model extends RynoObject {
   //         of the associated constructor function. Passing a string here is useful for the case
   //         where you are defining an association where the associated constructor function has yet
   //         to be defined. In order for this to work, the associated model class must be registered
-  //         with the given name using `Model.registerClass`.
+  //         with the given name using `Model.register`.
   // opts  - An object containing zero or more of the following keys (default: `{}`):
   //   inverse - Used for establishing two way associations, this is the name of the property on the
   //             associated object that points back to the receiver class.
@@ -349,7 +344,7 @@ class Model extends RynoObject {
   //         of the associated constructor function. Passing a string here is useful for the case
   //         where you are defining an association where the associated constructor function has yet
   //         to be defined. In order for this to work, the associated model class must be registered
-  //         with the given name using `Model.registerClass`.
+  //         with the given name using `Model.register`.
   // opts  - (see hasOne description)
   //
   // Returns the receiver.
