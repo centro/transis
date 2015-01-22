@@ -18,51 +18,31 @@ describe('Model', function () {
     this.attr('str', 'string');
     this.attr('strWithDefault', 'string', {default: 'zzz'});
     this.attr('num', 'number');
-  }).register('BasicModel');
+  });
 
   var Author = Model.extend('Author', function() {
     this.attr('first', 'string');
     this.attr('last', 'string');
     this.hasMany('posts', 'Post', {inverse: 'author'});
-  }).register('Author');
+  });
 
   var Post = Model.extend('Post', function() {
     this.attr('title', 'string');
     this.attr('body', 'string');
     this.hasOne('author', 'Author', {inverse: 'posts'});
     this.hasMany('tags', 'Tag', {inverse: 'posts'});
-  }).register('Post');
+  });
 
   var Tag = Model.extend('Tag', function() {
     this.attr('name', 'string');
     this.hasMany('posts', 'Post', {inverse: 'tags'});
-  }).register('Tag');
+  });
 
   beforeEach(function() {
     BasicModel.mapper = TestMapper;
   });
 
   afterEach(function() { IdMap.clear(); });
-
-  describe('.register', function() {
-    it('throws an exception when given a null name', function() {
-      var A = Model.extend('A');
-
-      expect(function() {
-        A.register(null);
-      }).toThrow(new Error(`Ryno.Model.register: no name given for class: \`${A}\``));
-    });
-
-    it('throws an exception when given a name that has already been registered', function() {
-      var A1 = Model.extend('A1');
-      var A2 = Model.extend('A2');
-
-      A1.register('A');
-      expect(function() {
-        A2.register('A');
-      }).toThrow(new Error("Ryno.Model.register: a class with name `A` has already been registered"));
-    });
-  });
 
   describe('.empty', function() {
     it('returns an instance of the class with sourceState set to EMPTY and the given id', function() {

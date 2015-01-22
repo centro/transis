@@ -1,25 +1,41 @@
 import "es6-shim";
 import RynoObject from "../object";
 
-var Test = RynoObject.extend('Test', function() {
-  this.prop('str');
-
-  this.prop('num', {
-    get: function() { return this._NUM_; },
-    set: function(v) { this._NUM_ = v; }
-  });
-
-  this.prop('ro', {
-    readonly: true,
-    get: function() { return 4; }
-  });
-
-  this.prop('def', {
-    default: 'hello'
-  });
-});
-
 describe('Ryno.Object', function() {
+  var Test = RynoObject.extend('Test', function() {
+    this.prop('str');
+
+    this.prop('num', {
+      get: function() { return this._NUM_; },
+      set: function(v) { this._NUM_ = v; }
+    });
+
+    this.prop('ro', {
+      readonly: true,
+      get: function() { return 4; }
+    });
+
+    this.prop('def', {
+      default: 'hello'
+    });
+  });
+
+  describe('.resolve', function() {
+    it('returns the Ryno.Object subclass of the given name', function() {
+      var A = RynoObject.extend('A'), B = A.extend('B'), C = B.extend('C')
+
+      expect(RynoObject.resolve('A')).toBe(A);
+      expect(RynoObject.resolve('B')).toBe(B);
+      expect(RynoObject.resolve('C')).toBe(C);
+    });
+
+    it('throws an error when a subclass with the given name is not known', function() {
+      expect(function() {
+        RynoObject.resolve('Abcdef');
+      }).toThrow(new Error('Ryno.Object.resolve: could not resolve subclass: `Abcdef`'));
+    });
+  });
+
   describe('.prop', function() {
     var t;
 

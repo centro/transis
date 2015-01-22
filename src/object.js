@@ -1,6 +1,6 @@
 import Emitter from "./emitter";
 
-var objectId = 0;
+var objectId = 0, subclasses = {};
 
 function onDependentEvent(event, data, desc) {
   this.emit(`change:${desc.name}`, {object: this});
@@ -24,7 +24,26 @@ RynoObject.extend = function(name, f) {
 
   if (typeof f === 'function') { f.call(subclass); }
 
+  subclasses[name] = subclass;
+  subclass.objectId = ++objectId;
+
   return subclass;
+};
+
+// Internal: Returns the `Ryno.Object` subclass with the given name.
+//
+// name - A string representing the name of a `Ryno.Object` subclass.
+//
+// Returns the resolved subclass constructor function.
+// Throws `Error` if a class with the given name is not known.
+RynoObject.resolve = function(name) {
+  var klass = (typeof name === 'function') ? name : subclasses[name];
+
+  if (!klass) {
+    throw new Error(`Ryno.Object.resolve: could not resolve subclass: \`${name}\``);
+  }
+
+  return klass;
 };
 
 // Public: Defines a property on the class's prototype. Properties defined with this method are

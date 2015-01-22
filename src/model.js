@@ -6,28 +6,12 @@ import QueryArray from "./query_array";
 import HasManyArray from "./has_many_array";
 import * as attrs from "./attrs";
 
-var registeredClasses = {}, registeredAttrs = {};
+var registeredAttrs = {};
 
 const NEW     = 'new';
 const EMPTY   = 'empty';
 const LOADED  = 'loaded';
 const DELETED = 'deleted';
-
-// Internal: Resolves the given class name from the classes registered via `Model.register`.
-//
-// name - A string representing the name of a model class.
-//
-// Returns the resolved class constructor function.
-// Throws `Error` if a class with the given name is not registered.
-function resolveClass(name) {
-  var klass = (typeof name === 'function') ? name : registeredClasses[name];
-
-  if (!klass) {
-    throw new Error(`Ryno.Model.resolveClass: could not resolve model class: \`${name}\``);
-  }
-
-  return klass;
-}
 
 // Internal: Checks to make sure the given object is of the type specified in the given association
 // descriptor.
@@ -35,7 +19,7 @@ function resolveClass(name) {
 // Returns nothing.
 // Throws `Error` if the given object isn't of the type specified in the association descriptor.
 function checkAssociatedType(desc, o) {
-  var klass = resolveClass(desc.klass);
+  var klass = RynoObject.resolve(desc.klass);
 
   if (!(o instanceof klass)) {
     throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
@@ -63,7 +47,7 @@ function hasOneSet(desc, v, sync) {
       k     = `__${name}`,
       prev  = this[k],
       inv   = desc.inverse,
-      klass = resolveClass(desc.klass);
+      klass = RynoObject.resolve(desc.klass);
 
   if (v && !(v instanceof klass)) {
     throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${klass}\` but received \`${v}\` instead`);
@@ -107,26 +91,6 @@ function mapperDeleteSuccess() {
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 var Model = RynoObject.extend('Ryno.Model', function() {
-  // Public: Registers the `Model` subclass using the given name. Model subclasses must be
-  // registered when they are referenced as a string in either a `hasOne` or `hasMany` association.
-  //
-  // name - A string. This string can be used to reference the model class in associations.
-  //
-  // Returns the receiver.
-  this.register = function(name = this.name) {
-    if (typeof name !== 'string' || name.length === 0) {
-      throw new Error(`Ryno.Model.register: no name given for class: \`${this}\``);
-    }
-
-    if (name in registeredClasses && registeredClasses[name] !== this) {
-      throw new Error(`Ryno.Model.register: a class with name \`${name}\` has already been registered`);
-    }
-
-    registeredClasses[name] = this;
-
-    return this;
-  };
-
   // Public: Returns an empty instance of the model class. An empty instance contains only an id
   // and must be retrieved from the mapper before any of its attributes will be available. Since the
   // model's data mapper will likely need to perform an async action to retrieve data, this method
@@ -208,8 +172,7 @@ var Model = RynoObject.extend('Ryno.Model', function() {
   // klass - Either the constructor function of the associated model or a string containing the name
   //         of the associated constructor function. Passing a string here is useful for the case
   //         where you are defining an association where the associated constructor function has yet
-  //         to be defined. In order for this to work, the associated model class must be registered
-  //         with the given name using `Model.register`.
+  //         to be defined.
   // opts  - An object containing zero or more of the following keys (default: `{}`):
   //   inverse - Used for establishing two way associations, this is the name of the property on the
   //             associated object that points back to the receiver class.
@@ -251,8 +214,7 @@ var Model = RynoObject.extend('Ryno.Model', function() {
   // klass - Either the constructor function of the associated model or a string containing the name
   //         of the associated constructor function. Passing a string here is useful for the case
   //         where you are defining an association where the associated constructor function has yet
-  //         to be defined. In order for this to work, the associated model class must be registered
-  //         with the given name using `Model.register`.
+  //         to be defined.
   // opts  - (see hasOne description)
   //
   // Returns the receiver.
@@ -270,7 +232,7 @@ var Model = RynoObject.extend('Ryno.Model', function() {
     this.prop(name, {
       get: function() {
         if (this[k]) { return this[k]; }
-        desc.klass = resolveClass(desc.klass);
+        desc.klass = RynoObject.resolve(desc.klass);
         return this[k] = new HasManyArray(this, desc);
       },
       set: function(a) { this[k].replace(a); }
@@ -332,7 +294,7 @@ var Model = RynoObject.extend('Ryno.Model', function() {
 
     // load and set each association
     for (let name in associated) {
-      let klass = resolveClass(associations[name].klass);
+      let klass = RynoObject.resolve(associations[name].klass);
       let data = associated[name];
 
       if (!data) { continue; }
