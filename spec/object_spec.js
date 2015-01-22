@@ -20,6 +20,72 @@ describe('Ryno.Object', function() {
     });
   });
 
+  describe('.extend', function() {
+    var Child = RynoObject.extend('Child', function() {
+      this.prototype.init = function() {
+      };
+    });
+
+    var Grandchild = Child.extend('Grandchild', function() {
+      this.prototype.init = function() {
+      };
+    });
+
+    it("sets the name argument as the subclass's displayName property", function() {
+      expect(Child.displayName).toBe('Child');
+      expect(Grandchild.displayName).toBe('Grandchild');
+    });
+
+    it('copies the static properties to the subclass', function() {
+      expect(typeof Child.extend).toBe('function');
+      expect(typeof Child.prop).toBe('function');
+      expect(typeof Grandchild.extend).toBe('function');
+      expect(typeof Grandchild.prop).toBe('function');
+    });
+
+    it("sets the subclass's prototype to an object that inherites from the parents prototype", function() {
+      expect(RynoObject.prototype.isPrototypeOf(Child.prototype)).toBe(true);
+      expect(Child.prototype.isPrototypeOf(Grandchild.prototype)).toBe(true);
+    });
+
+    it("sets the __super__ property on the subclass to the parent's prototype", function() {
+      expect(Child.__super__).toBe(RynoObject.prototype);
+      expect(Grandchild.__super__).toBe(Child.prototype);
+    });
+
+    it("sets the constructor property of the subclass's prototype to the subclass", function() {
+      expect(Child.prototype.constructor).toBe(Child);
+      expect(Grandchild.prototype.constructor).toBe(Grandchild);
+    });
+
+    it("allows the instanceof operator to work with instances of the subclass", function() {
+      var child = new Child, grandchild = new Grandchild;
+
+      expect(child instanceof Child).toBe(true);
+      expect(grandchild instanceof Child).toBe(true);
+      expect(grandchild instanceof Grandchild).toBe(true);
+    });
+
+    it("creates a constructor function that invokes the subclass's init method", function() {
+      spyOn(Child.prototype, 'init');
+      spyOn(Grandchild.prototype, 'init');
+
+      new Child({foo: 1, bar: 2});
+      expect(Child.prototype.init).toHaveBeenCalledWith({foo: 1, bar: 2});
+
+      new Grandchild({baz: 3});
+      expect(Grandchild.prototype.init).toHaveBeenCalledWith({baz: 3});
+    });
+
+    describe('with no name argument', function() {
+      it('throws an exception', function() {
+        expect(function() {
+          RynoObject.extend();
+        }).toThrow(new Error('Ryno.Object.extend: a name is required'));
+      });
+    });
+  });
+
   describe('.resolve', function() {
     it('returns the Ryno.Object subclass of the given name', function() {
       var A = RynoObject.extend('A'), B = A.extend('B'), C = B.extend('C')

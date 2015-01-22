@@ -13,6 +13,10 @@ function RynoObject() {
 
 // Public: Creates a subclass of `Ryno.Object`.
 RynoObject.extend = function(name, f) {
+  if (typeof name !== 'string') {
+    throw new Error(`${this}.extend: a name is required`);
+  }
+
   var subclass = function() { RynoObject.apply(this, arguments); };
 
   for (let k in this) { if (this.hasOwnProperty(k)) { subclass[k] = this[k]; } }
@@ -160,6 +164,8 @@ RynoObject.prototype.setProp = function(name, value) {
 
   this.emit(`change:${name}`, {object: this, old});
 };
+
+RynoObject.displayName = 'Ryno.Object';
 
 Object.assign(RynoObject.prototype, Emitter);
 
