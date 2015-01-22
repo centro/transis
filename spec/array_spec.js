@@ -333,9 +333,10 @@ describe('Array', function() {
   describe('change events', function() {
     var a, spy;
 
-    class Test extends RynoObject {}
-    Test.prop('x');
-    Test.prop('y');
+    var Test = RynoObject.extend('Test', function() {
+      this.prop('x');
+      this.prop('y');
+    });
 
     beforeEach(function() {
       a = A(new Test({x: 1, y: 'a'}), new Test({x: 2, y: 'b'}), new Test({x: 3, y: 'c'}));

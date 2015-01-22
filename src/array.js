@@ -8,34 +8,34 @@ function onElementChange(event, data) {
   this.emit(`change:${ns}`, Object.assign({array: this}, data));
 }
 
-class RynoArray extends RynoObject {
+var RynoArray = RynoObject.extend('Ryno.Array', function() {
   // Public: Returns a new `Ryno.Array` containing the given arguments as contents.
   //
   // Returns a new `Ryno.Array`.
-  static A() {
+  this.A = function() {
     var a = new RynoArray;
     a.push.apply(a, arguments);
     return a;
-  }
+  };
 
   // Public: Returns a new `Ryno.Array` containing the contents of the given array-like object.
   //
   // a - Any array-like object (a native array, `Arguments` object, or `Ryno.Array` instance).
   //
   // Returns a new `Ryno.Array`.
-  static from(a) {
+  this.from = function(a) {
     var b = new RynoArray(a.length), i, n;
     if (a instanceof RynoArray) { a = a.__elements__; }
     for (i = 0, n = a.length; i < n; i++) { b.__elements__[i] = a[i]; }
     return b;
-  }
+  };
 
   // Public: Wraps a native array with a `Ryno.Array`.
   //
   // a - A native array object.
   //
   // Returns a new `Ryno.Array`.
-  static wrap(a) {
+  this.wrap = function(a) {
     if (!Array.isArray(a)) {
       throw new TypeError(`Ryno.Array.wrap: expected a native array but received \`${a}\` instead`);
     }
@@ -43,11 +43,19 @@ class RynoArray extends RynoObject {
     var b = new RynoArray;
     b.__elements__ = a;
     return b;
-  }
+  };
+
+  Object.defineProperties(this.prototype, {
+    // Public: Returns the current length of the array.
+    length: { get: function() { return this.__elements__.length; } },
+
+    // Public: Returns the backing native array.
+    native: { get: function() { return this.__elements__; } }
+  });
 
   // Public: The `Ryno.Array` constructor. With a single number argument, an array is created with
   // the same length. In every other case, the array is initialized with the given arguments.
-  constructor() {
+  this.prototype.init = function() {
     var elements = slice.call(arguments), i, n;
 
     if (elements.length === 1 && typeof elements[0] === 'number') {
@@ -63,14 +71,8 @@ class RynoArray extends RynoObject {
       }
     }
 
-    super();
-  }
-
-  // Public: Returns the current length of the array.
-  get length() { return this.__elements__.length; }
-
-  // Public: Returns the backing native array.
-  get native() { return this.__elements__; }
+    RynoArray.__super__.init.call(this);
+  };
 
   // Public: Element reference and assignment method. When given one argument, returns the item at
   // the specified index. When passed, two arguments, the second argument is set as the item at the
@@ -85,7 +87,7 @@ class RynoArray extends RynoObject {
   // Returns the value at the given index when passed one argument. Returns `undefined` if the index
   //   is out of range.
   // Returns `v` when given two arguments.
-  at(i, v) {
+  this.prototype.at = function(i, v) {
     var length = this.length;
 
     if (i < 0) { i = length + i; }
@@ -97,7 +99,7 @@ class RynoArray extends RynoObject {
       this.splice(i, 1, v);
       return v;
     }
-  }
+  };
 
   // Public: `Ryno.Array` equality test. This method performs an element-wise comparison between the
   // receiver and the given array.
@@ -105,11 +107,11 @@ class RynoArray extends RynoObject {
   // other - A `Ryno.Array` or native array to compare to the receiver.
   //
   // Returns `true` if the arrays are equal and `false` otherwise.
-  eq(other) {
+  this.prototype.eq = function(other) {
     if (other instanceof RynoArray) { return util.eq(this.__elements__, other.__elements__); }
     if (other instanceof Array) { return util.eq(this.__elements__, other); }
     return false;
-  }
+  };
 
   // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
   // made through this method. In addition to making the mutation, this method also emits `splice`
@@ -125,7 +127,7 @@ class RynoArray extends RynoObject {
   //
   // Returns a new `Ryno.Array` containing the elements removed.
   // Throws `Error` when given an index that is out of range.
-  splice(i, n) {
+  this.prototype.splice = function(i, n) {
     var added = slice.call(arguments, 2), index = i < 0 ? this.length + i : i, removed, j, m;
 
     if (index < 0) {
@@ -151,39 +153,43 @@ class RynoArray extends RynoObject {
     this.emit('splice', {array: this, i: index, n, added, removed});
 
     return RynoArray.from(removed);
-  }
+  };
 
   // Public: Adds one or more elements to the end of the array and returns the new length.
   //
   // ...elements - One or more objects to add to the end of the array.
   //
   // Returns the new length of the array.
-  push() {
+  this.prototype.push = function() {
     var args = slice.call(arguments);
     this.splice.apply(this, [this.length, 0].concat(args));
     return this.length;
-  }
+  };
 
   // Public: Adds one or more elements to the beginning of the array and returns the new length.
   //
   // ...elements - One or more objects to add to the beginning of the array.
   //
   // Returns the new length of the array.
-  unshift() {
+  this.prototype.unshift = function() {
     var args = slice.call(arguments);
     this.splice.apply(this, [0, 0].concat(args));
     return this.length;
-  }
+  };
 
   // Public: Removes the last element from the array and returns the element.
   //
   // Returns the last element in the array or `undefined` if the array length is 0.
-  pop() { return this.length > 0 ? this.splice(-1, 1).at(0) : undefined; }
+  this.prototype.pop = function() {
+    return this.length > 0 ? this.splice(-1, 1).at(0) : undefined;
+  };
 
   // Public: Removes the first element from the array and returns the element.
   //
   // Returns the first element in the array or `undefined` if the array length is 0.
-  shift() { return this.length > 0 ? this.splice(0, 1).at(0) : undefined; }
+  this.prototype.shift = function() {
+    return this.length > 0 ? this.splice(0, 1).at(0) : undefined;
+  };
 
   // Public: Returns a new `Ryno.Array` comprised of the receiver joined with the array(s) or
   // value(s) provided as arguments.
@@ -191,13 +197,13 @@ class RynoArray extends RynoObject {
   // ...value - Arrays or values to concatenate into the new array.
   //
   // Returns a new `Basis.Array`.
-  concat() {
+  this.prototype.concat = function() {
     var args = slice.call(arguments).map(function(arg) {
       return arg instanceof RynoArray ? arg.__elements__ : arg;
     });
 
     return RynoArray.wrap(concat.apply(this.__elements__, args));
-  }
+  };
 
   // Public: Returns a shallow copy of a portion of an array into a new array.
   //
@@ -208,9 +214,9 @@ class RynoArray extends RynoObject {
   //         extracts through the end of the array.
   //
   // Returns a new `Ryno.Array`.
-  slice() {
+  this.prototype.slice = function() {
     return RynoArray.wrap(slice.apply(this.__elements__, arguments));
-  }
+  };
 
   // Public: Creates a new array with the results of calling the given function on every element in
   // the array.
@@ -222,9 +228,9 @@ class RynoArray extends RynoObject {
   // ctx      - Value to use as this when invoking callback.
   //
   // Returns a new `Ryno.Array`.
-  map() {
+  this.prototype.map = function() {
     return RynoArray.wrap(map.apply(this.__elements__, arguments));
-  }
+  };
 
   // Public: Creates a new array with all elements that pass the test implemented by the provided
   // function.
@@ -234,9 +240,9 @@ class RynoArray extends RynoObject {
   // ctx      - Value to use as this when invoking callback.
   //
   // Returns a new `Ryno.Array`.
-  filter() {
+  this.prototype.filter = function() {
     return RynoArray.wrap(filter.apply(this.__elements__, arguments));
-  }
+  };
 
   // Public: Returns the first index at which the given element can be found in the array using a
   // strict equality (`===`) test. If the element is not found, then `-1` is returned.
@@ -245,9 +251,9 @@ class RynoArray extends RynoObject {
   // i - The index at which to start the search (default: `0`).
   //
   // Returns the index at which the element is found or `-1` if its not found.
-  indexOf(e, i) {
+  this.prototype.indexOf = function(e, i) {
     return this.__elements__.indexOf(e, i);
-  }
+  };
 
   // Public: Returns the first index of the array which satisfies the given testing function.
   //
@@ -257,13 +263,13 @@ class RynoArray extends RynoObject {
   //
   // Returns the index of the first item that satisfies the testing function or `-1` if one is not
   //   found.
-  findIndex(f, ctx = null) {
+  this.prototype.findIndex = function(f, ctx = null) {
     for (let i = 0, n = this.length; i < n; i++) {
       if (f.call(ctx, this.at(i), i, this)) { return i; }
     }
 
     return -1;
-  }
+  };
 
   // Public: Returns the first item of the array which satisfies the given testing function.
   //
@@ -272,10 +278,10 @@ class RynoArray extends RynoObject {
   // ctx  - Object used as `this` when executing `callback` (default: `null`).
   //
   // Returns the first item that satisfies the testing function or `undefined` if one is not found.
-  find(f, ctx = null) {
+  this.prototype.find = function(f, ctx = null) {
     var i = this.findIndex(f, ctx);
     return i === -1 ? undefined : this.at(i);
-  }
+  };
 
   // Public: Tests whether some element of the array passes the given test function.
   //
@@ -286,13 +292,13 @@ class RynoArray extends RynoObject {
   // ctx - Object used as `this` when executing `callback` (default: `null`).
   //
   // Returns `true` if some element of the array passes the test function and `false` otherwise.
-  some(f, ctx = null) {
+  this.prototype.some = function(f, ctx = null) {
     for (let i = 0, n = this.length; i < n; i++) {
       if (f.call(ctx, this.__elements__[i], i, this)) { return true; }
     }
 
     return false;
-  }
+  };
 
   // Public: Applies the given function against an accumulator and each element of the array in
   // order to reduce it to a single value.
@@ -306,7 +312,7 @@ class RynoArray extends RynoObject {
   //        array is used.
   //
   // Returns the final value of the accumulator.
-  reduce(f, init) {
+  this.prototype.reduce = function(f, init) {
     var acc = arguments.length > 1 ? init : this.__elements__[0];
 
     if (this.length === 0 && arguments.length < 2) {
@@ -318,7 +324,7 @@ class RynoArray extends RynoObject {
     }
 
     return acc;
-  }
+  };
 
   // Public: Executes the given function once for every element in the array.
   //
@@ -327,44 +333,44 @@ class RynoArray extends RynoObject {
   //   index   - The index of the current element.
   //   array   - The array `forEach` was called on.
   // ctx - Object used as `this` when executing `f` (default: `null`).
-  forEach(f, ctx = null) {
+  this.prototype.forEach = function(f, ctx = null) {
     for (let i = 0, n = this.length; i < n; i++) {
       f.call(ctx, this.__elements__[i], i, this);
     }
 
     return undefined;
-  }
+  };
 
   // Public: Joins all of the elements of the array into a string.
   //
   // sep - The string to use as the separator (default: `","`).
   //
   // Returns a string.
-  join(sep = ',') {
+  this.prototype.join = function(sep = ',') {
     return this.__elements__.join(sep);
-  }
+  };
 
   // Public: Replaces the contents of the receiver with the contents of the given array.
   //
   // a - A `Ryno.Array` or native array.
   //
   // Returns the receiver.
-  replace(a) {
+  this.prototype.replace = function(a) {
     this.splice.apply(this, new RynoArray(0, this.length).concat(a).__elements__);
     return this;
-  }
+  };
 
   // Public: Clears the array by removing all elements.
   //
   // Returns the receiver.
-  clear() {
+  this.prototype.clear = function() {
     this.splice(0, this.length);
     return this;
-  }
+  };
 
-  toString() {
+  this.prototype.toString = function() {
     return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
-  }
-}
+  };
+});
 
 export default RynoArray;

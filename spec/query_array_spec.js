@@ -3,10 +3,10 @@ import Model from "../model";
 import QueryArray from "../query_array";
 
 describe('QueryArray', function () {
-  class Test extends Model {}
-  Test.attr('str', 'string');
-  Test.attr('num', 'number');
-  Test.register();
+  var Test = Model.extend('Test', function() {
+    this.attr('str', 'string');
+    this.attr('num', 'number');
+  });
 
   beforeEach(function() {
     var _this = this;
@@ -136,7 +136,7 @@ describe('QueryArray', function () {
     });
 
     it("throws an exception when the class's mapper is not defined", function() {
-      class Foo extends Model {}
+      var Foo = Model.extend('Foo');
 
       expect(function() {
         (new QueryArray(Foo)).query();
@@ -144,7 +144,7 @@ describe('QueryArray', function () {
     });
 
     it("throws an exception when the class's mapper does not define a query method", function() {
-      class Foo extends Model {}
+      var Foo = Model.extend('Foo');
       Foo.mapper = {};
 
       expect(function() {
@@ -153,7 +153,7 @@ describe('QueryArray', function () {
     });
 
     it("throws an exception when the class's mapper.query method does not return a promise", function() {
-      class Foo extends Model {}
+      var Foo = Model.extend('Foo');
       Foo.mapper = {query: function() {}};
 
       expect(function() {

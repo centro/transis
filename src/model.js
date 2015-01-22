@@ -82,9 +82,9 @@ function hasOneSet(desc, v, sync) {
 // the identity map, and removes removes it from any associations its currently participating in.
 function mapperDeleteSuccess() {
   IdMap.delete(this);
-  this.__isBusy__ = false;
-  this.__sourceState__ = DELETED;
-  delete this.__error__;
+  this.isBusy = false;
+  this.sourceState = DELETED;
+  this.error = undefined;
 
   for (let name in this.associations) {
     let desc = this.associations[name];
@@ -106,14 +106,14 @@ function mapperDeleteSuccess() {
 // Internal: Capitalizes the given word.
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-class Model extends RynoObject {
+var Model = RynoObject.extend('Ryno.Model', function() {
   // Public: Registers the `Model` subclass using the given name. Model subclasses must be
   // registered when they are referenced as a string in either a `hasOne` or `hasMany` association.
   //
   // name - A string. This string can be used to reference the model class in associations.
   //
   // Returns the receiver.
-  static register(name = this.name) {
+  this.register = function(name = this.name) {
     if (typeof name !== 'string' || name.length === 0) {
       throw new Error(`Ryno.Model.register: no name given for class: \`${this}\``);
     }
@@ -123,17 +123,9 @@ class Model extends RynoObject {
     }
 
     registeredClasses[name] = this;
-    this.displayName = name;
 
     return this;
-  }
-
-  // Public: Returns a string containing the class's name.
-  static toString() {
-    if (this.hasOwnProperty('displayName')) { return this.displayName; }
-    if (this.hasOwnProperty('name')) { return this.name; }
-    else { return '(Unknown)'; }
-  }
+  };
 
   // Public: Returns an empty instance of the model class. An empty instance contains only an id
   // and must be retrieved from the mapper before any of its attributes will be available. Since the
@@ -145,11 +137,11 @@ class Model extends RynoObject {
   // id - The id of the model.
   //
   // Returns a new instance of the class.
-  static empty(id) {
+  this.empty = function(id) {
     var model = new this({id: id});
-    model.__sourceState__ = EMPTY;
+    model.sourceState = EMPTY;
     return model;
-  }
+  };
 
   // Public: Registers a new attribute type available to be used on `Model` subclasses.
   //
@@ -163,7 +155,7 @@ class Model extends RynoObject {
   //             `.attr` method.
   //
   // Returns the receiver.
-  static registerAttr(name, converter) {
+  this.registerAttr = function(name, converter) {
     if (registeredAttrs[name]) {
       throw new Error(`${this}.registerAttr: an attribute with the name \`${name}\` has already been defined`);
     }
@@ -171,7 +163,7 @@ class Model extends RynoObject {
     registeredAttrs[name] = converter;
 
     return this;
-  }
+  };
 
   // Public: Defines an attribute on the model class. Attributes are typed properties that can
   // parse/coerce raw values (say from a JSON object) into objects of the property type. Calling
@@ -188,7 +180,7 @@ class Model extends RynoObject {
   //        `{}`).
   //
   // Returns the receiver.
-  static attr(name, type, opts = {}) {
+  this.attr = function(name, type, opts = {}) {
     var converter = registeredAttrs[type];
 
     if (!converter) {
@@ -207,7 +199,7 @@ class Model extends RynoObject {
     });
 
     return this;
-  }
+  };
 
   // Public: Defines a `hasOne` association on the receiver class. This method will generate a
   // property with the given name that can be used to get or set the associated model.
@@ -223,7 +215,7 @@ class Model extends RynoObject {
   //             associated object that points back to the receiver class.
   //
   // Returns the receiver.
-  static hasOne(name, klass, opts = {}) {
+  this.hasOne = function(name, klass, opts = {}) {
     var desc;
 
     if (!this.prototype.hasOwnProperty('associations')) {
@@ -234,14 +226,13 @@ class Model extends RynoObject {
       type: 'hasOne', name, klass
     });
 
-
     this.prop(name, {
       get: function() { return this[`__${name}`]; },
       set: function(v) { hasOneSet.call(this, desc, v, true); }
     });
 
     return this;
-  }
+  };
 
   // Public: Defines a `hasMany` association on the receiver class. This method will generate a
   // property with the given name that can be used to get or set an array of associated model
@@ -265,7 +256,7 @@ class Model extends RynoObject {
   // opts  - (see hasOne description)
   //
   // Returns the receiver.
-  static hasMany(name, klass, opts = {}) {
+  this.hasMany = function(name, klass, opts = {}) {
     var cap = capitalize(name), k = `__${name}`, desc;
 
     if (!this.prototype.hasOwnProperty('associations')) {
@@ -284,7 +275,7 @@ class Model extends RynoObject {
       },
       set: function(a) { this[k].replace(a); }
     });
-  }
+  };
 
   // Public: Loads the given model attributes into the identity map. This method should be called by
   // your data mapper(s) when new data is successfully retrieved.
@@ -294,7 +285,7 @@ class Model extends RynoObject {
   //
   // Returns the loaded model instance.
   // Throws `Error` if the given attributes do not contain an `id` attribute.
-  static load(attrs) {
+  this.load = function(attrs) {
     var id = attrs.id, associations = this.prototype.associations, associated = {}, model;
 
     if (!id) {
@@ -359,30 +350,30 @@ class Model extends RynoObject {
       }
     }
 
-    model.__sourceState__ = LOADED;
+    model.sourceState = LOADED;
 
     return model;
-  }
+  };
 
   // Public: Loads an array of attribute objects.
   //
   // objects - An array containing attribute hashes.
   //
   // Returns an array of loaded model instances.
-  static loadAll(objects) { return objects.map((object) => this.load(object)); }
+  this.loadAll = function(objects) { return objects.map((object) => this.load(object)); };
 
   // Public: Creates a new `Ryno.QueryArray` but does not invoke its `query` method. This is useful
   // for cases where you want to initialize an empty query, but not yet run it.
   //
   // Returns a new `Ryno.QueryArray`.
-  static buildQuery() { return new QueryArray(this); }
+  this.buildQuery = function() { return new QueryArray(this); };
 
   // Public: Creates a new `Ryno.QueryArray` and invokes its `query` method with the given options.
   //
   // opts - An options object to pass to the `Ryno.QueryArray#query` method (default: `{}`).
   //
   // Returns a new `Ryno.QueryArray`.
-  static query(opts = {}) { return this.buildQuery().query(opts); }
+  this.query = function(opts = {}) { return this.buildQuery().query(opts); };
 
   // Public: Retrieves a model from the identity map or creates a new empty model instance. If you
   // want to get the model from the mapper, then use the `Model.get` method.
@@ -390,7 +381,7 @@ class Model extends RynoObject {
   // id - The id of the model to get.
   //
   // Returns an instance of the receiver.
-  static local(id) { return IdMap.get(this, id) || this.empty(id); }
+  this.local = function(id) { return IdMap.get(this, id) || this.empty(id); };
 
   // Public: Gets a model instance, either from the identity map or from the mapper. If the model
   // has already been loaded into the identity map, then it is simply returned, otherwise the data
@@ -402,26 +393,26 @@ class Model extends RynoObject {
   //             exists in the identity map.
   //
   // Returns an instance of the receiver.
-  static get(id, opts = {}) {
+  this.get = function(id, opts = {}) {
     var model = this.local(id), getOpts = Object.assign({}, opts);
     delete getOpts.refresh;
 
     if (model.isEmpty || opts.refresh) {
-      model.__isBusy__ = true;
+      model.isBusy = true;
       model.__promise__ = this._callMapper('get', [id, getOpts])
         .then((result) => {
-          model.__isBusy__ = false;
-          delete model.__error__;
+          model.isBusy = false;
+          model.error = undefined;
           this.load(result);
         }, (error) => {
-          model.__isBusy__ = false;
-          model.__error__ = error;
+          model.isBusy = false;
+          model.error = error;
           throw error;
         });
     }
 
     return model;
-  }
+  };
 
   // Internal: Invokes the given method on the receiver's mapper, ensuring that it returns a
   // Thennable (Promise-like) object.
@@ -433,7 +424,7 @@ class Model extends RynoObject {
   // Throws `Error` when the mapper is not defined.
   // Throws `Error` when the mapper does not implement the given method.
   // Throws `Error` when the mapper does not return a Thennable object.
-  static _callMapper(method, args) {
+  this._callMapper = function(method, args) {
     var promise;
 
     if (!this.mapper) {
@@ -451,35 +442,59 @@ class Model extends RynoObject {
     }
 
     return promise;
+  };
+
+  // Internal: Hold the association descriptors created by `.hasOne` and `.hasMany`.
+  this.prototype.associations = {};
+
+  // Internal: Initializes the model by setting up some internal properties.
+  this.prototype.init = function(props) {
+    this.attrs       = {};
+    this.sourceState = NEW;
+    this.isBusy      = false;
+    this.__promise__ = Promise.resolve();
+
+    Model.__super__.init.call(this, props);
   }
 
-  constructor(attrs) {
-    this.attrs           = {};
-    this.__sourceState__ = NEW;
-    this.__isBusy__      = false;
-    this.__promise__     = Promise.resolve();
+  Object.defineProperty(this.prototype, 'id', {
+    get: function() { return this.__id__; },
+    set: function(id) {
+      if (this.__id__) {
+        throw new Error(`${this.constructor}#id=: overwriting a model's identity is not allowed: ${this}`);
+      }
 
-    super(attrs);
-  }
+      this.__id__ = id;
 
-  get id() { return this.__id__; }
-  set id(id) {
-    if (this.__id__) {
-      throw new Error(`${this.constructor}#id=: overwriting a model's identity is not allowed: ${this}`);
+      IdMap.insert(this);
     }
+  });
 
-    this.__id__ = id;
+  this.prop('sourceState');
 
-    IdMap.insert(this);
-  }
+  this.prop('isNew', {
+    readonly: true, changesOn: ['change:sourceState'],
+    get: function() { return this.sourceState === NEW; }
+  });
 
-  get sourceState() { return this.__sourceState__; }
-  get isNew() { return this.sourceState === NEW; }
-  get isEmpty() { return this.sourceState === EMPTY; }
-  get isLoaded() { return this.sourceState === LOADED; }
-  get isDeleted() { return this.sourceState === DELETED; }
-  get isBusy() { return this.__isBusy__; }
-  get error() { return this.__error__; }
+  this.prop('isEmpty', {
+    readonly: true, changesOn: ['change:sourceState'],
+    get: function() { return this.sourceState === EMPTY; }
+  });
+
+  this.prop('isLoaded', {
+    readonly: true, changesOn: ['change:sourceState'],
+    get: function() { return this.sourceState === LOADED; }
+  });
+
+  this.prop('isDeleted', {
+    readonly: true, changesOn: ['change:sourceState'],
+    get: function() { return this.sourceState === DELETED; }
+  });
+
+  this.prop('isBusy');
+
+  this.prop('error');
 
   // Public: Refreshes the model by getting it from the data mapper.
   //
@@ -487,13 +502,13 @@ class Model extends RynoObject {
   //
   // Returns the receiver.
   // Throws `Error` if the receiver is not LOADED or is BUSY.
-  get(opts = {}) {
+  this.prototype.get = function(opts = {}) {
     if ((!this.isLoaded && !this.isEmpty) || this.isBusy) {
       throw new Error(`${this.constructor}#get: can't get a model in the ${this.stateString()} state: ${this}`);
     }
 
     return this.constructor.get(this.id, Object.assign({}, opts, {refresh: true}));
-  }
+  };
 
   // Public: Saves the model by invoking either the `create` or `update` method on the model's data
   // mapper. The `create` method is invoked if the model is in the `NEW` state and `create`
@@ -503,25 +518,25 @@ class Model extends RynoObject {
   //
   // Returns the receiver.
   // Throws `Error` if the receiver is not NEW or LOADED or is currently busy.
-  save(opts = {}) {
+  this.prototype.save = function(opts = {}) {
     if ((!this.isNew && !this.isLoaded) || this.isBusy) {
       throw new Error(`${this.constructor}#save: can't save a model in the ${this.stateString()} state: ${this}`);
     }
 
-    this.__isBusy__ = true;
+    this.isBusy = true;
 
     this.__promise__ = this.constructor._callMapper(this.isNew ? 'create' : 'update', [this, opts])
       .then((attrs) => {
-        this.__isBusy__ = false;
-        delete this.__error__;
+        this.isBusy = false;
+        this.error = undefined;
         this.load(attrs);
       }, (error) => {
-        this.__isBusy__ = false;
-        this.__error__ = error;
+        this.isBusy = false;
+        this.error = error;
       });
 
     return this;
-  }
+  };
 
   // Public: Deletes the model by passing it to the data mapper's `delete` method.
   //
@@ -529,7 +544,7 @@ class Model extends RynoObject {
   //
   // Returns the receiver.
   // Throws `Error` if the model is currently busy.
-  delete(opts = {}) {
+  this.prototype.delete = function(opts = {}) {
     if (this.isDeleted) { return this; }
 
     if (this.isBusy) {
@@ -540,19 +555,19 @@ class Model extends RynoObject {
       mapperDeleteSuccess.call(this);
     }
     else {
-      this.__isBusy__ = true;
+      this.isBusy = true;
 
       this.__promise__ = this.constructor._callMapper('delete', [this, opts])
         .then(() => {
           mapperDeleteSuccess.call(this);
         }, (error) => {
-          this.__isBusy__ = false;
-          this.__error__ = error;
+          this.isBusy = false;
+          this.error = error;
         });
     }
 
     return this;
-  }
+  };
 
   // Public: Registers fulfillment and rejection handlers on the latest promise object returned by
   // the model's mapper. If the model has yet to interact with the mapper, then the `onFulfilled`
@@ -565,7 +580,9 @@ class Model extends RynoObject {
   // onRejected  - A function to be invoked when the latest promise from the mapper is rejected.
   //
   // Returns a new `Promise` that will be resolved with the return value of `onFulfilled`.
-  then(onFulfilled, onRejected) { return this.__promise__.then(onFulfilled, onRejected); }
+  this.prototype.then = function(onFulfilled, onRejected) {
+    return this.__promise__.then(onFulfilled, onRejected);
+  };
 
   // Public: Registers a rejection handler on the latest promise object returned by the model's
   // mapper.
@@ -573,13 +590,15 @@ class Model extends RynoObject {
   // onRejected  - A function to be invoked when the latest promise from the mapper is rejected.
   //
   // Returns a new `Promise` that is resolved to the return value of the callback if it is called.
-  catch(onRejected) { return this.__promise__.catch(onRejected); }
+  this.prototype.catch = function(onRejected) {
+    return this.__promise__.catch(onRejected);
+  };
 
   // Public: Loads the given attributes into the model. This method simply ensure's that the
   // receiver has its `id` set and then delegates to `Model.load`.
   //
   // Returns the receiver.
-  load(attrs) {
+  this.prototype.load = function(attrs) {
     var id = attrs.id;
 
     if (id == null && this.id == null) {
@@ -596,18 +615,18 @@ class Model extends RynoObject {
     this.constructor.load(attrs);
 
     return this;
-  }
+  };
 
   // Public: Returns a string representation of the model's current state.
-  stateString() {
+  this.prototype.stateString = function() {
     var a = [this.sourceState.toUpperCase()];
     if (this.isBusy) { a.push('BUSY'); }
     return a.join('-');
-  }
+  };
 
-  toString() {
+  this.prototype.toString = function() {
     return `#<${this.constructor} (${this.stateString()}):${this.id}>`;
-  }
+  };
 
   // Internal: Called by an inverse association when a model was removed from the inverse side.
   // Updates the local side of the association.
@@ -616,7 +635,7 @@ class Model extends RynoObject {
   // model - The model that was removed from the inverse side.
   //
   // Returns nothing.
-  _inverseRemoved(name, model) {
+  this.prototype._inverseRemoved = function(name, model) {
     var desc = this.associations[name];
 
     if (!desc) {
@@ -629,7 +648,7 @@ class Model extends RynoObject {
     else if (desc.type === 'hasMany') {
       this[desc.name]._inverseRemove(model);
     }
-  }
+  };
 
   // Internal: Called by an inverse association when a model was added on the inverse side. Updates
   // the local side of the association.
@@ -638,7 +657,7 @@ class Model extends RynoObject {
   // model - The model that was added on the inverse side.
   //
   // Returns nothing.
-  _inverseAdded(name, model) {
+  this.prototype._inverseAdded = function(name, model) {
     var desc = this.associations[name];
 
     if (!desc) {
@@ -651,12 +670,8 @@ class Model extends RynoObject {
     else if (desc.type === 'hasMany') {
       this[desc.name]._inverseAdd(model);
     }
-  }
-}
-
-Model.prototype.associations = {};
-
-Model.displayName = 'Ryno.Model';
+  };
+});
 
 Model.NEW     = NEW;
 Model.EMPTY   = EMPTY;

@@ -14,29 +14,29 @@ describe('Model', function () {
     delete: function() {}
   };
 
-  class BasicModel extends Model {}
-  BasicModel.attr('str', 'string');
-  BasicModel.attr('strWithDefault', 'string', {default: 'zzz'});
-  BasicModel.attr('num', 'number');
-  BasicModel.register();
+  var BasicModel = Model.extend('BasicModel', function() {
+    this.attr('str', 'string');
+    this.attr('strWithDefault', 'string', {default: 'zzz'});
+    this.attr('num', 'number');
+  }).register('BasicModel');
 
-  class Author extends Model {}
-  Author.register();
-  Author.attr('first', 'string');
-  Author.attr('last', 'string');
-  Author.hasMany('posts', 'Post', {inverse: 'author'});
+  var Author = Model.extend('Author', function() {
+    this.attr('first', 'string');
+    this.attr('last', 'string');
+    this.hasMany('posts', 'Post', {inverse: 'author'});
+  }).register('Author');
 
-  class Post extends Model {}
-  Post.register();
-  Post.attr('title', 'string');
-  Post.attr('body', 'string');
-  Post.hasOne('author', 'Author', {inverse: 'posts'});
-  Post.hasMany('tags', 'Tag', {inverse: 'posts'});
+  var Post = Model.extend('Post', function() {
+    this.attr('title', 'string');
+    this.attr('body', 'string');
+    this.hasOne('author', 'Author', {inverse: 'posts'});
+    this.hasMany('tags', 'Tag', {inverse: 'posts'});
+  }).register('Post');
 
-  class Tag extends Model {}
-  Tag.register();
-  Tag.attr('name', 'string');
-  Tag.hasMany('posts', 'Post', {inverse: 'tags'});
+  var Tag = Model.extend('Tag', function() {
+    this.attr('name', 'string');
+    this.hasMany('posts', 'Post', {inverse: 'tags'});
+  }).register('Tag');
 
   beforeEach(function() {
     BasicModel.mapper = TestMapper;
@@ -46,7 +46,7 @@ describe('Model', function () {
 
   describe('.register', function() {
     it('throws an exception when given a null name', function() {
-      class A extends Model {}
+      var A = Model.extend('A');
 
       expect(function() {
         A.register(null);
@@ -54,8 +54,8 @@ describe('Model', function () {
     });
 
     it('throws an exception when given a name that has already been registered', function() {
-      class A1 extends Model {}
-      class A2 extends Model {}
+      var A1 = Model.extend('A1');
+      var A2 = Model.extend('A2');
 
       A1.register('A');
       expect(function() {
@@ -142,10 +142,12 @@ describe('Model', function () {
 
   describe('.hasOne', function() {
     describe('with no inverse', function() {
-      class Bar extends Model {}
-      Bar.attr('x', 'number');
-      class Foo extends Model {}
-      Foo.hasOne('bar', Bar);
+      var Bar = Model.extend('Bar', function() {
+        this.attr('x', 'number');
+      });
+      var Foo = Model.extend('Foo', function() {
+        this.hasOne('bar', Bar);
+      });
 
       it('creates a property with the given name', function() {
         expect('bar' in Foo.prototype).toBe(true);
@@ -182,8 +184,8 @@ describe('Model', function () {
     });
 
     describe('with a hasOne inverse', function() {
-      class Bar extends Model {}
-      class Foo extends Model {}
+      var Bar = Model.extend('Bar');
+      var Foo = Model.extend('Foo');
       Foo.hasOne('bar', Bar, {inverse: 'foo'});
       Bar.hasOne('foo', Foo, {inverse: 'bar'});
 
@@ -207,8 +209,8 @@ describe('Model', function () {
     });
 
     describe('with a hasMany inverse', function() {
-      class Foo extends Model {}
-      class Bar extends Model {}
+      var Foo = Model.extend('Foo');
+      var Bar = Model.extend('Bar');
       Foo.hasOne('bar', Bar, {inverse: 'foos'});
       Bar.hasMany('foos', Foo, {inverse: 'bar'});
 
@@ -237,10 +239,12 @@ describe('Model', function () {
 
   describe('.hasMany', function() {
     describe('with no inverse', function() {
-      class Foo extends Model {}
-      class Bar extends Model {}
-      Bar.attr('x', 'number');
-      Foo.hasMany('bars', Bar);
+      var Bar = Model.extend('Bar', function() {
+        this.attr('x', 'number');
+      });
+      var Foo = Model.extend('Foo', function() {
+        this.hasMany('bars', Bar);
+      });
 
       it('creates a property with the given name', function() {
         expect('bars' in Foo.prototype).toBe(true);
@@ -299,8 +303,8 @@ describe('Model', function () {
     });
 
     describe('with a hasOne inverse', function() {
-      class Foo extends Model {}
-      class Bar extends Model {}
+      var Foo = Model.extend('Foo');
+      var Bar = Model.extend('Bar');
       Foo.hasMany('bars', Bar, {inverse: 'foo'});
       Bar.hasOne('foo', Foo, {inverse: 'bars'});
 
@@ -362,8 +366,8 @@ describe('Model', function () {
     });
 
     describe('with a hasMany inverse', function() {
-      class Foo extends Model {}
-      class Bar extends Model {}
+      var Foo = Model.extend('Foo');
+      var Bar = Model.extend('Bar');
       Foo.hasMany('bars', Bar, {inverse: 'foos'});
       Bar.hasMany('foos', Foo, {inverse: 'bars'});
 

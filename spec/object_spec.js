@@ -1,22 +1,22 @@
 import "es6-shim";
 import RynoObject from "../object";
 
-class Test extends RynoObject {}
+var Test = RynoObject.extend('Test', function() {
+  this.prop('str');
 
-Test.prop('str');
+  this.prop('num', {
+    get: function() { return this._NUM_; },
+    set: function(v) { this._NUM_ = v; }
+  });
 
-Test.prop('num', {
-  get: function() { return this._NUM_; },
-  set: function(v) { this._NUM_ = v; }
-});
+  this.prop('ro', {
+    readonly: true,
+    get: function() { return 4; }
+  });
 
-Test.prop('ro', {
-  readonly: true,
-  get: function() { return 4; }
-});
-
-Test.prop('def', {
-  default: 'hello'
+  this.prop('def', {
+    default: 'hello'
+  });
 });
 
 describe('Ryno.Object', function() {
@@ -109,12 +109,13 @@ describe('Ryno.Object', function() {
     });
 
     describe('with changesOn option', function() {
-      class User extends RynoObject {}
-      User.prop('first');
-      User.prop('last');
-      User.prop('full', {
-        readonly: true, changesOn: ['change:first', 'change:last'],
-        get: function() { return `${this.first} ${this.last}`; }
+      var User = RynoObject.extend('User', function() {
+        this.prop('first');
+        this.prop('last');
+        this.prop('full', {
+          readonly: true, changesOn: ['change:first', 'change:last'],
+          get: function() { return `${this.first} ${this.last}`; }
+        });
       });
 
       it('causes `change:<name>` events to be emitted whenever any of the events are observed', function() {
