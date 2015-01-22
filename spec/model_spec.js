@@ -220,6 +220,7 @@ describe('Model', function () {
     describe('with no inverse', function() {
       class Foo extends Model {}
       class Bar extends Model {}
+      Bar.attr('x', 'number');
       Foo.hasMany('bars', Bar);
 
       it('creates a property with the given name', function() {
@@ -239,14 +240,42 @@ describe('Model', function () {
         }).toThrow(new Error(`Foo#bars: expected an object of type \`Bar\` but received \`${b}\` instead`));
       });
 
-      describe('adding models', function() {
-        it('throws an exception when adding objects of the wrong type', function() {
-          var f = new Foo, b = new BasicModel;
+      it('throws an exception when adding objects of the wrong type', function() {
+        var f = new Foo, b = new BasicModel;
 
-          expect(function() {
-            f.bars.push(b);
-          }).toThrow(new Error(`Foo#bars: expected an object of type \`Bar\` but received \`${b}\` instead`));
+        expect(function() {
+          f.bars.push(b);
+        }).toThrow(new Error(`Foo#bars: expected an object of type \`Bar\` but received \`${b}\` instead`));
+      });
+
+      it('emits a `splice:<name>` event when models are added', function() {
+        var f = new Foo, b = new Bar, spy = jasmine.createSpy();
+
+        f.on('splice:bars', spy);
+        f.bars.push(b);
+        expect(spy).toHaveBeenCalledWith('splice:bars', {
+          array: f.bars, i: 0, n: 0, added: [b], removed: []
         });
+      });
+
+      it('emits a `splice:<name>` event when models are removed', function() {
+        var f = new Foo, b = new Bar, spy = jasmine.createSpy();
+
+        f.bars.push(b);
+        f.on('splice:bars', spy);
+        f.bars.pop();
+        expect(spy).toHaveBeenCalledWith('splice:bars', {
+          array: f.bars, i: 0, n: 1, added: [], removed: [b]
+        });
+      });
+
+      it('emits `<name>ElementChange:<prop name>` events when an associated model changes', function() {
+        var f = new Foo, b = new Bar({x: 1}), spy = jasmine.createSpy();
+
+        f.bars = [b];
+        f.on('barsElementChange:x', spy);
+        b.x = 2;
+        expect(spy).toHaveBeenCalledWith('barsElementChange:x', {array: f.bars, object: b, old: 1});
       });
     });
 
@@ -777,7 +806,7 @@ describe('Model', function () {
           expect(m.sourceState).toBe(Model.LOADED);
           expect(m.isBusy).toBe(false);
           done();
-        });
+        }, 10);
       });
 
       it('loads the resolved object', function(done) {
@@ -788,7 +817,7 @@ describe('Model', function () {
           expect(m.str).toBe('abc');
           expect(m.num).toBe(21);
           done();
-        });
+        }, 10);
       });
 
       it('does not set the sourceState to LOADED when the mapper rejects the promise', function(done) {
@@ -798,7 +827,7 @@ describe('Model', function () {
         setTimeout(function() {
           expect(m.sourceState).toBe(Model.EMPTY);
           done();
-        });
+        }, 10);
       });
 
       it('sets isBusy to false when the mapper rejects the promise', function(done) {
@@ -808,7 +837,7 @@ describe('Model', function () {
         setTimeout(function() {
           expect(m.isBusy).toBe(false);
           done();
-        });
+        }, 10);
       });
 
       it('sets the error property when the mapper rejects the promise', function(done) {
@@ -817,7 +846,7 @@ describe('Model', function () {
         setTimeout(function() {
           expect(m.error).toBe('error!');
           done();
-        });
+        }, 10);
       });
 
       it('clears the error property when the mapper resolves the promise', function(done) {
@@ -830,8 +859,8 @@ describe('Model', function () {
           setTimeout(() => {
             expect(m.error).toBeUndefined();
             done();
-          });
-        });
+          }, 10);
+        }, 10);
       });
     });
   });
@@ -936,7 +965,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.model.isBusy).toBe(false);
           done();
-        });
+        }, 10);
       });
 
       it('sets sourceState to LOADED when the mapper resolves the promise', function(done) {
@@ -946,7 +975,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.model.sourceState).toBe(Model.LOADED);
           done();
-        });
+        }, 10);
       });
 
       it('loads the resolved attributes', function(done) {
@@ -957,7 +986,7 @@ describe('Model', function () {
           expect(this.model.str).toBe('the string');
           expect(this.model.num).toBe(6);
           done();
-        });
+        }, 10);
       });
 
       it('does not change the sourceState when the mapper rejects the promise', function(done) {
@@ -967,7 +996,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.model.sourceState).toBe(Model.NEW);
           done();
-        });
+        }, 10);
       });
 
       it('sets isBusy to false when the mapper rejects the promise', function(done) {
@@ -977,7 +1006,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.model.isBusy).toBe(false);
           done();
-        });
+        }, 10);
       });
 
       it('sets the error property when the mapper rejects the promise', function(done) {
@@ -986,7 +1015,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.model.error).toBe('failed');
           done();
-        });
+        }, 10);
       });
 
       it('clears the error property when the mapper resolves the promise', function(done) {
@@ -999,8 +1028,8 @@ describe('Model', function () {
           setTimeout(() => {
             expect(this.model.error).toBeUndefined();
             done();
-          });
-        });
+          }, 10);
+        }, 10);
       });
     });
 
@@ -1053,7 +1082,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.model.isBusy).toBe(false);
           done();
-        });
+        }, 10);
       });
 
       it('loads the resolved attributes', function(done) {
@@ -1063,7 +1092,7 @@ describe('Model', function () {
           expect(this.model.str).toBe('xyz');
           expect(this.model.num).toBe(14);
           done();
-        });
+        }, 10);
       });
 
       it('sets isBusy to false when the mapper rejects the promise', function(done) {
@@ -1073,7 +1102,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.model.isBusy).toBe(false);
           done();
-        });
+        }, 10);
       });
 
       it('sets the error property when the mapper rejects the promise', function(done) {
@@ -1083,7 +1112,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.model.error).toBe('no');
           done();
-        });
+        }, 10);
       });
 
       it('clears the error property when the mapper resolves the promise', function(done) {
@@ -1097,8 +1126,8 @@ describe('Model', function () {
           setTimeout(() => {
             expect(this.model.error).toBeUndefined();
             done();
-          });
-        });
+          }, 10);
+        }, 10);
       });
     });
 
@@ -1133,7 +1162,7 @@ describe('Model', function () {
             m.save();
           }).toThrow(new Error(`BasicModel#save: can't save a model in the DELETED state: ${m}`));
           done();
-        });
+        }, 10);
       });
     });
   });
@@ -1180,7 +1209,7 @@ describe('Model', function () {
       setTimeout(() => {
         expect(this.model.isBusy).toBe(false);
         done();
-      });
+      }, 10);
     });
 
     it('sets sourceState to DELETED when the mapper resolves its promise', function(done) {
@@ -1190,7 +1219,7 @@ describe('Model', function () {
       setTimeout(() => {
         expect(this.model.sourceState).toBe(Model.DELETED);
         done();
-      });
+      }, 10);
     });
 
     it('removes the model from the identity map when the mapper resolves its promise', function(done) {
@@ -1202,7 +1231,7 @@ describe('Model', function () {
         expect(m).not.toBe(this.model);
         expect(m.isEmpty).toBe(true);
         done();
-      });
+      }, 10);
     });
 
     it('removes the model from any associations when the mapper resolves the promise', function(done) {
@@ -1225,7 +1254,7 @@ describe('Model', function () {
         expect(a.posts).toEqual(A());
         expect(t.posts).toEqual(A());
         done();
-      });
+      }, 10);
     });
 
     it('sets isBusy to false when the mapper rejects its promise', function(done) {
@@ -1235,7 +1264,7 @@ describe('Model', function () {
       setTimeout(() => {
         expect(this.model.isBusy).toBe(false);
         done();
-      });
+      }, 10);
     });
 
     it('does not change the sourceState when the mapper rejects its promise', function(done) {
@@ -1245,7 +1274,7 @@ describe('Model', function () {
       setTimeout(() => {
         expect(this.model.sourceState).toBe(Model.LOADED);
         done();
-      });
+      }, 10);
     });
 
     it("does not invoke the mapper's delete method when the model is in the NEW state", function() {
@@ -1264,7 +1293,7 @@ describe('Model', function () {
         this.model.delete();
         expect(BasicModel.mapper.delete).not.toHaveBeenCalled();
         done();
-      });
+      }, 10);
     });
 
     it('throws an exception when the model is BUSY', function() {
@@ -1289,7 +1318,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.onFulfilled).toHaveBeenCalledWith(undefined);
           done();
-        });
+        }, 10);
       });
     });
 
@@ -1313,7 +1342,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.onFulfilled).toHaveBeenCalledWith(undefined);
           done();
-        });
+        }, 10);
       });
 
       it('returns a new promise that is resolved with the return value of the fulfillment handler', function(done) {
@@ -1325,7 +1354,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(spy).toHaveBeenCalledWith('foo');
           done();
-        });
+        }, 10);
       });
 
       it('invokes the rejected callback when the mapper rejects the pending promise', function(done) {
@@ -1336,7 +1365,7 @@ describe('Model', function () {
         setTimeout(() => {
           expect(this.onRejected).toHaveBeenCalledWith('blah');
           done();
-        });
+        }, 10);
       });
     });
   });
@@ -1363,7 +1392,7 @@ describe('Model', function () {
       setTimeout(() => {
         expect(this.onRejected).toHaveBeenCalledWith('blah');
         done();
-      });
+      }, 10);
     });
   });
 

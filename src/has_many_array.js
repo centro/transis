@@ -1,17 +1,24 @@
 import RynoArray from "./array";
 
 function onSplice(event, {array, i, n, added, removed}) {
-  var inverse = this.__desc__.inverse;
+  var desc = this.__desc__, inverse = desc.inverse;
 
-  if (this.__handlingInverse__) { return; }
+  if (inverse && !this.__handlingInverse__) {
+    removed.forEach(function(model) {
+      model._inverseRemoved(inverse, this.__owner__);
+    }, this);
 
-  removed.forEach(function(model) {
-    model._inverseRemoved(inverse, this.__owner__);
-  }, this);
+    added.forEach(function(model) {
+      model._inverseAdded(inverse, this.__owner__);
+    }, this);
+  }
 
-  added.forEach(function(model) {
-    model._inverseAdded(inverse, this.__owner__);
-  }, this);
+  this.__owner__.emit(`splice:${desc.name}`, {array, i, n, added, removed});
+}
+
+function onElementChange(event, data) {
+  var ns = event.split(':')[1], desc = this.__desc__;
+  this.__owner__.emit(`${desc.name}ElementChange:${ns}`, data);
 }
 
 function checkAssociatedType(o) {
@@ -27,13 +34,14 @@ class HasManyArray extends RynoArray {
     super();
     this.__owner__ = owner;
     this.__desc__ = desc;
-    if (desc.inverse) { this.on('splice', onSplice); }
+    this.on('splice', onSplice);
+    this.on('elementChange:*', onElementChange);
   }
 
   splice() {
     var added = Array.from(arguments).slice(2);
     added.forEach((o) => checkAssociatedType.call(this, o));
-    super.splice.apply(this, arguments);
+    return super.splice.apply(this, arguments);
   }
 
   _inverseAdd(model) {
