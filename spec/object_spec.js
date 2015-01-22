@@ -107,6 +107,28 @@ describe('Ryno.Object', function() {
         });
       });
     });
+
+    describe('with changesOn option', function() {
+      class User extends RynoObject {}
+      User.prop('first');
+      User.prop('last');
+      User.prop('full', {
+        readonly: true, changesOn: ['change:first', 'change:last'],
+        get: function() { return `${this.first} ${this.last}`; }
+      });
+
+      it('causes `change:<name>` events to be emitted whenever any of the events are observed', function() {
+        var u = new User({first: 'Joe', last: 'Blow'}), spy = jasmine.createSpy();
+
+        u.on('change:full', spy);
+        expect(u.full).toBe('Joe Blow');
+        u.first = 'Bob';
+        expect(spy).toHaveBeenCalledWith('change:full', {object: u});
+        expect(spy.calls.count()).toBe(1);
+        u.last = 'Smith';
+        expect(spy.calls.count()).toBe(2);
+      });
+    });
   });
 
   describe('constructor', function() {

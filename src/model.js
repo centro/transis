@@ -447,7 +447,7 @@ class Model extends RynoObject {
     this.__isBusy__      = false;
     this.__promise__     = Promise.resolve();
 
-    for (let k in attrs) { if (k in this) { this[k] = attrs[k]; } }
+    super(attrs);
   }
 
   get id() { return this.__id__; }

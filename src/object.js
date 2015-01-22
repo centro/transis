@@ -2,6 +2,10 @@ import Emitter from "./emitter";
 
 var objectId = 0;
 
+function onDependentEvent(event, data, desc) {
+  this.emit(`change:${desc.name}`, {object: this});
+}
+
 class RynoObject {
   // Public: Defines a property on the class's prototype. Properties defined with this method are
   // observable using the `Ryno.Object#on` method. When changed, they emit `change:<name>` events.
@@ -9,18 +13,23 @@ class RynoObject {
   //
   // name - A string containing the name of the property.
   // opts - An object containing one or more of the following keys:
-  //   get      - A custom property getter function.
-  //   set      - A custom property setter function.
-  //   readonly - Makes the property readonly. Should only be used with the `get` option.
-  //   default  - Specify a default value for the property.
+  //   get       - A custom property getter function.
+  //   set       - A custom property setter function.
+  //   readonly  - Makes the property readonly. Should only be used with the `get` option.
+  //   default   - Specify a default value for the property.
+  //   changesOn - An array of event names that when observed, cause the property to change. This
+  //               should be used with custom `get` functions in order to make the property
+  //               observable.
   //
   // Returns the receiver.
   static prop(name, opts = {}) {
     var descriptor = Object.assign({
+      name: name,
       get: null,
       set: null,
       readonly: false,
-      default: undefined
+      default: undefined,
+      changesOn: []
     }, opts);
 
     if (!this.prototype.hasOwnProperty('__props__')) {
@@ -41,6 +50,11 @@ class RynoObject {
 
   constructor(props = {}) {
     for (let k in props) { if (k in this) { this[k] = props[k]; } }
+    for (let k in this.__props__) {
+      this.__props__[k].changesOn.forEach((event) => {
+        this.on(event, onDependentEvent, {context: this.__props__[k]})
+      });
+    }
   }
 
   // Public: Returns a number that can be used to uniquely identify the receiver object.
