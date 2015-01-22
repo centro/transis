@@ -269,13 +269,13 @@ describe('Model', function () {
         });
       });
 
-      it('emits `<name>ElementChange:<prop name>` events when an associated model changes', function() {
+      it('emits `change:<name>.<prop name>` events when an associated model changes', function() {
         var f = new Foo, b = new Bar({x: 1}), spy = jasmine.createSpy();
 
         f.bars = [b];
-        f.on('barsElementChange:x', spy);
+        f.on('change:bars.x', spy);
         b.x = 2;
-        expect(spy).toHaveBeenCalledWith('barsElementChange:x', {array: f.bars, object: b, old: 1});
+        expect(spy).toHaveBeenCalledWith('change:bars.x', {array: f.bars, object: b, old: 1});
       });
     });
 

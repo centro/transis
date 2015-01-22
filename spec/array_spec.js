@@ -341,24 +341,24 @@ describe('Array', function() {
       a = A(new Test({x: 1, y: 'a'}), new Test({x: 2, y: 'b'}), new Test({x: 3, y: 'c'}));
       spy = jasmine.createSpy();
 
-      a.on('elementChange:*', spy);
+      a.on('change:*', spy);
     });
 
-    it('emits an elementChange event when a property on an element of the array changes', function() {
+    it('emits an `change:<prop name>` event when a property on an element of the array changes', function() {
       a.at(0).x = 10;
-      expect(spy).toHaveBeenCalledWith('elementChange:x', {array: a, object: a.at(0), old: 1});
+      expect(spy).toHaveBeenCalledWith('change:x', {array: a, object: a.at(0), old: 1});
       a.at(1).y = 'foo';
-      expect(spy).toHaveBeenCalledWith('elementChange:y', {array: a, object: a.at(1), old: 'b'});
+      expect(spy).toHaveBeenCalledWith('change:y', {array: a, object: a.at(1), old: 'b'});
     });
 
-    it('emits an elementChange event when an added element changes', function() {
+    it('emits an `change:<prop name>` event when an added element changes', function() {
       var t = new Test({x: 4, y: 'd'});
       a.push(t);
       t.y = 'e';
-      expect(spy).toHaveBeenCalledWith('elementChange:y', {array: a, object: t, old: 'd'});
+      expect(spy).toHaveBeenCalledWith('change:y', {array: a, object: t, old: 'd'});
     });
 
-    it('does not emit an elementChange event when a removed element changes', function() {
+    it('does not emit an `change:<prop name>` event when a removed element changes', function() {
       var t = a.pop();
       t.y = 'e';
       expect(spy).not.toHaveBeenCalled();

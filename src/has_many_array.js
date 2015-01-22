@@ -16,9 +16,10 @@ function onSplice(event, {array, i, n, added, removed}) {
   this.__owner__.emit(`splice:${desc.name}`, {array, i, n, added, removed});
 }
 
-function onElementChange(event, data) {
+function onChange(event, data) {
   var ns = event.split(':')[1], desc = this.__desc__;
-  this.__owner__.emit(`${desc.name}ElementChange:${ns}`, data);
+  if (ns.indexOf('.') >= 0) { return; }
+  this.__owner__.emit(`change:${desc.name}.${ns}`, data);
 }
 
 function checkAssociatedType(o) {
@@ -35,7 +36,7 @@ class HasManyArray extends RynoArray {
     this.__owner__ = owner;
     this.__desc__ = desc;
     this.on('splice', onSplice);
-    this.on('elementChange:*', onElementChange);
+    this.on('change:*', onChange);
   }
 
   splice() {

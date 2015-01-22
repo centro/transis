@@ -5,7 +5,7 @@ var {slice, splice, concat, map, filter} = Array.prototype;
 
 function onElementChange(event, data) {
   var ns = event.split(':')[1];
-  this.emit(`elementChange:${ns}`, Object.assign({array: this}, data));
+  this.emit(`change:${ns}`, Object.assign({array: this}, data));
 }
 
 class RynoArray extends RynoObject {
@@ -58,7 +58,7 @@ class RynoArray extends RynoObject {
 
       for (i = 0, n = elements.length; i < n; i++) {
         if (elements[i] instanceof RynoObject) {
-          elements[i].on('change:*', onElementEvent, {observer: this});
+          elements[i].on('change:*', onElementChange, {observer: this});
         }
       }
     }
