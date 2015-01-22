@@ -42,6 +42,14 @@ function checkAssociatedType(desc, o) {
   }
 }
 
+// Internal: Handler for change events observed on objects associated via a `hasOne` association.
+// This propagates the event on the receiver.
+function onHasOneChange(event, data, desc) {
+  var ns = event.split(':')[1];
+  if (ns.indexOf('.') >= 0) { return; }
+  this.emit(`change:${desc.name}.${ns}`, data);
+}
+
 // Internal: Sets the given object on a `hasOne` property.
 //
 // desc - An association descriptor.
@@ -65,6 +73,9 @@ function hasOneSet(desc, v, sync) {
 
   if (sync && inv && prev) { prev._inverseRemoved(inv, this); }
   if (sync && inv && v) { v._inverseAdded(inv, this); }
+
+  if (prev) { prev.off('change:*', onHasOneChange, {observer: this, context: desc}); }
+  if (v) { v.on('change:*', onHasOneChange, {observer: this, context: desc}); }
 }
 
 // Internal: Callback for a successful model deletion. Updates the model's state, removes it from
@@ -223,7 +234,8 @@ class Model extends RynoObject {
       type: 'hasOne', name, klass
     });
 
-    Object.defineProperty(this.prototype, name, {
+
+    this.prop(name, {
       get: function() { return this[`__${name}`]; },
       set: function(v) { hasOneSet.call(this, desc, v, true); }
     });

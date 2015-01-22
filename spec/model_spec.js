@@ -143,6 +143,7 @@ describe('Model', function () {
   describe('.hasOne', function() {
     describe('with no inverse', function() {
       class Bar extends Model {}
+      Bar.attr('x', 'number');
       class Foo extends Model {}
       Foo.hasOne('bar', Bar);
 
@@ -159,6 +160,24 @@ describe('Model', function () {
         expect(function() {
           f.bar = b;
         }).toThrow(new Error(`Foo#bar: expected an object of type \`Bar\` but received \`${b}\` instead`));
+      });
+
+      it('emits `change:<name>` events when the associated model is set', function() {
+        var f = new Foo, b = new Bar, spy = jasmine.createSpy();
+
+        f.on('change:bar', spy);
+        f.bar = b;
+        expect(spy).toHaveBeenCalledWith('change:bar', {object: f, old: undefined});
+        f.bar = undefined;
+        expect(spy).toHaveBeenCalledWith('change:bar', {object: f, old: b});
+      });
+
+      it('emits `change:<name>.<prop name>` events when the associated model changes', function() {
+        var b = new Bar({x: 1}), f = new Foo({bar: b}), spy = jasmine.createSpy();
+
+        f.on('change:bar.x', spy);
+        b.x = 2;
+        expect(spy).toHaveBeenCalledWith('change:bar.x', {object: b, old: 1});
       });
     });
 
