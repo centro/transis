@@ -9,7 +9,7 @@ var IdMap = {
     }
 
     if (map.get(id)) {
-      throw new Error(`IdMap.insert: model of type \`${klass.name}\` and id \`${id}\` has already been inserted`);
+      throw new Error(`IdMap.insert: model of type \`${klass}\` and id \`${id}\` has already been inserted`);
     }
 
     map.set(id,  model);

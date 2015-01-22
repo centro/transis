@@ -13,11 +13,11 @@ build/ryno.js: $(ES5_SOURCES)
 
 build/%.js: src/%.js
 	@mkdir -p build
-	./node_modules/.bin/6to5 -m commonInterop $< -o $@
+	./node_modules/.bin/6to5 $< -o $@
 
 build/spec/%.js: spec/%.js
 	@mkdir -p build/spec
-	./node_modules/.bin/6to5 -m commonInterop $< -o $@
+	./node_modules/.bin/6to5 $< -o $@
 
 SPEC ?=
 spec_node: ryno $(ES5_SPECS)

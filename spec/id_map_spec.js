@@ -28,7 +28,7 @@ describe('IdMap', function () {
       });
     });
 
-    describe('with a model instance of a class it has been seen before', function() {
+    describe('with a model instance of a class it has seen before', function() {
       beforeEach(function() { IdMap.insert(this.foo1); });
 
       it("adds the model to the map at the key of the given model's constructor", function() {
@@ -42,7 +42,7 @@ describe('IdMap', function () {
       it('throws an exception when the model already exists in the id map', function() {
         expect(() => {
           IdMap.insert(this.foo1);
-        }).toThrow(new Error("IdMap.insert: model of type `Foo` and id `1` has already been inserted"));
+        }).toThrow(new Error(`IdMap.insert: model of type \`${Foo}\` and id \`1\` has already been inserted`));
       });
     });
 
