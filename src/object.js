@@ -22,8 +22,7 @@ function getCached(name) { return this.__cache__ ? this.__cache__[name] : undefi
 // Internal: Dependent event observer. Clears cached values and emits change events for the
 // the property whose dependency was changed.
 function onDependentEvent(event, data, desc) {
-  uncache.call(this, desc.name);
-  this.emit(`change:${desc.name}`, {object: this});
+  this._emitChangeEvent(desc.name);
 }
 
 // Public: Creates a subclass of `Basis.Object`.
@@ -189,7 +188,13 @@ BasisObject.prototype.setProp = function(name, value) {
   if (descriptor.set) { descriptor.set.call(this, value); }
   else { this[key] = value; }
 
-  this.emit(`change:${name}`, {object: this, old});
+  this._emitChangeEvent(name, {old});
+};
+
+// Internal: Emits a `change:<name>` event and clears the cache for the property that changed.
+BasisObject.prototype._emitChangeEvent = function(name, opts = {}) {
+  uncache.call(this, name);
+  this.emit(`change:${name}`, Object.assign(opts, {object: this}));
 };
 
 BasisObject.displayName = 'Basis.Object';
