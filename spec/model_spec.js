@@ -805,65 +805,65 @@ describe('Model', function () {
         var m = BasicModel.get(704);
         expect(m.sourceState).toBe(Model.EMPTY);
         this.resolve({id: 704, str: 'foo'});
-        setTimeout(function() {
+        this.delay(function() {
           expect(m.sourceState).toBe(Model.LOADED);
           expect(m.isBusy).toBe(false);
           done();
-        }, 10);
+        });
       });
 
       it('loads the resolved object', function(done) {
         var m = BasicModel.get(705);
         expect(m.sourceState).toBe(Model.EMPTY);
         this.resolve({id: 705, str: 'abc', num: 21});
-        setTimeout(function() {
+        this.delay(function() {
           expect(m.str).toBe('abc');
           expect(m.num).toBe(21);
           done();
-        }, 10);
+        });
       });
 
       it('does not set the sourceState to LOADED when the mapper rejects the promise', function(done) {
         var m = BasicModel.get(706);
         expect(m.sourceState).toBe(Model.EMPTY);
         this.reject('error!');
-        setTimeout(function() {
+        this.delay(function() {
           expect(m.sourceState).toBe(Model.EMPTY);
           done();
-        }, 10);
+        });
       });
 
       it('sets isBusy to false when the mapper rejects the promise', function(done) {
         var m = BasicModel.get(707);
         expect(m.isBusy).toBe(true);
         this.reject('error!');
-        setTimeout(function() {
+        this.delay(function() {
           expect(m.isBusy).toBe(false);
           done();
-        }, 10);
+        });
       });
 
       it('sets the error property when the mapper rejects the promise', function(done) {
         var m = BasicModel.get(708);
         this.reject('error!');
-        setTimeout(function() {
+        this.delay(function() {
           expect(m.error).toBe('error!');
           done();
-        }, 10);
+        });
       });
 
       it('clears the error property when the mapper resolves the promise', function(done) {
         var m = BasicModel.get(708);
         this.reject('blah');
-        setTimeout(() => {
+        this.delay(() => {
           expect(m.error).toBe('blah');
           BasicModel.get(708);
           this.resolve({id: 708, str: 'asdf'});
-          setTimeout(() => {
+          this.delay(() => {
             expect(m.error).toBeUndefined();
             done();
-          }, 10);
-        }, 10);
+          });
+        });
       });
     });
   });
@@ -965,74 +965,74 @@ describe('Model', function () {
         this.model.save();
         expect(this.model.isBusy).toBe(true);
         this.resolve({id: 123});
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.isBusy).toBe(false);
           done();
-        }, 10);
+        });
       });
 
       it('sets sourceState to LOADED when the mapper resolves the promise', function(done) {
         this.model.save();
         expect(this.model.sourceState).toBe(Model.NEW);
         this.resolve({id: 123});
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.sourceState).toBe(Model.LOADED);
           done();
-        }, 10);
+        });
       });
 
       it('loads the resolved attributes', function(done) {
         this.model.save();
         this.resolve({id: 123, str: 'the string', num: 6});
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.id).toBe(123);
           expect(this.model.str).toBe('the string');
           expect(this.model.num).toBe(6);
           done();
-        }, 10);
+        });
       });
 
       it('does not change the sourceState when the mapper rejects the promise', function(done) {
         this.model.save();
         expect(this.model.sourceState).toBe(Model.NEW);
         this.reject('failed');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.sourceState).toBe(Model.NEW);
           done();
-        }, 10);
+        });
       });
 
       it('sets isBusy to false when the mapper rejects the promise', function(done) {
         this.model.save();
         expect(this.model.isBusy).toBe(true);
         this.reject('failed');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.isBusy).toBe(false);
           done();
-        }, 10);
+        });
       });
 
       it('sets the error property when the mapper rejects the promise', function(done) {
         this.model.save();
         this.reject('failed');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.error).toBe('failed');
           done();
-        }, 10);
+        });
       });
 
       it('clears the error property when the mapper resolves the promise', function(done) {
         this.model.save();
         this.reject('failed');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.error).toBe('failed');
           this.model.save();
           this.resolve({id: 123});
-          setTimeout(() => {
+          this.delay(() => {
             expect(this.model.error).toBeUndefined();
             done();
-          }, 10);
-        }, 10);
+          });
+        });
       });
     });
 
@@ -1082,55 +1082,55 @@ describe('Model', function () {
         this.model.save();
         expect(this.model.isBusy).toBe(true);
         this.resolve({id: 800});
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.isBusy).toBe(false);
           done();
-        }, 10);
+        });
       });
 
       it('loads the resolved attributes', function(done) {
         this.model.save();
         this.resolve({id: 800, str: 'xyz', num: 14});
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.str).toBe('xyz');
           expect(this.model.num).toBe(14);
           done();
-        }, 10);
+        });
       });
 
       it('sets isBusy to false when the mapper rejects the promise', function(done) {
         this.model.save();
         expect(this.model.isBusy).toBe(true);
         this.reject('no');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.isBusy).toBe(false);
           done();
-        }, 10);
+        });
       });
 
       it('sets the error property when the mapper rejects the promise', function(done) {
         this.model.save();
         expect(this.model.error).toBeUndefined();
         this.reject('no');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.error).toBe('no');
           done();
-        }, 10);
+        });
       });
 
       it('clears the error property when the mapper resolves the promise', function(done) {
         this.model.save();
         expect(this.model.error).toBeUndefined();
         this.reject('no');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.model.error).toBe('no');
           this.model.save();
           this.resolve({id: 800});
-          setTimeout(() => {
+          this.delay(() => {
             expect(this.model.error).toBeUndefined();
             done();
-          }, 10);
-        }, 10);
+          });
+        });
       });
     });
 
@@ -1159,13 +1159,13 @@ describe('Model', function () {
         var m = BasicModel.load({id: 801});
         m.delete();
         this.deleteResolve();
-        setTimeout(function() {
+        this.delay(function() {
           expect(m.sourceState).toBe(Model.DELETED);
           expect(function() {
             m.save();
           }).toThrow(new Error(`BasicModel#save: can't save a model in the DELETED state: ${m}`));
           done();
-        }, 10);
+        });
       });
     });
   });
@@ -1209,32 +1209,32 @@ describe('Model', function () {
       this.model.delete();
       expect(this.model.isBusy).toBe(true);
       this.resolve();
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.model.isBusy).toBe(false);
         done();
-      }, 10);
+      });
     });
 
     it('sets sourceState to DELETED when the mapper resolves its promise', function(done) {
       this.model.delete();
       expect(this.model.sourceState).toBe(Model.LOADED);
       this.resolve();
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.model.sourceState).toBe(Model.DELETED);
         done();
-      }, 10);
+      });
     });
 
     it('removes the model from the identity map when the mapper resolves its promise', function(done) {
       this.model.delete();
       expect(BasicModel.get(this.model.id)).toBe(this.model);
       this.resolve();
-      setTimeout(() => {
+      this.delay(() => {
         var m = BasicModel.get(this.model.id);
         expect(m).not.toBe(this.model);
         expect(m.isEmpty).toBe(true);
         done();
-      }, 10);
+      });
     });
 
     it('removes the model from any associations when the mapper resolves the promise', function(done) {
@@ -1253,31 +1253,31 @@ describe('Model', function () {
       expect(t.posts).toEqual(A(p));
       p.delete();
       this.resolve();
-      setTimeout(() => {
+      this.delay(() => {
         expect(a.posts).toEqual(A());
         expect(t.posts).toEqual(A());
         done();
-      }, 10);
+      });
     });
 
     it('sets isBusy to false when the mapper rejects its promise', function(done) {
       this.model.delete();
       expect(this.model.isBusy).toBe(true);
       this.reject();
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.model.isBusy).toBe(false);
         done();
-      }, 10);
+      });
     });
 
     it('does not change the sourceState when the mapper rejects its promise', function(done) {
       this.model.delete();
       expect(this.model.sourceState).toBe(Model.LOADED);
       this.reject();
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.model.sourceState).toBe(Model.LOADED);
         done();
-      }, 10);
+      });
     });
 
     it("does not invoke the mapper's delete method when the model is in the NEW state", function() {
@@ -1290,13 +1290,13 @@ describe('Model', function () {
     it('does nothing when the model state is DELETED', function(done) {
       this.model.delete();
       this.resolve();
-      setTimeout(() => {
+      this.delay(() => {
         BasicModel.mapper.delete.calls.reset();
         expect(this.model.sourceState).toBe(Model.DELETED);
         this.model.delete();
         expect(BasicModel.mapper.delete).not.toHaveBeenCalled();
         done();
-      }, 10);
+      });
     });
 
     it('throws an exception when the model is BUSY', function() {
@@ -1318,10 +1318,10 @@ describe('Model', function () {
       it('invokes the fulfillment callback immediately', function(done) {
         var m = new BasicModel;
         m.then(this.onFulfilled, this.onRejected);
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.onFulfilled).toHaveBeenCalledWith(undefined);
           done();
-        }, 10);
+        });
       });
     });
 
@@ -1342,10 +1342,10 @@ describe('Model', function () {
         expect(m.isBusy).toBe(true);
         m.then(this.onFulfilled, this.onRejected);
         this.resolve({id: 19});
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.onFulfilled).toHaveBeenCalledWith(undefined);
           done();
-        }, 10);
+        });
       });
 
       it('returns a new promise that is resolved with the return value of the fulfillment handler', function(done) {
@@ -1354,10 +1354,10 @@ describe('Model', function () {
         var spy = jasmine.createSpy();
         p.then(spy);
         this.resolve({id: 19});
-        setTimeout(() => {
+        this.delay(() => {
           expect(spy).toHaveBeenCalledWith('foo');
           done();
-        }, 10);
+        });
       });
 
       it('invokes the rejected callback when the mapper rejects the pending promise', function(done) {
@@ -1365,10 +1365,10 @@ describe('Model', function () {
         expect(m.isBusy).toBe(true);
         m.then(this.onFulfilled, this.onRejected);
         this.reject('blah');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.onRejected).toHaveBeenCalledWith('blah');
           done();
-        }, 10);
+        });
       });
     });
   });
@@ -1392,10 +1392,10 @@ describe('Model', function () {
       expect(m.isBusy).toBe(true);
       m.catch(this.onRejected);
       this.reject('blah');
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.onRejected).toHaveBeenCalledWith('blah');
         done();
-      }, 10);
+      });
     });
   });
 

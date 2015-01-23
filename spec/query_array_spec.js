@@ -46,56 +46,56 @@ describe('QueryArray', function () {
       this.a.query();
       expect(this.a.isBusy).toBe(true);
       this.resolve([]);
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.a.isBusy).toBe(false);
         done();
-      }, 10);
+      });
     });
 
     it('sets the isBusy property to false when the promise is rejected', function(done) {
       this.a.query();
       expect(this.a.isBusy).toBe(true);
       this.reject('foo');
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.a.isBusy).toBe(false);
         done();
-      }, 10);
+      });
     });
 
     it('sets the error property when the promise is rejected', function(done) {
       this.a.query();
       this.reject('foobar');
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.a.error).toBe('foobar');
         done();
-      }, 10);
+      });
     });
 
     it('clears the error property when the promise is resolved', function(done) {
       this.a.query();
       this.reject('foobar');
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.a.error).toBe('foobar');
         this.a.query();
         this.resolve([]);
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.a.error).toBeUndefined();
           done();
-        }, 10);
-      }, 10);
+        });
+      });
     });
 
     it('loads the resolved array of objects and replaces the contents of the array with the loaded models', function(done) {
       this.a.query();
       this.resolve([{id: 600, str: 's1'}, {id: 601, str: 's2'}]);
-      setTimeout(() => {
+      this.delay(() => {
         expect(this.a.length).toBe(2);
         expect(this.a.at(0).id).toBe(600);
         expect(this.a.at(0).str).toBe('s1');
         expect(this.a.at(1).id).toBe(601);
         expect(this.a.at(1).str).toBe('s2');
         done();
-      }, 10);
+      });
     });
 
     it("does not invoke the mapper's query method when the array is busy", function() {
@@ -111,11 +111,11 @@ describe('QueryArray', function () {
       expect(Test.mapper.query.calls.count()).toBe(1);
       expect(Test.mapper.query).toHaveBeenCalledWith({foo: 1});
       this.resolve([]);
-      setTimeout(() => {
+      this.delay(() => {
         expect(Test.mapper.query.calls.count()).toBe(2);
         expect(Test.mapper.query).toHaveBeenCalledWith({foo: 3});
         done();
-      }, 10);
+      });
     });
 
     it('properly resolves the promise when the query is queued', function(done) {
@@ -124,15 +124,15 @@ describe('QueryArray', function () {
       this.a.query({foo: 1}).then(spy1);
       this.a.query({foo: 2}).then(spy2);
       this.resolve([]);
-      setTimeout(function() {
+      this.delay(function() {
         expect(spy1).toHaveBeenCalled();
         expect(spy2).not.toHaveBeenCalled();
         this.resolve([]);
-        setTimeout(function() {
+        this.delay(function() {
           expect(spy2).toHaveBeenCalled();
           done();
-        }, 10);
-      }.bind(this), 10);
+        });
+      }.bind(this));
     });
 
     it("throws an exception when the class's mapper is not defined", function() {
@@ -171,11 +171,11 @@ describe('QueryArray', function () {
     describe('when called before the #query method', function() {
       it('invokes the fulfilled callback', function(done) {
         this.a.then(this.onFulfilled, this.onRejected);
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.onFulfilled).toHaveBeenCalled();
           expect(this.onRejected).not.toHaveBeenCalled();
           done();
-        }, 10);
+        });
       });
     });
 
@@ -183,21 +183,21 @@ describe('QueryArray', function () {
       it('invokes the fulfilled callback when the mapper fulfills its promise', function(done) {
         this.a.query().then(this.onFulfilled, this.onRejected);
         this.resolve([]);
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.onFulfilled).toHaveBeenCalled();
           expect(this.onRejected).not.toHaveBeenCalled();
           done();
-        }, 10);
+        });
       });
 
       it('invokes the rejected callback when the mapper rejects its promise', function(done) {
         this.a.query().then(this.onFulfilled, this.onRejected);
         this.reject('foo');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.onFulfilled).not.toHaveBeenCalled();
           expect(this.onRejected).toHaveBeenCalled();
           done();
-        }, 10);
+        });
       });
     });
   });
@@ -210,10 +210,10 @@ describe('QueryArray', function () {
     describe('when called before the #query method', function() {
       it('does nothing', function(done) {
         this.a.catch(this.onRejected);
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.onRejected).not.toHaveBeenCalled();
           done();
-        }, 10);
+        });
       });
     });
 
@@ -221,19 +221,19 @@ describe('QueryArray', function () {
       it('does nothing when the mapper fulfills its promise', function(done) {
         this.a.query().catch(this.onRejected);
         this.resolve([]);
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.onRejected).not.toHaveBeenCalled();
           done();
-        }, 10);
+        });
       });
 
       it('invokes the callback when the mapper rejects its promise', function(done) {
         this.a.query().catch(this.onRejected);
         this.reject('foo');
-        setTimeout(() => {
+        this.delay(() => {
           expect(this.onRejected).toHaveBeenCalledWith('foo');
           done();
-        }, 10);
+        });
       });
     });
   });
