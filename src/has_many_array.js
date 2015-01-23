@@ -1,7 +1,7 @@
 import BasisArray from "./array";
 
 function onSplice(event, {array, i, n, added, removed}) {
-  var desc = this.__desc__, inverse = desc.inverse;
+  var desc = this.__desc__, inverse = desc.inverse, name = desc.name, changes, i;
 
   if (inverse && !this.__handlingInverse__) {
     removed.forEach(function(model) {
@@ -11,6 +11,33 @@ function onSplice(event, {array, i, n, added, removed}) {
     added.forEach(function(model) {
       model._inverseAdded(inverse, this.__owner__);
     }, this);
+  }
+
+  if (desc.owner) {
+    changes = this.__owner__.changes[name] =
+      this.__owner__.changes[name] || {added: [], removed: []};
+
+    added.forEach((m) => {
+      if ((i = changes.removed.indexOf(m)) !== -1) {
+        changes.removed.splice(i, 1);
+      }
+      else if (changes.added.indexOf(m) === -1) {
+        changes.added.push(m);
+      }
+    });
+
+    removed.forEach((m) => {
+      if ((i = changes.added.indexOf(m)) !== -1) {
+        changes.added.splice(i, 1);
+      }
+      else if (changes.removed.indexOf(m) === -1) {
+        changes.removed.push(m);
+      }
+    });
+
+    if (!changes.added.length && !changes.removed.length) {
+      delete this.__owner__.changes[name];
+    }
   }
 
   this.__owner__.emit(`splice:${desc.name}`, {array, i, n, added, removed});

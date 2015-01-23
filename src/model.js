@@ -5,6 +5,7 @@ import BasisArray from "./array";
 import QueryArray from "./query_array";
 import HasManyArray from "./has_many_array";
 import * as attrs from "./attrs";
+import * as util from "./util";
 
 var registeredAttrs = {};
 
@@ -313,6 +314,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
     }
 
     model.sourceState = LOADED;
+    model.changes = {};
 
     return model;
   };
@@ -412,6 +414,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
   // Internal: Initializes the model by setting up some internal properties.
   this.prototype.init = function(props) {
     this.attrs       = {};
+    this.changes     = {};
     this.sourceState = NEW;
     this.isBusy      = false;
     this.__promise__ = Promise.resolve();
@@ -586,6 +589,27 @@ var Model = BasisObject.extend('Basis.Model', function() {
     return a.join('-');
   };
 
+  // Public: Undoes all property and owned assocation changes made to this model since it was last
+  // loaded.
+  this.prototype.undoChanges = function() {
+    var associations = this.associations;
+
+    for (let prop in this.changes) {
+      if (associations[prop] && associations[prop].type === 'hasMany') {
+        this.changes[prop].removed.forEach((m) => {
+          this[prop].push(m);
+        });
+
+        this.changes[prop].added.forEach((m) => {
+          this[prop].splice(this[prop].indexOf(m), 1);
+        });
+      }
+      else {
+        this[prop] = this.changes[prop];
+      }
+    }
+  };
+
   this.prototype.toString = function() {
     return `#<${this.constructor} (${this.stateString()}):${this.id}>`;
   };
@@ -632,6 +656,16 @@ var Model = BasisObject.extend('Basis.Model', function() {
     else if (desc.type === 'hasMany') {
       this[desc.name]._inverseAdd(model);
     }
+  };
+
+  // Internal: Overrides `Basis.Object#_setProp` in order to perform change tracking.
+  this.prototype._setProp = function(name, value) {
+    var oldValue = Model.__super__._setProp.call(this, name, value);
+
+    if (this.associations && this.associations[name] && !this.associations[name].owner) { return; }
+
+    if (!(name in this.changes)) { this.changes[name] = oldValue; }
+    if (util.eq(this[name], this.changes[name])) { delete this.changes[name]; }
   };
 });
 

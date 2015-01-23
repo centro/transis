@@ -104,8 +104,8 @@ BasisObject.prop = function(name, opts = {}) {
   this.prototype.__props__[name] = descriptor;
 
   Object.defineProperty(this.prototype, name, {
-    get: function() { return this.getProp(name); },
-    set: descriptor.readonly ? undefined : function(value) { this.setProp(name, value); },
+    get: function() { return this._getProp(name); },
+    set: descriptor.readonly ? undefined : function(value) { this._setProp(name, value); },
     configurable: false,
     enumerable: true
   });
@@ -150,11 +150,11 @@ BasisObject.prototype.eq = function(other) { return this === other; };
 //
 // Returns the value of the property.
 // Throws `Error` if there is no property with the given name.
-BasisObject.prototype.getProp = function(name) {
+BasisObject.prototype._getProp = function(name) {
   var descriptor = this.__props__ && this.__props__[name], key = `__${name}`, value;
 
   if (!descriptor) {
-    throw new Error(`Basis.Object#getProp: unknown prop name \`${name}\``);
+    throw new Error(`Basis.Object#_getProp: unknown prop name \`${name}\``);
   }
 
   if (descriptor.cache && isCached.call(this, name)) { return getCached.call(this, name); }
@@ -169,26 +169,28 @@ BasisObject.prototype.getProp = function(name) {
 
 // Internal: Sets the value of the given property and emits a `change:<name>` event.
 //
-// Returns nothing.
+// Returns the previous value.
 // Throws `Error` if there is no property with the given name.
 // Throws `TypeError` if the property is readonly.
-BasisObject.prototype.setProp = function(name, value) {
+BasisObject.prototype._setProp = function(name, value) {
   var descriptor = this.__props__ && this.__props__[name],
       key        = `__${name}`,
-      old        = this.getProp(name);
+      old        = this._getProp(name);
 
   if (!descriptor) {
-    throw new Error(`Basis.Object#setProp: unknown prop name \`${name}\``);
+    throw new Error(`Basis.Object#_setProp: unknown prop name \`${name}\``);
   }
 
   if (descriptor.readonly) {
-    throw new TypeError(`Basis.Object#setProp: cannot set readonly property \`${name}\` of ${this}`);
+    throw new TypeError(`Basis.Object#_setProp: cannot set readonly property \`${name}\` of ${this}`);
   }
 
   if (descriptor.set) { descriptor.set.call(this, value); }
   else { this[key] = value; }
 
   this._emitChangeEvent(name, {old});
+
+  return old;
 };
 
 // Internal: Emits a `change:<name>` event and clears the cache for the property that changed.

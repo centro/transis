@@ -1435,5 +1435,197 @@ describe('Model', function () {
       }).toThrow(new Error('Author#load: received attributes with id `4` but model already has id `3`'));
     });
   });
+
+  describe('change tracking', function() {
+    var Company = Model.extend('Company', function() {
+      this.hasMany('invoices', 'Invoice', {inverse: 'company'});
+      this.attr('name', 'string');
+    });
+
+    var Address = Model.extend('Address', function() {
+      this.attr('name', 'string');
+      this.attr('address', 'string');
+    });
+
+    var Invoice = Model.extend('Invoice', function() {
+      this.hasOne('company', 'Company', {inverse: 'invoices'});
+      this.hasOne('billingAddress', 'Address', {owner: true});
+      this.hasMany('lineItems', 'LineItem', {owner: true, inverse: 'invoice'});
+      this.attr('name', 'string');
+    });
+
+    var LineItem = Model.extend('LineItem', function() {
+      this.hasOne('invoice', 'Invoice', {inverse: 'lineItems'});
+      this.attr('name', 'string');
+      this.attr('quantity', 'number');
+      this.attr('rate', 'number');
+    });
+
+    beforeEach(function() {
+      this.company = Company.load({id: 123, name: 'Acme, Inc.'});
+
+      this.invoice = Invoice.load({
+        id: 8,
+        company: 123,
+        name: 'A',
+        billingAddress: {id: 20, name: 'Joe Blow', address: '123 Fake St.'},
+        lineItems: [
+          {id: 10, name: 'foo', quantity: 10, rate: 3.5},
+          {id: 11, name: 'bar', quantity: 3, rate: 12.25},
+          {id: 12, name: 'baz', quantity: 8, rate: 5},
+        ]
+      });
+    });
+
+    it('keeps track of changes to attributes in the `changes` property', function() {
+      expect(this.invoice.changes).toEqual({});
+      this.invoice.name = 'B';
+      expect(this.invoice.changes).toEqual({name: 'A'});
+    });
+
+    it('does not keep track of intermediate changes', function() {
+      this.invoice.name = 'B';
+      expect(this.invoice.changes.name).toBe('A');
+      this.invoice.name = 'C';
+      expect(this.invoice.changes.name).toBe('A');
+    });
+
+    it('does not add a change record if the attribute is set to an equal value', function() {
+      this.invoice.name = 'A';
+      expect(this.invoice.changes).toEqual({});
+    });
+
+    it('clears the change when an attribute is set back to its original value', function() {
+      this.invoice.name = 'B';
+      expect(this.invoice.changes.name).toBe('A');
+      this.invoice.name = 'A';
+      expect(this.invoice.changes.name).toBeUndefined();
+    });
+
+    it('keeps track of changes to owned hasOne associations', function() {
+      var address = this.invoice.billingAddress;
+
+      this.invoice.billingAddress = new Address;
+      expect(this.invoice.changes.billingAddress).toBe(address);
+    });
+
+    it('does not keep track of changes to unowned hasOne associations', function() {
+      expect(this.invoice.company).toBe(this.company);
+      this.invoice.company = null;
+      expect(this.invoice.changes.company).toBeUndefined();
+    });
+
+    it('keeps track of changes to owned hasMany associations when models are added', function() {
+      var li1 = new LineItem, li2 = new LineItem;
+
+      expect(this.invoice.changes.lineItems).toBeUndefined();
+      this.invoice.lineItems.push(li1);
+      expect(this.invoice.changes.lineItems).toEqual({added: [li1], removed: []});
+      this.invoice.lineItems.push(li2);
+      expect(this.invoice.changes.lineItems).toEqual({added: [li1, li2], removed: []});
+    });
+
+    it('keeps track of changes to owned hasMany associations when elements are removed', function() {
+      var li1, li2;
+
+      expect(this.invoice.changes.lineItems).toBeUndefined();
+      li1 = this.invoice.lineItems.pop();
+      expect(this.invoice.changes.lineItems).toEqual({removed: [li1], added: []});
+      li2 = this.invoice.lineItems.pop();
+      expect(this.invoice.changes.lineItems).toEqual({removed: [li1, li2], added: []});
+    });
+
+    it('keeps track of changes to owned hasMany associations when there are additions and removals', function() {
+      var added = new LineItem, removed;
+
+      removed = this.invoice.lineItems.shift();
+      this.invoice.lineItems.push(added);
+      expect(this.invoice.changes.lineItems).toEqual({removed: [removed], added: [added]});
+    });
+
+    it('keeps track of changes to owned hasMany associations when they are set', function() {
+      var li1 = new LineItem, li2 = new LineItem, old = this.invoice.lineItems.slice().native;
+
+      expect(this.invoice.changes.lineItems).toBeUndefined();
+      this.invoice.lineItems = [li1, li2];
+      expect(this.invoice.changes.lineItems).toEqual({added: [li1, li2], removed: old});
+    });
+
+    it('handles when a model is added and then removed from an owned hasMany association', function() {
+      var li = new LineItem;
+
+      this.invoice.lineItems.push(li);
+      expect(this.invoice.changes.lineItems).toEqual({added: [li], removed: []});
+      this.invoice.lineItems.pop();
+      expect(this.invoice.changes.lineItems).toBeUndefined();
+    })
+
+    it('handles when a model is removed and then added to an owned hasMany association', function() {
+      var li;
+
+      li = this.invoice.lineItems.pop();
+      expect(this.invoice.changes.lineItems).toEqual({added: [], removed: [li]});
+      this.invoice.lineItems.push(li);
+      expect(this.invoice.changes.lineItems).toBeUndefined();
+    })
+
+    it('clears the changes on an owned hasMany assocation when changes are manually undone', function() {
+      var added = new LineItem, removed;
+
+      removed = this.invoice.lineItems.pop();
+      this.invoice.lineItems.push(added);
+      expect(this.invoice.changes.lineItems).toEqual({added: [added], removed: [removed]});
+      this.invoice.lineItems.pop();
+      this.invoice.lineItems.push(removed);
+      expect(this.invoice.changes.lineItems).toBeUndefined();
+    });
+
+    it('does not keep track of changes to unowned hasMany associations', function() {
+      this.company.invoices.push(new Invoice);
+      expect(this.company.changes.invoices).toBeUndefined();
+    });
+
+    it('clears the `changes` object on a successful save', function() {
+    });
+
+    it('does not clear the changes object when a save is unsuccessful', function() {
+    });
+
+    describe('#undoChanges', function() {
+      it('restores the changed attributes to their original values', function() {
+        this.invoice.name = 'B';
+        this.invoice.undoChanges();
+        expect(this.invoice.name).toBe('A');
+      });
+
+      it('restores owned hasOne associations to their original value', function() {
+        var address = this.invoice.billingAddress;
+
+        this.invoice.billingAddress = new Address;
+        this.invoice.undoChanges();
+        expect(this.invoice.billingAddress).toBe(address);
+      });
+
+      it('restores owned hasMany associations to their original value', function() {
+        var orig = this.invoice.lineItems.slice(), added = new LineItem, removed;
+
+        removed = this.invoice.lineItems.pop();
+        this.invoice.lineItems.push(added);
+        this.invoice.undoChanges();
+        expect(this.invoice.lineItems).toEqual(orig);
+      });
+
+      it('clears the `changes` objects', function() {
+        this.invoice.name = 'B';
+        this.invoice.billingAddress = new Address;
+        this.invoice.lineItems.pop();
+        this.invoice.lineItems.push(new LineItem);
+
+        expect(Object.keys(this.invoice.changes).length > 0).toBe(true);
+        this.invoice.undoChanges();
+        expect(this.invoice.changes).toEqual({});
+      });
+    });
+  });
 });
 
