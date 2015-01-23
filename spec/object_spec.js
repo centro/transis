@@ -212,6 +212,59 @@ describe('Basis.Object', function() {
         expect(spy.calls.count()).toBe(2);
       });
     });
+
+    describe('with cache option', function() {
+      var Foo, spy;
+
+      beforeEach(function() {
+        spy = jasmine.createSpy().and.callFake(function() { return this.a * 2; });
+        Foo = BasisObject.extend('Foo', function() {
+          this.prop('a');
+          this.prop('doubleA', {cache: true, readonly: true, changesOn: ['change:a'], get: spy});
+        });
+      });
+
+      it('calls the getter function to initially compute the value', function() {
+        var f = new Foo({a: 9});
+
+        expect(f.doubleA).toBe(18);
+        expect(spy.calls.count()).toBe(1);
+      });
+
+      it('returns the cached value on subsequent gets', function() {
+        var f = new Foo({a: 7});
+
+        expect(f.doubleA).toBe(14);
+        expect(spy.calls.count()).toBe(1);
+        expect(f.doubleA).toBe(14);
+        expect(spy.calls.count()).toBe(1);
+      });
+
+      it('recomputes the value by calling the getter function after a dependent event is observed', function() {
+        var f = new Foo({a: 3});
+
+        expect(f.doubleA).toBe(6);
+        expect(spy.calls.count()).toBe(1);
+        expect(f.doubleA).toBe(6);
+        expect(spy.calls.count()).toBe(1);
+        f.a = 5;
+        expect(f.doubleA).toBe(10);
+        expect(spy.calls.count()).toBe(2);
+        expect(f.doubleA).toBe(10);
+        expect(spy.calls.count()).toBe(2);
+        f.a = 21;
+        expect(f.doubleA).toBe(42);
+        expect(spy.calls.count()).toBe(3);
+        expect(f.doubleA).toBe(42);
+        expect(spy.calls.count()).toBe(3);
+      });
+
+      it('logs a warning to the console when a cached property is defined without any dependencies', function() {
+        spyOn(console, 'warn');
+        Foo.prop('x', {cache: true, get: function() {}});
+        expect(console.warn).toHaveBeenCalledWith('Basis.Object.prop: cached property `x` does not have any dependencies (use the `changesOn` option)');
+      });
+    });
   });
 
   describe('constructor', function() {

@@ -2,14 +2,29 @@ import Emitter from "./emitter";
 
 var objectId = 0, subclasses = {};
 
-function onDependentEvent(event, data, desc) {
-  this.emit(`change:${desc.name}`, {object: this});
-}
-
 function BasisObject() {
   Object.defineProperty(this, 'objectId', {value: ++objectId});
   this.init.apply(this, arguments);
 };
+
+// Internal: Caches the given name/value pair on the receiver.
+function cache(name, value) { (this.__cache__ = this.__cache__ || {})[name] = value; }
+
+// Internal: Removes the given name from the cache.
+function uncache(name) { if (this.__cache__) { delete this.__cache__[name]; } }
+
+// Internal: Indicates whether the current name has a value cached.
+function isCached(name) { return this.__cache__ ? this.__cache__.hasOwnProperty(name) : false; }
+
+// Internal: Returns the cached value for the given name.
+function getCached(name) { return this.__cache__ ? this.__cache__[name] : undefined; }
+
+// Internal: Dependent event observer. Clears cached values and emits change events for the
+// the property whose dependency was changed.
+function onDependentEvent(event, data, desc) {
+  uncache.call(this, desc.name);
+  this.emit(`change:${desc.name}`, {object: this});
+}
 
 // Public: Creates a subclass of `Basis.Object`.
 BasisObject.extend = function(name, f) {
@@ -63,6 +78,9 @@ BasisObject.resolve = function(name) {
 //   changesOn - An array of event names that when observed, cause the property to change. This
 //               should be used with custom `get` functions in order to make the property
 //               observable.
+//   cache     - Set this to true to enable property caching. This is useful with computed
+//               properties that have their dependent events defined. If dependent events aren't
+//               defined, then the initially cached value will never be cleared.
 //
 // Returns the receiver.
 BasisObject.prop = function(name, opts = {}) {
@@ -72,8 +90,13 @@ BasisObject.prop = function(name, opts = {}) {
     set: null,
     readonly: false,
     default: undefined,
-    changesOn: []
+    changesOn: [],
+    cache: false
   }, opts);
+
+  if (descriptor.cache && !descriptor.changesOn.length) {
+    console.warn(`Basis.Object.prop: cached property \`${name}\` does not have any dependencies (use the \`changesOn\` option)`);
+  }
 
   if (!this.prototype.hasOwnProperty('__props__')) {
     this.prototype.__props__ = Object.create(this.prototype.__props__ || null);
@@ -135,8 +158,12 @@ BasisObject.prototype.getProp = function(name) {
     throw new Error(`Basis.Object#getProp: unknown prop name \`${name}\``);
   }
 
+  if (descriptor.cache && isCached.call(this, name)) { return getCached.call(this, name); }
+
   value = descriptor.get ? descriptor.get.call(this) : this[key];
   value = (value === undefined) ? descriptor.default : value;
+
+  if (descriptor.cache) { cache.call(this, name, value); }
 
   return value;
 };
