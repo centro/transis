@@ -608,6 +608,19 @@ var Model = BasisObject.extend('Basis.Model', function() {
         this[prop] = this.changes[prop];
       }
     }
+
+    for (let name in associations) {
+      let desc = associations[name];
+
+      if (!desc.owner) { continue; }
+
+      if (desc.type === 'hasOne') {
+        this[name] && this[name].undoChanges();
+      }
+      else if (desc.type === 'hasMany') {
+        this[name].forEach(m => m.undoChanges());
+      }
+    }
   };
 
   this.prototype.toString = function() {

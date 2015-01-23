@@ -1625,6 +1625,27 @@ describe('Model', function () {
         this.invoice.undoChanges();
         expect(this.invoice.changes).toEqual({});
       });
+
+      it('undoes changes on owned associations', function() {
+        var li = this.invoice.lineItems.at(0);
+
+        li.quantity = 11;
+        this.invoice.billingAddress.name = 'Bob Smith';
+        expect(li.changes).toEqual({quantity: 10});
+        expect(this.invoice.billingAddress.changes).toEqual({name: 'Joe Blow'});
+        this.invoice.undoChanges()
+        expect(li.quantity).toBe(10);
+        expect(this.invoice.billingAddress.name).toBe('Joe Blow');
+        expect(li.changes).toEqual({});
+        expect(this.invoice.billingAddress.changes).toEqual({});
+      });
+
+      it('does not undo changes to unowned associations', function() {
+        this.invoice.company.name = 'Foobar';
+        expect(this.invoice.company.changes).toEqual({name: 'Acme, Inc.'});
+        this.invoice.undoChanges();
+        expect(this.invoice.company.changes).toEqual({name: 'Acme, Inc.'});
+      });
     });
   });
 });
