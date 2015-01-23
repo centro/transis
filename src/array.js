@@ -1,4 +1,4 @@
-import RynoObject from "./object";
+import BasisObject from "./object";
 import * as util from "./util";
 
 var {slice, splice, concat, map, filter} = Array.prototype;
@@ -8,39 +8,39 @@ function onElementChange(event, data) {
   this.emit(`change:${ns}`, Object.assign({array: this}, data));
 }
 
-var RynoArray = RynoObject.extend('Ryno.Array', function() {
-  // Public: Returns a new `Ryno.Array` containing the given arguments as contents.
+var BasisArray = BasisObject.extend('Basis.Array', function() {
+  // Public: Returns a new `Basis.Array` containing the given arguments as contents.
   //
-  // Returns a new `Ryno.Array`.
+  // Returns a new `Basis.Array`.
   this.A = function() {
-    var a = new RynoArray;
+    var a = new BasisArray;
     a.push.apply(a, arguments);
     return a;
   };
 
-  // Public: Returns a new `Ryno.Array` containing the contents of the given array-like object.
+  // Public: Returns a new `Basis.Array` containing the contents of the given array-like object.
   //
-  // a - Any array-like object (a native array, `Arguments` object, or `Ryno.Array` instance).
+  // a - Any array-like object (a native array, `Arguments` object, or `Basis.Array` instance).
   //
-  // Returns a new `Ryno.Array`.
+  // Returns a new `Basis.Array`.
   this.from = function(a) {
-    var b = new RynoArray(a.length), i, n;
-    if (a instanceof RynoArray) { a = a.__elements__; }
+    var b = new BasisArray(a.length), i, n;
+    if (a instanceof BasisArray) { a = a.__elements__; }
     for (i = 0, n = a.length; i < n; i++) { b.__elements__[i] = a[i]; }
     return b;
   };
 
-  // Public: Wraps a native array with a `Ryno.Array`.
+  // Public: Wraps a native array with a `Basis.Array`.
   //
   // a - A native array object.
   //
-  // Returns a new `Ryno.Array`.
+  // Returns a new `Basis.Array`.
   this.wrap = function(a) {
     if (!Array.isArray(a)) {
-      throw new TypeError(`Ryno.Array.wrap: expected a native array but received \`${a}\` instead`);
+      throw new TypeError(`Basis.Array.wrap: expected a native array but received \`${a}\` instead`);
     }
 
-    var b = new RynoArray;
+    var b = new BasisArray;
     b.__elements__ = a;
     return b;
   };
@@ -53,7 +53,7 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
     native: { get: function() { return this.__elements__; } }
   });
 
-  // Public: The `Ryno.Array` constructor. With a single number argument, an array is created with
+  // Public: The `Basis.Array` constructor. With a single number argument, an array is created with
   // the same length. In every other case, the array is initialized with the given arguments.
   this.prototype.init = function() {
     var elements = slice.call(arguments), i, n;
@@ -65,13 +65,13 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
       this.__elements__ = elements;
 
       for (i = 0, n = elements.length; i < n; i++) {
-        if (elements[i] instanceof RynoObject) {
+        if (elements[i] instanceof BasisObject) {
           elements[i].on('change:*', onElementChange, {observer: this});
         }
       }
     }
 
-    RynoArray.__super__.init.call(this);
+    BasisArray.__super__.init.call(this);
   };
 
   // Public: Element reference and assignment method. When given one argument, returns the item at
@@ -101,14 +101,14 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
     }
   };
 
-  // Public: `Ryno.Array` equality test. This method performs an element-wise comparison between the
+  // Public: `Basis.Array` equality test. This method performs an element-wise comparison between the
   // receiver and the given array.
   //
-  // other - A `Ryno.Array` or native array to compare to the receiver.
+  // other - A `Basis.Array` or native array to compare to the receiver.
   //
   // Returns `true` if the arrays are equal and `false` otherwise.
   this.prototype.eq = function(other) {
-    if (other instanceof RynoArray) { return util.eq(this.__elements__, other.__elements__); }
+    if (other instanceof BasisArray) { return util.eq(this.__elements__, other.__elements__); }
     if (other instanceof Array) { return util.eq(this.__elements__, other); }
     return false;
   };
@@ -125,13 +125,13 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
   //            starting from `i` are removed.
   // ...items - Zero or more items to add to the array, starting at index `i`.
   //
-  // Returns a new `Ryno.Array` containing the elements removed.
+  // Returns a new `Basis.Array` containing the elements removed.
   // Throws `Error` when given an index that is out of range.
   this.prototype.splice = function(i, n) {
     var added = slice.call(arguments, 2), index = i < 0 ? this.length + i : i, removed, j, m;
 
     if (index < 0) {
-      throw new Error(`Ryno.Array#splice: index ${i} is too small for ${this}`);
+      throw new Error(`Basis.Array#splice: index ${i} is too small for ${this}`);
     }
 
     if (n === undefined) { n = this.length - index; }
@@ -139,20 +139,20 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
     removed = splice.apply(this.__elements__, [index, n].concat(added));
 
     for (j = 0, m = removed.length; j < m; j++) {
-      if (removed[j] instanceof RynoObject) {
+      if (removed[j] instanceof BasisObject) {
         removed[j].off('change:*', onElementChange, {observer: this});
       }
     }
 
     for (j = 0, m = added.length; j < m; j++) {
-      if (added[j] instanceof RynoObject) {
+      if (added[j] instanceof BasisObject) {
         added[j].on('change:*', onElementChange, {observer: this});
       }
     }
 
     this.emit('splice', {array: this, i: index, n, added, removed});
 
-    return RynoArray.from(removed);
+    return BasisArray.from(removed);
   };
 
   // Public: Adds one or more elements to the end of the array and returns the new length.
@@ -191,7 +191,7 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
     return this.length > 0 ? this.splice(0, 1).at(0) : undefined;
   };
 
-  // Public: Returns a new `Ryno.Array` comprised of the receiver joined with the array(s) or
+  // Public: Returns a new `Basis.Array` comprised of the receiver joined with the array(s) or
   // value(s) provided as arguments.
   //
   // ...value - Arrays or values to concatenate into the new array.
@@ -199,10 +199,10 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
   // Returns a new `Basis.Array`.
   this.prototype.concat = function() {
     var args = slice.call(arguments).map(function(arg) {
-      return arg instanceof RynoArray ? arg.__elements__ : arg;
+      return arg instanceof BasisArray ? arg.__elements__ : arg;
     });
 
-    return RynoArray.wrap(concat.apply(this.__elements__, args));
+    return BasisArray.wrap(concat.apply(this.__elements__, args));
   };
 
   // Public: Returns a shallow copy of a portion of an array into a new array.
@@ -213,9 +213,9 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
   //         negative index indicates an offset from the end of the array. If omitted, slice
   //         extracts through the end of the array.
   //
-  // Returns a new `Ryno.Array`.
+  // Returns a new `Basis.Array`.
   this.prototype.slice = function() {
-    return RynoArray.wrap(slice.apply(this.__elements__, arguments));
+    return BasisArray.wrap(slice.apply(this.__elements__, arguments));
   };
 
   // Public: Creates a new array with the results of calling the given function on every element in
@@ -227,9 +227,9 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
   //   array   - The array map was called on.
   // ctx      - Value to use as this when invoking callback.
   //
-  // Returns a new `Ryno.Array`.
+  // Returns a new `Basis.Array`.
   this.prototype.map = function() {
-    return RynoArray.wrap(map.apply(this.__elements__, arguments));
+    return BasisArray.wrap(map.apply(this.__elements__, arguments));
   };
 
   // Public: Creates a new array with all elements that pass the test implemented by the provided
@@ -239,9 +239,9 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
   //            false to discard.
   // ctx      - Value to use as this when invoking callback.
   //
-  // Returns a new `Ryno.Array`.
+  // Returns a new `Basis.Array`.
   this.prototype.filter = function() {
-    return RynoArray.wrap(filter.apply(this.__elements__, arguments));
+    return BasisArray.wrap(filter.apply(this.__elements__, arguments));
   };
 
   // Public: Returns the first index at which the given element can be found in the array using a
@@ -316,7 +316,7 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
     var acc = arguments.length > 1 ? init : this.__elements__[0];
 
     if (this.length === 0 && arguments.length < 2) {
-      throw new TypeError(`Ryno.Array#reduce: reduce of an empty array with no initial value`);
+      throw new TypeError(`Basis.Array#reduce: reduce of an empty array with no initial value`);
     }
 
     for (let i = arguments.length > 1 ? 0 : 1, n = this.length; i < n; i++) {
@@ -352,11 +352,11 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
 
   // Public: Replaces the contents of the receiver with the contents of the given array.
   //
-  // a - A `Ryno.Array` or native array.
+  // a - A `Basis.Array` or native array.
   //
   // Returns the receiver.
   this.prototype.replace = function(a) {
-    this.splice.apply(this, new RynoArray(0, this.length).concat(a).__elements__);
+    this.splice.apply(this, new BasisArray(0, this.length).concat(a).__elements__);
     return this;
   };
 
@@ -369,8 +369,8 @@ var RynoArray = RynoObject.extend('Ryno.Array', function() {
   };
 
   this.prototype.toString = function() {
-    return `#<Ryno.Array:${this.objectId} [${this.__elements__}]>`;
+    return `#<Basis.Array:${this.objectId} [${this.__elements__}]>`;
   };
 });
 
-export default RynoArray;
+export default BasisArray;

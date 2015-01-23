@@ -13,7 +13,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'node_modules/es6-shim/es6-shim.js',
-      'build/ryno.js',
+      'build/basis.js',
       'build/spec/helpers.js',
       'build/spec/*_spec.js'
     ],

@@ -1,9 +1,9 @@
 import "es6-shim";
 import Model from "../model";
 import IdMap from "../id_map";
-import RynoArray from "../array";
+import BasisArray from "../array";
 
-var A = RynoArray.A;
+var A = BasisArray.A;
 
 describe('Model', function () {
   var TestMapper = {
@@ -56,7 +56,7 @@ describe('Model', function () {
     it('throws an exception when an attribute with the given name has already been defined', function() {
       expect(function() {
         Model.registerAttr('string');
-      }).toThrow(new Error('Ryno.Model.registerAttr: an attribute with the name `string` has already been defined'));
+      }).toThrow(new Error('Basis.Model.registerAttr: an attribute with the name `string` has already been defined'));
     });
   });
 

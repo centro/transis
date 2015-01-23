@@ -6,10 +6,10 @@ ES5_SPECS   = $(SPECS:spec/%.js=build/spec/%.js)
 
 default: spec
 
-ryno: $(ES5_SOURCES)
+basis: $(ES5_SOURCES)
 
-build/ryno.js: $(ES5_SOURCES)
-	./node_modules/.bin/browserify build/index.js --s Ryno > $@
+build/basis.js: $(ES5_SOURCES)
+	./node_modules/.bin/browserify build/index.js --s Basis > $@
 
 build/%.js: src/%.js
 	@mkdir -p build
@@ -20,15 +20,15 @@ build/spec/%.js: spec/%.js
 	./node_modules/.bin/6to5 $< -o $@
 
 SPEC ?=
-spec_node: ryno $(ES5_SPECS)
+spec_node: basis $(ES5_SPECS)
 	./node_modules/.bin/jasmine $(SPEC)
 
-spec_browser: build/ryno.js $(ES5_SPECS)
+spec_browser: build/basis.js $(ES5_SPECS)
 	./node_modules/karma/bin/karma start ./spec/karma.js
 
 spec: spec_node spec_browser
 
-repl: ryno
+repl: basis
 	env NODE_NO_READLINE=1 rlwrap node ./util/repl.js
 
 clean:

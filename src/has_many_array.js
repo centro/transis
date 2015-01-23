@@ -1,4 +1,4 @@
-import RynoArray from "./array";
+import BasisArray from "./array";
 
 function onSplice(event, {array, i, n, added, removed}) {
   var desc = this.__desc__, inverse = desc.inverse;
@@ -30,7 +30,7 @@ function checkAssociatedType(o) {
   }
 }
 
-class HasManyArray extends RynoArray {
+class HasManyArray extends BasisArray {
   constructor(owner, desc) {
     super();
     this.__owner__ = owner;

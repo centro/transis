@@ -1,9 +1,9 @@
-import RynoArray from "./array";
+import BasisArray from "./array";
 
-// Public: The `QueryArray` class is a subclass of `Ryno.Array` that can be used to load a
+// Public: The `QueryArray` class is a subclass of `Basis.Array` that can be used to load a
 // collection of model objects from the model class's mapper. An instance of this class is returned
-// by `Ryno.Model.buildQuery` and `Ryno.Model.query`.
-var QueryArray = RynoArray.extend('Ryno.QueryArray', function() {
+// by `Basis.Model.buildQuery` and `Basis.Model.query`.
+var QueryArray = BasisArray.extend('Basis.QueryArray', function() {
   this.prop('isBusy');
 
   this.prop('error');
@@ -18,7 +18,7 @@ var QueryArray = RynoArray.extend('Ryno.QueryArray', function() {
   // Public: Execute a query by invoking the `query` method on the modelClass's mapper. This will
   // but the array into a busy state (indicated by the `isBusy` property) until the mapper has
   // fulfilled its promise. When the promise is successfully resolved, the returned data is loaded
-  // via `Ryno.Model.loadAll` and the materialzed models are replaced into the array. When the
+  // via `Basis.Model.loadAll` and the materialzed models are replaced into the array. When the
   // promise is rejected, the error message returned by the mapper is made available on the `error`
   // property.
   //

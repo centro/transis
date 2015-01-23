@@ -1,4 +1,4 @@
-import RynoObject from "./object";
+import BasisObject from "./object";
 
 var toString = Object.prototype.toString, slice = Array.prototype.slice;
 
@@ -55,7 +55,7 @@ function unmark(o1, o2) {
 //
 // This function is used internally when traversing objects and arrays to avoid getting stuck in
 // infinite loops when circular objects are encountered. It should be wrapped around all recursive
-// function calls where a circular object may be encountered. See `Ryno.eq` for an example.
+// function calls where a circular object may be encountered. See `Basis.eq` for an example.
 //
 // o1 - The first object to check for recursion.
 // o2 - The paired object to check for recursion (default: `undefined`).
@@ -81,11 +81,11 @@ export function detectRecursion(o1, o2, f) {
 //
 // Examples
 //
-//   Ryno.type([])       // => 'array'
-//   Ryno.type({})       // => 'object'
-//   Ryno.type(9)        // => 'number'
-//   Ryno.type(/fo*/)    // => 'regexp'
-//   Ryno.type(new Date) // => 'date'
+//   Basis.type([])       // => 'array'
+//   Basis.type({})       // => 'object'
+//   Basis.type(9)        // => 'number'
+//   Basis.type(/fo*/)    // => 'regexp'
+//   Basis.type(new Date) // => 'date'
 //
 // o - The object to get the type of.
 //
@@ -119,7 +119,7 @@ export function type(o) {
   return 'unknown';
 };
 
-// Public: Performs an object equality test. If the first argument is a `Ryno.Object` then it is
+// Public: Performs an object equality test. If the first argument is a `Basis.Object` then it is
 // sent the `eq` method, otherwise custom equality code is run based on the object type.
 //
 // a - Any object.
@@ -132,8 +132,8 @@ export function eq(a, b) {
   // identical objects are equal
   if (a === b) { return true; }
 
-  // if the first argument is a Ryno.Object, delegate to its `eq` method
-  if (a instanceof RynoObject) { return a.eq(b); }
+  // if the first argument is a Basis.Object, delegate to its `eq` method
+  if (a instanceof BasisObject) { return a.eq(b); }
 
   atype = type(a);
   btype = type(b);

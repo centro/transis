@@ -1,77 +1,77 @@
 import "es6-shim";
-import RynoArray from "../array";
-import RynoObject from "../object";
+import BasisArray from "../array";
+import BasisObject from "../object";
 
-var A = RynoArray.A;
+var A = BasisArray.A;
 
 describe('Array', function() {
   describe('.A', function() {
-    it('returns a Ryno.Array containing all of the given arguments', function() {
+    it('returns a Basis.Array containing all of the given arguments', function() {
       var a1 = A(1,2,3), a2 = A(9);
 
-      expect(a1 instanceof RynoArray).toBe(true);
+      expect(a1 instanceof BasisArray).toBe(true);
       expect(a1.length).toBe(3);
       expect(a1.at(0)).toBe(1);
       expect(a1.at(1)).toBe(2);
       expect(a1.at(2)).toBe(3);
-      expect(a2 instanceof RynoArray).toBe(true);
+      expect(a2 instanceof BasisArray).toBe(true);
       expect(a2.length).toBe(1);
       expect(a2.at(0)).toBe(9);
     });
 
-    it('returns an empty Ryno.Array when given no arguments', function() {
+    it('returns an empty Basis.Array when given no arguments', function() {
       var a = A();
 
-      expect(a instanceof RynoArray).toBe(true);
+      expect(a instanceof BasisArray).toBe(true);
       expect(a.length).toBe(0);
     });
   });
 
   describe('.from', function() {
-    it('creates a new Ryno.Array with the contents of the given native array', function() {
+    it('creates a new Basis.Array with the contents of the given native array', function() {
       var a = [1, 2];
 
-      expect(RynoArray.from(a) instanceof RynoArray).toBe(true);
-      expect(RynoArray.from(a)).toEqual(a);
+      expect(BasisArray.from(a) instanceof BasisArray).toBe(true);
+      expect(BasisArray.from(a)).toEqual(a);
     });
 
-    it('creates a new RynoArray with the contents of the given Arguments object', function() {
+    it('creates a new BasisArray with the contents of the given Arguments object', function() {
       var args = (function() { return arguments; })('a', 'b', 'c');
 
-      expect(RynoArray.from(args) instanceof RynoArray).toBe(true);
-      expect(RynoArray.from(args)).toEqual(A('a', 'b', 'c'));
+      expect(BasisArray.from(args) instanceof BasisArray).toBe(true);
+      expect(BasisArray.from(args)).toEqual(A('a', 'b', 'c'));
     });
 
-    it('creates a new Ryno.Array with the contents of the given Ryno.Array', function() {
+    it('creates a new Basis.Array with the contents of the given Basis.Array', function() {
       var a = A(1, 2);
 
-      expect(RynoArray.from(a) instanceof RynoArray).toBe(true);
-      expect(RynoArray.from(a)).not.toBe(a);
-      expect(RynoArray.from(a)).toEqual(a);
+      expect(BasisArray.from(a) instanceof BasisArray).toBe(true);
+      expect(BasisArray.from(a)).not.toBe(a);
+      expect(BasisArray.from(a)).toEqual(a);
     });
   });
 
   describe('.wrap', function() {
-    it('creates a new Ryno.Array with the given array as the backing __elements__', function() {
+    it('creates a new Basis.Array with the given array as the backing __elements__', function() {
       var a = [1,2,3];
 
-      expect(RynoArray.wrap(a).__elements__).toBe(a);
+      expect(BasisArray.wrap(a).__elements__).toBe(a);
     });
 
     it('throws a TypeError exception when given a non-array', function() {
       expect(function() {
-        RynoArray.wrap({});
-      }).toThrow(new TypeError(`Ryno.Array.wrap: expected a native array but received \`${{}}\` instead`));
+        BasisArray.wrap({});
+      }).toThrow(new TypeError(`Basis.Array.wrap: expected a native array but received \`${{}}\` instead`));
 
       expect(function() {
-        RynoArray.wrap(4);
-      }).toThrow(new TypeError(`Ryno.Array.wrap: expected a native array but received \`${4}\` instead`));
+        BasisArray.wrap(4);
+      }).toThrow(new TypeError(`Basis.Array.wrap: expected a native array but received \`${4}\` instead`));
     });
   });
 
   describe('constructor', function() {
     it('creates an array of the given size when passed a single number', function() {
-      var a = new RynoArray(3);
+      var a = new BasisArray(3);
 
       expect(a.length).toBe(3);
       expect(a.at(0)).toBeUndefined();
@@ -80,7 +80,7 @@ describe('Array', function() {
     });
 
     it('creates an array whose contents are the given arguments', function() {
-      var a1 = new RynoArray(1, 2), a2 = new RynoArray('a', 'b', 'c');
+      var a1 = new BasisArray(1, 2), a2 = new BasisArray('a', 'b', 'c');
 
       expect(a1.length).toBe(2);
       expect(a1.at(0)).toBe(1);
@@ -92,7 +92,7 @@ describe('Array', function() {
     });
 
     it('creates an empty array when no arguments are given', function() {
-      var a = new RynoArray;
+      var a = new BasisArray;
 
       expect(a.length).toBe(0);
     });
@@ -101,7 +101,7 @@ describe('Array', function() {
   describe('#at', function() {
     var a;
 
-    beforeEach(function() { a = new RynoArray('the', 'quick', 'brown', 'fox'); });
+    beforeEach(function() { a = new BasisArray('the', 'quick', 'brown', 'fox'); });
 
     describe('given just an index', function() {
       it('returns the value at the given index when given a positive index in range', function() {
@@ -177,10 +177,10 @@ describe('Array', function() {
       expect(a2.eq(a1)).toBe(true);
     });
 
-    it("returns `false` when given an argument that is not a regular array or Ryno.Array", function() {
+    it("returns `false` when given an argument that is not a regular array or Basis.Array", function() {
       expect((A()).eq("foo")).toBe(false);
       expect((A()).eq({})).toBe(false);
-      expect((A()).eq(new RynoObject)).toBe(false);
+      expect((A()).eq(new BasisObject)).toBe(false);
     });
   });
 
@@ -301,7 +301,7 @@ describe('Array', function() {
 
         expect(function() {
           a.splice(-12);
-        }).toThrow(new Error('Ryno.Array#splice: index -12 is too small for ' + a));
+        }).toThrow(new Error('Basis.Array#splice: index -12 is too small for ' + a));
       });
     });
 
@@ -315,8 +315,8 @@ describe('Array', function() {
       expect(A(0, 1, 2).splice(10, 3, 10)).toEqual(A());
     });
 
-    it('returns an instance of Ryno.Array', function() {
-      expect(A(0, 1, 2).splice(0) instanceof RynoArray).toBe(true);
+    it('returns an instance of Basis.Array', function() {
+      expect(A(0, 1, 2).splice(0) instanceof BasisArray).toBe(true);
     });
 
     it('emits a splice event with the array, index, num removed, added, and removed elements', function() {
@@ -333,7 +333,7 @@ describe('Array', function() {
   describe('change events', function() {
     var a, spy;
 
-    var Test = RynoObject.extend('Test', function() {
+    var Test = BasisObject.extend('Test', function() {
       this.prop('x');
       this.prop('y');
     });
@@ -445,7 +445,7 @@ describe('Array', function() {
       expect(A(1,2,3).concat(4,5,6)).toEqual(A(1,2,3,4,5,6));
     });
 
-    it('returns a new array comprising the receiver joined with the given Ryno.Array', function() {
+    it('returns a new array comprising the receiver joined with the given Basis.Array', function() {
       expect(A(1,2,3).concat(A(4,5,6))).toEqual(A(1,2,3,4,5,6));
     });
 
@@ -457,8 +457,8 @@ describe('Array', function() {
       expect(A(1,2,3).concat([4,5], 6, A(7,8), 9)).toEqual(A(1,2,3,4,5,6,7,8,9));
     });
 
-    it('returns an instance of Ryno.Array', function() {
-      expect(A(1,2,3).concat(4,5,6) instanceof RynoArray).toBe(true);
+    it('returns an instance of Basis.Array', function() {
+      expect(A(1,2,3).concat(4,5,6) instanceof BasisArray).toBe(true);
     });
   });
 
@@ -473,8 +473,8 @@ describe('Array', function() {
       expect(A(0,1,2,3,4,5).slice(1,4)).toEqual(A(1,2,3));
     });
 
-    it('returns an instance of Ryno.Array', function() {
-      expect(A(1,2,3,4,5).slice() instanceof RynoArray).toBe(true);
+    it('returns an instance of Basis.Array', function() {
+      expect(A(1,2,3,4,5).slice() instanceof BasisArray).toBe(true);
     });
   });
 
@@ -483,8 +483,8 @@ describe('Array', function() {
       expect(A(1,2,3).map(function(x) { return x * 2; })).toEqual(A(2,4,6));
     });
 
-    it('returns an instance of Ryno.Array', function() {
-      expect(A(1,2,3).map(function(x) { return x * 2; }) instanceof RynoArray).toBe(true);
+    it('returns an instance of Basis.Array', function() {
+      expect(A(1,2,3).map(function(x) { return x * 2; }) instanceof BasisArray).toBe(true);
     });
 
     it('executes the given function in the context of the second argument', function() {
@@ -499,8 +499,8 @@ describe('Array', function() {
       expect(A(1,2,3,4,5).filter(function(x) { return x % 2 === 0; })).toEqual(A(2,4));
     });
 
-    it('returns an instance of Ryno.Array', function() {
-      expect(A(1,2,3,4,5).filter(function(x) { return x % 2 === 0; }) instanceof RynoArray).toBe(true);
+    it('returns an instance of Basis.Array', function() {
+      expect(A(1,2,3,4,5).filter(function(x) { return x % 2 === 0; }) instanceof BasisArray).toBe(true);
     });
 
     it('executes the given function in the context of the second argument', function() {
@@ -632,7 +632,7 @@ describe('Array', function() {
     it('throws a TypeError when the array is empty and no initial value is provided', function() {
       expect(function() {
         A().reduce(function() {});
-      }).toThrow(new TypeError(`Ryno.Array#reduce: reduce of an empty array with no initial value`));
+      }).toThrow(new TypeError(`Basis.Array#reduce: reduce of an empty array with no initial value`));
     });
   });
 
@@ -665,7 +665,7 @@ describe('Array', function() {
   });
 
   describe('#replace', function() {
-    it('replaces the contents of the receiver with the given `Ryno.Array` contents', function() {
+    it('replaces the contents of the receiver with the given `Basis.Array` contents', function() {
       var a = A(1,2,3);
       a.replace(A('foo', 'bar'));
       expect(a).toEqual(A('foo', 'bar'));

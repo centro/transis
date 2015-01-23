@@ -1,7 +1,7 @@
 import pluralize from "pluralize";
 import IdMap from "./id_map";
-import RynoObject from "./object";
-import RynoArray from "./array";
+import BasisObject from "./object";
+import BasisArray from "./array";
 import QueryArray from "./query_array";
 import HasManyArray from "./has_many_array";
 import * as attrs from "./attrs";
@@ -19,7 +19,7 @@ const DELETED = 'deleted';
 // Returns nothing.
 // Throws `Error` if the given object isn't of the type specified in the association descriptor.
 function checkAssociatedType(desc, o) {
-  var klass = RynoObject.resolve(desc.klass);
+  var klass = BasisObject.resolve(desc.klass);
 
   if (!(o instanceof klass)) {
     throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
@@ -47,7 +47,7 @@ function hasOneSet(desc, v, sync) {
       k     = `__${name}`,
       prev  = this[k],
       inv   = desc.inverse,
-      klass = RynoObject.resolve(desc.klass);
+      klass = BasisObject.resolve(desc.klass);
 
   if (v && !(v instanceof klass)) {
     throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${klass}\` but received \`${v}\` instead`);
@@ -90,7 +90,7 @@ function mapperDeleteSuccess() {
 // Internal: Capitalizes the given word.
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-var Model = RynoObject.extend('Ryno.Model', function() {
+var Model = BasisObject.extend('Basis.Model', function() {
   // Public: Returns an empty instance of the model class. An empty instance contains only an id
   // and must be retrieved from the mapper before any of its attributes will be available. Since the
   // model's data mapper will likely need to perform an async action to retrieve data, this method
@@ -232,7 +232,7 @@ var Model = RynoObject.extend('Ryno.Model', function() {
     this.prop(name, {
       get: function() {
         if (this[k]) { return this[k]; }
-        desc.klass = RynoObject.resolve(desc.klass);
+        desc.klass = BasisObject.resolve(desc.klass);
         return this[k] = new HasManyArray(this, desc);
       },
       set: function(a) { this[k].replace(a); }
@@ -294,7 +294,7 @@ var Model = RynoObject.extend('Ryno.Model', function() {
 
     // load and set each association
     for (let name in associated) {
-      let klass = RynoObject.resolve(associations[name].klass);
+      let klass = BasisObject.resolve(associations[name].klass);
       let data = associated[name];
 
       if (!data) { continue; }
@@ -324,17 +324,17 @@ var Model = RynoObject.extend('Ryno.Model', function() {
   // Returns an array of loaded model instances.
   this.loadAll = function(objects) { return objects.map((object) => this.load(object)); };
 
-  // Public: Creates a new `Ryno.QueryArray` but does not invoke its `query` method. This is useful
+  // Public: Creates a new `Basis.QueryArray` but does not invoke its `query` method. This is useful
   // for cases where you want to initialize an empty query, but not yet run it.
   //
-  // Returns a new `Ryno.QueryArray`.
+  // Returns a new `Basis.QueryArray`.
   this.buildQuery = function() { return new QueryArray(this); };
 
-  // Public: Creates a new `Ryno.QueryArray` and invokes its `query` method with the given options.
+  // Public: Creates a new `Basis.QueryArray` and invokes its `query` method with the given options.
   //
-  // opts - An options object to pass to the `Ryno.QueryArray#query` method (default: `{}`).
+  // opts - An options object to pass to the `Basis.QueryArray#query` method (default: `{}`).
   //
-  // Returns a new `Ryno.QueryArray`.
+  // Returns a new `Basis.QueryArray`.
   this.query = function(opts = {}) { return this.buildQuery().query(opts); };
 
   // Public: Retrieves a model from the identity map or creates a new empty model instance. If you

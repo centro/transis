@@ -1,8 +1,8 @@
 import "es6-shim";
-import RynoObject from "../object";
+import BasisObject from "../object";
 
-describe('Ryno.Object', function() {
-  var Test = RynoObject.extend('Test', function() {
+describe('Basis.Object', function() {
+  var Test = BasisObject.extend('Test', function() {
     this.prop('str');
 
     this.prop('num', {
@@ -21,7 +21,7 @@ describe('Ryno.Object', function() {
   });
 
   describe('.extend', function() {
-    var Child = RynoObject.extend('Child', function() {
+    var Child = BasisObject.extend('Child', function() {
       this.prototype.init = function() {
       };
     });
@@ -44,12 +44,12 @@ describe('Ryno.Object', function() {
     });
 
     it("sets the subclass's prototype to an object that inherites from the parents prototype", function() {
-      expect(RynoObject.prototype.isPrototypeOf(Child.prototype)).toBe(true);
+      expect(BasisObject.prototype.isPrototypeOf(Child.prototype)).toBe(true);
       expect(Child.prototype.isPrototypeOf(Grandchild.prototype)).toBe(true);
     });
 
     it("sets the __super__ property on the subclass to the parent's prototype", function() {
-      expect(Child.__super__).toBe(RynoObject.prototype);
+      expect(Child.__super__).toBe(BasisObject.prototype);
       expect(Grandchild.__super__).toBe(Child.prototype);
     });
 
@@ -80,25 +80,25 @@ describe('Ryno.Object', function() {
     describe('with no name argument', function() {
       it('throws an exception', function() {
         expect(function() {
-          RynoObject.extend();
-        }).toThrow(new Error('Ryno.Object.extend: a name is required'));
+          BasisObject.extend();
+        }).toThrow(new Error('Basis.Object.extend: a name is required'));
       });
     });
   });
 
   describe('.resolve', function() {
-    it('returns the Ryno.Object subclass of the given name', function() {
-      var A = RynoObject.extend('A'), B = A.extend('B'), C = B.extend('C')
+    it('returns the Basis.Object subclass of the given name', function() {
+      var A = BasisObject.extend('A'), B = A.extend('B'), C = B.extend('C')
 
-      expect(RynoObject.resolve('A')).toBe(A);
-      expect(RynoObject.resolve('B')).toBe(B);
-      expect(RynoObject.resolve('C')).toBe(C);
+      expect(BasisObject.resolve('A')).toBe(A);
+      expect(BasisObject.resolve('B')).toBe(B);
+      expect(BasisObject.resolve('C')).toBe(C);
     });
 
     it('throws an error when a subclass with the given name is not known', function() {
       expect(function() {
-        RynoObject.resolve('Abcdef');
-      }).toThrow(new Error('Ryno.Object.resolve: could not resolve subclass: `Abcdef`'));
+        BasisObject.resolve('Abcdef');
+      }).toThrow(new Error('Basis.Object.resolve: could not resolve subclass: `Abcdef`'));
     });
   });
 
@@ -191,7 +191,7 @@ describe('Ryno.Object', function() {
     });
 
     describe('with changesOn option', function() {
-      var User = RynoObject.extend('User', function() {
+      var User = BasisObject.extend('User', function() {
         this.prop('first');
         this.prop('last');
         this.prop('full', {
@@ -231,8 +231,8 @@ describe('Ryno.Object', function() {
   });
 
   describe('#objectId', function() {
-    it('returns a unique id for each instance of Ryno.Object', function() {
-      var o1 = new RynoObject, o2 = new RynoObject, o3 = new RynoObject;
+    it('returns a unique id for each instance of Basis.Object', function() {
+      var o1 = new BasisObject, o2 = new BasisObject, o3 = new BasisObject;
 
       expect(typeof o1.objectId).toBe('number');
       expect(typeof o2.objectId).toBe('number');
