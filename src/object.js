@@ -74,7 +74,7 @@ BasisObject.resolve = function(name) {
 //   set       - A custom property setter function.
 //   readonly  - Makes the property readonly. Should only be used with the `get` option.
 //   default   - Specify a default value for the property.
-//   changesOn - An array of event names that when observed, cause the property to change. This
+//   on        - An array of event names that when observed, cause the property to change. This
 //               should be used with custom `get` functions in order to make the property
 //               observable.
 //   cache     - Set this to true to enable property caching. This is useful with computed
@@ -89,13 +89,9 @@ BasisObject.prop = function(name, opts = {}) {
     set: null,
     readonly: false,
     default: undefined,
-    changesOn: [],
+    on: [],
     cache: false
   }, opts);
-
-  if (descriptor.cache && !descriptor.changesOn.length) {
-    console.warn(`Basis.Object.prop: cached property \`${name}\` does not have any dependencies (use the \`changesOn\` option)`);
-  }
 
   if (!this.prototype.hasOwnProperty('__props__')) {
     this.prototype.__props__ = Object.create(this.prototype.__props__ || null);
@@ -128,7 +124,7 @@ BasisObject.prototype.init = function(props = {}) {
   for (let k in props) { if (k in this) { this[k] = props[k]; } }
 
   for (let k in this.__props__) {
-    this.__props__[k].changesOn.forEach((event) => {
+    this.__props__[k].on.forEach((event) => {
       this.on(event, onDependentEvent, {context: this.__props__[k]})
     });
   }
@@ -138,7 +134,7 @@ BasisObject.prototype.init = function(props = {}) {
 
 // Public: Emits a `change:<name>` event and clears the cache for the property that changed. This
 // method should be called when a computed property that does not manage its own dependencies via
-// the `changesOn` option changes.
+// the `on` option changes.
 //
 // name - The name of the property that changed.
 // opts - An object to pass as the data argument with the emitted `change` event.

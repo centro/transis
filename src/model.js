@@ -438,22 +438,22 @@ var Model = BasisObject.extend('Basis.Model', function() {
   this.prop('sourceState');
 
   this.prop('isNew', {
-    readonly: true, changesOn: ['change:sourceState'],
+    readonly: true, on: ['change:sourceState'],
     get: function() { return this.sourceState === NEW; }
   });
 
   this.prop('isEmpty', {
-    readonly: true, changesOn: ['change:sourceState'],
+    readonly: true, on: ['change:sourceState'],
     get: function() { return this.sourceState === EMPTY; }
   });
 
   this.prop('isLoaded', {
-    readonly: true, changesOn: ['change:sourceState'],
+    readonly: true, on: ['change:sourceState'],
     get: function() { return this.sourceState === LOADED; }
   });
 
   this.prop('isDeleted', {
-    readonly: true, changesOn: ['change:sourceState'],
+    readonly: true, on: ['change:sourceState'],
     get: function() { return this.sourceState === DELETED; }
   });
 

@@ -190,12 +190,12 @@ describe('Basis.Object', function() {
       });
     });
 
-    describe('with changesOn option', function() {
+    describe('with on option', function() {
       var User = BasisObject.extend('User', function() {
         this.prop('first');
         this.prop('last');
         this.prop('full', {
-          readonly: true, changesOn: ['change:first', 'change:last'],
+          readonly: true, on: ['change:first', 'change:last'],
           get: function() { return `${this.first} ${this.last}`; }
         });
       });
@@ -220,7 +220,7 @@ describe('Basis.Object', function() {
         spy = jasmine.createSpy().and.callFake(function() { return this.a * 2; });
         Foo = BasisObject.extend('Foo', function() {
           this.prop('a');
-          this.prop('doubleA', {cache: true, readonly: true, changesOn: ['change:a'], get: spy});
+          this.prop('doubleA', {cache: true, readonly: true, on: ['change:a'], get: spy});
         });
       });
 
@@ -267,12 +267,6 @@ describe('Basis.Object', function() {
         f.didChange('a');
         expect(f.doubleA).toBe(6);
         expect(spy.calls.count()).toBe(2);
-      });
-
-      it('logs a warning to the console when a cached property is defined without any dependencies', function() {
-        spyOn(console, 'warn');
-        Foo.prop('x', {cache: true, get: function() {}});
-        expect(console.warn).toHaveBeenCalledWith('Basis.Object.prop: cached property `x` does not have any dependencies (use the `changesOn` option)');
       });
     });
   });
