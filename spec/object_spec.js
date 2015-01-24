@@ -259,12 +259,12 @@ describe('Basis.Object', function() {
         expect(spy.calls.count()).toBe(3);
       });
 
-      it('clears the cache when the _emitChangeEvent method is called with the cached property name', function() {
+      it('clears the cache when the didChange method is called with the cached property name', function() {
         var f = new Foo({a: 3});
 
         expect(f.doubleA).toBe(6);
         expect(spy.calls.count()).toBe(1);
-        f._emitChangeEvent('a');
+        f.didChange('a');
         expect(f.doubleA).toBe(6);
         expect(spy.calls.count()).toBe(2);
       });

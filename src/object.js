@@ -22,7 +22,7 @@ function getCached(name) { return this.__cache__ ? this.__cache__[name] : undefi
 // Internal: Dependent event observer. Clears cached values and emits change events for the
 // the property whose dependency was changed.
 function onDependentEvent(event, data, desc) {
-  this._emitChangeEvent(desc.name);
+  this.didChange(desc.name);
 }
 
 // Public: Creates a subclass of `Basis.Object`.
@@ -136,6 +136,20 @@ BasisObject.prototype.init = function(props = {}) {
   return this;
 };
 
+// Public: Emits a `change:<name>` event and clears the cache for the property that changed. This
+// method should be called when a computed property that does not manage its own dependencies via
+// the `changesOn` option changes.
+//
+// name - The name of the property that changed.
+// opts - An object to pass as the data argument with the emitted `change` event.
+//
+// Returns the receiver.
+BasisObject.prototype.didChange = function(name, opts = {}) {
+  uncache.call(this, name);
+  this.emit(`change:${name}`, Object.assign(opts, {object: this}));
+  return this;
+};
+
 // Public: Indicates whether the receiver is equal to the given object. The default implementation
 // simply does an identity comparison using the `===` operator. You'll likely want to override
 // this method in your sub-types in order to perform a more meaningful comparison.
@@ -188,15 +202,9 @@ BasisObject.prototype._setProp = function(name, value) {
   if (descriptor.set) { descriptor.set.call(this, value); }
   else { this[key] = value; }
 
-  this._emitChangeEvent(name, {old});
+  this.didChange(name, {old});
 
   return old;
-};
-
-// Internal: Emits a `change:<name>` event and clears the cache for the property that changed.
-BasisObject.prototype._emitChangeEvent = function(name, opts = {}) {
-  uncache.call(this, name);
-  this.emit(`change:${name}`, Object.assign(opts, {object: this}));
 };
 
 BasisObject.displayName = 'Basis.Object';
