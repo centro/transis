@@ -314,7 +314,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
     }
 
     model.sourceState = LOADED;
-    model.changes = {};
+    model._clearChanges();
 
     return model;
   };
@@ -414,7 +414,6 @@ var Model = BasisObject.extend('Basis.Model', function() {
   // Internal: Initializes the model by setting up some internal properties.
   this.prototype.init = function(props) {
     this.attrs       = {};
-    this.changes     = {};
     this.sourceState = NEW;
     this.isBusy      = false;
     this.__promise__ = Promise.resolve();
@@ -460,6 +459,14 @@ var Model = BasisObject.extend('Basis.Model', function() {
   this.prop('isBusy');
 
   this.prop('error');
+
+  // Public: Returns an object of changes made for properties on the receiver. For simple properties
+  // and `hasOne` associations, the original value is stored. For `hasMany` associations, the added
+  // and removed models are stored.
+  this.prop('changes', {
+    readonly: true,
+    get: function() { return this.__changes = this.__changes || {}; }
+  });
 
   // Public: Refreshes the model by getting it from the data mapper.
   //
@@ -677,8 +684,32 @@ var Model = BasisObject.extend('Basis.Model', function() {
 
     if (this.associations && this.associations[name] && !this.associations[name].owner) { return; }
 
-    if (!(name in this.changes)) { this.changes[name] = oldValue; }
-    if (util.eq(this[name], this.changes[name])) { delete this.changes[name]; }
+    if (!(name in this.changes)) {
+      if (!util.eq(this[name], oldValue)) {
+        this._setChange(name, oldValue);
+      }
+    }
+    else if (util.eq(this[name], this.changes[name])) {
+      this._clearChange(name);
+    }
+  };
+
+  // Internal: Sets the old value for the changed property of the given name.
+  this.prototype._setChange = function(name, oldValue) {
+    this.changes[name] = oldValue;
+    this.didChange('changes');
+  };
+
+  // Internal: Clears the change record for the property of the given name.
+  this.prototype._clearChange = function(name) {
+    delete this.changes[name];
+    this.didChange('changes');
+  };
+
+  // Internal: Clears all change records.
+  this.prototype._clearChanges = function() {
+    this.__changes = {};
+    this.didChange('changes');
   };
 });
 

@@ -1483,6 +1483,14 @@ describe('Model', function () {
       expect(this.invoice.changes).toEqual({name: 'A'});
     });
 
+    it('emits a `change:changes` event when an attribute changes', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('change:changes', spy);
+      this.invoice.name = 'B';
+      expect(spy).toHaveBeenCalledWith('change:changes', {object: this.invoice});
+    });
+
     it('does not keep track of intermediate changes', function() {
       this.invoice.name = 'B';
       expect(this.invoice.changes.name).toBe('A');
@@ -1515,6 +1523,14 @@ describe('Model', function () {
       expect(this.invoice.changes.company).toBeUndefined();
     });
 
+    it('emits a `change:changes` event when an owned hasOne association changes', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('change:changes', spy);
+      this.invoice.billingAddress = new Address;
+      expect(spy).toHaveBeenCalledWith('change:changes', {object: this.invoice});
+    });
+
     it('keeps track of changes to owned hasMany associations when models are added', function() {
       var li1 = new LineItem, li2 = new LineItem;
 
@@ -1541,6 +1557,14 @@ describe('Model', function () {
       removed = this.invoice.lineItems.shift();
       this.invoice.lineItems.push(added);
       expect(this.invoice.changes.lineItems).toEqual({removed: [removed], added: [added]});
+    });
+
+    it('emits a `change:changes` event when an owned hasMany association is mutated', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('change:changes', spy);
+      this.invoice.lineItems.pop();
+      expect(spy).toHaveBeenCalledWith('change:changes', {object: this.invoice});
     });
 
     it('keeps track of changes to owned hasMany associations when they are set', function() {

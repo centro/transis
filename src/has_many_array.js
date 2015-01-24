@@ -36,7 +36,10 @@ function onSplice(event, {array, i, n, added, removed}) {
     });
 
     if (!changes.added.length && !changes.removed.length) {
-      delete this.__owner__.changes[name];
+      this.__owner__._clearChange(name);
+    }
+    else {
+      this.__owner__._setChange(name, changes);
     }
   }
 
