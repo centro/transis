@@ -1609,12 +1609,6 @@ describe('Model', function () {
       expect(this.company.changes.invoices).toBeUndefined();
     });
 
-    it('clears the `changes` object on a successful save', function() {
-    });
-
-    it('does not clear the changes object when a save is unsuccessful', function() {
-    });
-
     describe('#undoChanges', function() {
       it('restores the changed attributes to their original values', function() {
         this.invoice.name = 'B';
@@ -1669,6 +1663,124 @@ describe('Model', function () {
         expect(this.invoice.company.changes).toEqual({name: 'Acme, Inc.'});
         this.invoice.undoChanges();
         expect(this.invoice.company.changes).toEqual({name: 'Acme, Inc.'});
+      });
+    });
+
+    describe('#hasOwnChanges', function() {
+      it('returns true when the receiver has a changed property', function() {
+        expect(this.invoice.hasOwnChanges).toBe(false);
+        this.invoice.name = 'B';
+        expect(this.invoice.hasOwnChanges).toBe(true);
+      });
+
+      it('returns true when the receiver has a mutated hasMany association', function() {
+        expect(this.invoice.hasOwnChanges).toBe(false);
+        this.invoice.lineItems.pop();
+        expect(this.invoice.hasOwnChanges).toBe(true);
+      });
+
+      it('returns false when the receiver has no changes', function() {
+        expect(this.invoice.hasOwnChanges).toBe(false);
+      });
+
+      it('returns false when an owned associated model has changes', function() {
+        this.invoice.billingAddress.name = 'Bob Smith';
+        expect(this.invoice.hasOwnChanges).toBe(false);
+      });
+
+      describe('change event', function() {
+        beforeEach(function() {
+          this.spy = jasmine.createSpy();
+          this.invoice.on('change:hasOwnChanges', this.spy);
+        });
+
+        it('is fired when an attribute changes', function() {
+          this.invoice.name = 'B';
+          expect(this.spy).toHaveBeenCalled();
+        });
+
+        it('is fired when an owned hasMany association is mutated', function() {
+          this.invoice.lineItems.pop();
+          expect(this.spy).toHaveBeenCalled();
+        });
+
+        it('is not fired when an owned associated model changes', function() {
+          this.invoice.billingAddress.name = 'Bob Smith';
+          expect(this.spy).not.toHaveBeenCalled();
+        });
+
+        it('is not fired when an unowned associated model changes', function() {
+          this.invoice.company.name = 'Foo';
+          expect(this.spy).not.toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe('#hasChanges', function() {
+      it('returns true when the receiver has a changed property', function() {
+        expect(this.invoice.hasChanges).toBe(false);
+        this.invoice.name = 'B';
+        expect(this.invoice.hasChanges).toBe(true);
+      });
+
+      it('returns true when the receiver has a mutated hasMany association', function() {
+        expect(this.invoice.hasChanges).toBe(false);
+        this.invoice.lineItems.pop();
+        expect(this.invoice.hasChanges).toBe(true);
+      });
+
+      it('returns true when an owned hasOne associated model has changes', function() {
+        expect(this.invoice.hasChanges).toBe(false);
+        this.invoice.billingAddress.name = 'Bob Smith';
+        expect(this.invoice.hasChanges).toBe(true);
+      });
+
+      it('returns true when an owned hasMany associated model has changes', function() {
+        expect(this.invoice.hasChanges).toBe(false);
+        this.invoice.lineItems.at(0).name = 'abc';
+        expect(this.invoice.hasChanges).toBe(true);
+      });
+
+      it('returns false when the receiver and its owned associated models have no changes', function() {
+        expect(this.invoice.hasChanges).toBe(false);
+      });
+
+      it('returns false when an non-owned associated model has changes', function() {
+        expect(this.invoice.hasChanges).toBe(false);
+        this.invoice.company.name = 'Blah';
+        expect(this.invoice.hasChanges).toBe(false);
+      });
+
+      describe('change event', function() {
+        beforeEach(function() {
+          this.spy = jasmine.createSpy();
+          this.invoice.on('change:hasChanges', this.spy);
+        });
+
+        it('is fired when an attribute changes', function() {
+          this.invoice.name = 'B';
+          expect(this.spy).toHaveBeenCalled();
+        });
+
+        it('is fired when an owned hasMany association is mutated', function() {
+          this.invoice.lineItems.pop();
+          expect(this.spy).toHaveBeenCalled();
+        });
+
+        it('is fired when an owned hasOne associated model changes', function() {
+          this.invoice.billingAddress.name = 'Bob Smith';
+          expect(this.spy).toHaveBeenCalled();
+        });
+
+        it('is fired when an owned hasMany associated model changes', function() {
+          this.invoice.lineItems.at(0).name = 'xyz';
+          expect(this.spy).toHaveBeenCalled();
+        });
+
+        it('is not fired when an unowned associated model changes', function() {
+          this.invoice.company.name = 'Foo';
+          expect(this.spy).not.toHaveBeenCalled();
+        });
       });
     });
   });

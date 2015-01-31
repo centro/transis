@@ -418,6 +418,12 @@ var Model = BasisObject.extend('Basis.Model', function() {
     this.isBusy      = false;
     this.__promise__ = Promise.resolve();
 
+    for (let name in this.associations) {
+      if (this.associations[name].owner) {
+        this.__props__.hasChanges.on.push(`change:${name}.hasChanges`);
+      }
+    }
+
     Model.__super__.init.call(this, props);
   }
 
@@ -466,6 +472,35 @@ var Model = BasisObject.extend('Basis.Model', function() {
   this.prop('changes', {
     readonly: true,
     get: function() { return this.__changes = this.__changes || {}; }
+  });
+
+  // Public: Returns a boolean indicating whether the model has any property changes or any
+  // owned `hasMany` associations that have been mutated.
+  this.prop('hasOwnChanges', {
+    readonly: true, on: ['change:changes'],
+    get: function() { return Object.keys(this.changes).length > 0; }
+  });
+
+  // Public: Returns a boolean indicating whether the model has any changes or if any of its owned
+  // associated models have changes.
+  this.prop('hasChanges', {
+    readonly: true, on: ['change:changes'],
+    get: function() {
+      if (this.hasOwnChanges) { return true; }
+
+      for (let name in this.associations) {
+        if (!this.associations[name].owner) { continue; }
+
+        if (this.associations[name].type === 'hasOne') {
+          if (this[name].hasChanges) { return true; }
+        }
+        else if (this.associations[name].type === 'hasMany') {
+          return this[name].some((m) => m.hasChanges);
+        }
+      }
+
+      return false;
+    }
   });
 
   // Public: Refreshes the model by getting it from the data mapper.
