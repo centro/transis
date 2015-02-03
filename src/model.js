@@ -27,6 +27,18 @@ function checkAssociatedType(desc, o) {
   }
 }
 
+// Internal: Checks that the given association descriptor does not have both sides of the
+// association marked as the owner.
+function checkOwnerOpts(desc) {
+  var klass, inv;
+
+  if (desc.owner && desc.inverse &&
+      (klass = this.resolve(desc.klass, false)) && klass.prototype.associations &&
+        (inv = klass.prototype.associations[desc.inverse]) && inv.owner) {
+    throw new Error(`${this}.${desc.name}: both sides of the association are marked as owner`);
+  }
+}
+
 // Internal: Handler for change events observed on objects associated via a `hasOne` association.
 // This propagates the event on the receiver.
 function onHasOneChange(event, data, desc) {
@@ -190,6 +202,8 @@ var Model = BasisObject.extend('Basis.Model', function() {
       type: 'hasOne', name, klass
     });
 
+    checkOwnerOpts.call(this, desc);
+
     this.prop(name, {
       get: function() { return this[`__${name}`]; },
       set: function(v) { hasOneSet.call(this, desc, v, true); }
@@ -229,6 +243,8 @@ var Model = BasisObject.extend('Basis.Model', function() {
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
       type: 'hasMany', name, klass, singular: pluralize(name, 1)
     });
+
+    checkOwnerOpts.call(this, desc);
 
     this.prop(name, {
       get: function() {

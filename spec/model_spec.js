@@ -215,6 +215,20 @@ describe('Model', function () {
         expect(b.foos).toEqual(A());
       });
     });
+
+    describe('with the owner option and an inverse that also has the owner option', function() {
+      Model.extend('Foo', function() {
+        this.hasOne('bar', 'Bar', {inverse: 'foo', owner: true});
+      });
+
+      it('should throw an exception', function() {
+        expect(function() {
+          Model.extend('Bar', function() {
+            this.hasOne('foo', 'Foo', {inverse: 'bar', owner: true});
+          });
+        }).toThrow(new Error('Bar.foo: both sides of the association are marked as owner'));
+      });
+    });
   });
 
   describe('.hasMany', function() {
@@ -404,6 +418,20 @@ describe('Model', function () {
         expect(f.bars).toEqual(A());
         expect(b1.foos).toEqual(A());
         expect(b2.foos).toEqual(A());
+      });
+    });
+
+    describe('with the owner option and an inverse that also has the owner option', function() {
+      Model.extend('Foo', function() {
+        this.hasOne('bar', 'Bar', {inverse: 'foos', owner: true});
+      });
+
+      it('should throw an exception', function() {
+        expect(function() {
+          Model.extend('Bar', function() {
+            this.hasMany('foos', 'Foo', {inverse: 'bar', owner: true});
+          });
+        }).toThrow(new Error('Bar.foos: both sides of the association are marked as owner'));
       });
     });
   });

@@ -50,14 +50,17 @@ BasisObject.extend = function(name, f) {
 
 // Internal: Returns the `Basis.Object` subclass with the given name.
 //
-// name - A string representing the name of a `Basis.Object` subclass.
+// name  - A string representing the name of a `Basis.Object` subclass.
+// raise - A boolean indicating whether an exception should be raised if the name can't be resolved
+//         (default: `true`).
 //
-// Returns the resolved subclass constructor function.
-// Throws `Error` if a class with the given name is not known.
-BasisObject.resolve = function(name) {
+// Returns the resolved subclass constructor function or `undefined` if a class with the given name
+//   is not known.
+// Throws `Error` if the `raise` argument is `true` and the name cannot not be resolved.
+BasisObject.resolve = function(name, raise = true) {
   var klass = (typeof name === 'function') ? name : subclasses[name];
 
-  if (!klass) {
+  if (!klass && raise) {
     throw new Error(`Basis.Object.resolve: could not resolve subclass: \`${name}\``);
   }
 
