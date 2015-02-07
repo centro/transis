@@ -1812,5 +1812,64 @@ describe('Model', function () {
       });
     });
   });
+
+  describe('validations', function() {
+    var ValidatedModel = Model.extend('ValidatedModel', function() {
+      this.attr('name', 'string');
+      this.attr('num', 'number');
+      this.validate('name', 'nameIsLowerCase');
+      this.validate('name', function() {
+        if (this.name && this.name.length >= 10) {
+          this.addError('name', 'must be less than 10 characters');
+        }
+      });
+      this.validate('num', 'numIsInteger');
+
+      this.prototype.nameIsLowerCase = function() {
+        if (this.name && this.name.toLowerCase() !== this.name) {
+          this.addError('name', 'must be lower case');
+        }
+      };
+
+      this.prototype.numIsInteger = function() {
+        if (!String(this.num).match(/^\d+$/)) {
+          this.addError('num', 'is not an integer');
+        }
+      };
+    });
+
+    describe('#addError', function() {
+      beforeEach(function() {
+        this.m = new BasicModel;
+      });
+
+      it('adds the given mesage to the `errors` hash for the given name', function() {
+        expect(this.m.errors.str).toBeUndefined();
+        this.m.addError('str', 'foo');
+        expect(this.m.errors.str).toEqual(['foo']);
+      });
+
+      it('adds to the errors array when a validation error already exists for the given name', function() {
+        this.m.addError('str', 'foo');
+        expect(this.m.errors.str).toEqual(['foo']);
+        this.m.addError('str', 'bar');
+        expect(this.m.errors.str).toEqual(['foo', 'bar']);
+      });
+
+      it('does not add identical error messages', function() {
+        this.m.addError('str', 'foo');
+        expect(this.m.errors.str).toEqual(['foo']);
+        this.m.addError('str', 'foo');
+        expect(this.m.errors.str).toEqual(['foo']);
+      });
+
+      it('triggers a `change:errors` event', function() {
+        var spy = jasmine.createSpy();
+        this.m.on('change:errors', spy);
+        this.m.addError('str', 'foo');
+        expect(spy).toHaveBeenCalledWith('change:errors', {object: this.m});
+      });
+    });
+  });
 });
 

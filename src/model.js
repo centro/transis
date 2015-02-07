@@ -256,6 +256,9 @@ var Model = BasisObject.extend('Basis.Model', function() {
     });
   };
 
+  this.validate = function(name, f) {
+  };
+
   // Public: Loads the given model attributes into the identity map. This method should be called by
   // your data mapper(s) when new data is successfully retrieved.
   //
@@ -519,6 +522,13 @@ var Model = BasisObject.extend('Basis.Model', function() {
     }
   });
 
+  // Public: Object containing any validation errors on the model. The keys of the object are theo
+  // properties that have errors and the values are an array of error messages.
+  this.prop('errors', {
+    readonly: true,
+    get: function() { return this.__errors = this.__errors || {}; }
+  });
+
   // Public: Refreshes the model by getting it from the data mapper.
   //
   // opts - An object to forward along to the mapper (default: `{}`).
@@ -679,6 +689,24 @@ var Model = BasisObject.extend('Basis.Model', function() {
         this[name].forEach(m => m.undoChanges());
       }
     }
+  };
+
+  // Public: Add a validation error for the given property name and type. Adding an error will cause
+  // the model to enter an invalid state.
+  //
+  // name    - The name of the attribute or property that has a validation error.
+  // message - A string containing the error message.
+  //
+  // Returns the receiver.
+  this.prototype.addError = function(name, message) {
+    this.errors[name] = this.errors[name] || [];
+
+    if (this.errors[name].indexOf(message) === -1) {
+      this.errors[name].push(message);
+      this.didChange('errors');
+    }
+
+    return this;
   };
 
   this.prototype.toString = function() {
