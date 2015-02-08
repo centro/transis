@@ -440,6 +440,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
     for (let name in this.associations) {
       if (this.associations[name].owner) {
         this.__props__.hasChanges.on.push(`change:${name}.hasChanges`);
+        this.__props__.hasErrors.on.push(`change:${name}.hasErrors`);
       }
     }
 
@@ -527,6 +528,35 @@ var Model = BasisObject.extend('Basis.Model', function() {
   this.prop('errors', {
     readonly: true,
     get: function() { return this.__errors = this.__errors || {}; }
+  });
+
+  // Public: Returns a boolean indicating whether the model has any validation errors on its own
+  // properties.
+  this.prop('hasOwnErrors', {
+    readonly: true, on: ['change:errors'],
+    get: function() { return Object.keys(this.errors).length > 0; }
+  });
+
+  // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
+  // its owned associated models have validation errors.
+  this.prop('hasErrors', {
+    readonly: true, on: ['change:errors'],
+    get: function() {
+      if (this.hasOwnErrors) { return true; }
+
+      for (let name in this.associations) {
+        if (!this.associations[name].owner) { continue; }
+
+        if (this.associations[name].type === 'hasOne') {
+          if (this[name].hasErrors) { return true; }
+        }
+        else if (this.associations[name].type === 'hasMany') {
+          return this[name].some((m) => m.hasErrors);
+        }
+      }
+
+      return false;
+    }
   });
 
   // Public: Refreshes the model by getting it from the data mapper.

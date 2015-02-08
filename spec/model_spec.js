@@ -38,6 +38,30 @@ describe('Model', function () {
     this.hasMany('posts', 'Post', {inverse: 'tags'});
   });
 
+  var Company = Model.extend('Company', function() {
+    this.hasMany('invoices', 'Invoice', {inverse: 'company'});
+    this.attr('name', 'string');
+  });
+
+  var Address = Model.extend('Address', function() {
+    this.attr('name', 'string');
+    this.attr('address', 'string');
+  });
+
+  var Invoice = Model.extend('Invoice', function() {
+    this.hasOne('company', 'Company', {inverse: 'invoices'});
+    this.hasOne('billingAddress', 'Address', {owner: true});
+    this.hasMany('lineItems', 'LineItem', {owner: true, inverse: 'invoice'});
+    this.attr('name', 'string');
+  });
+
+  var LineItem = Model.extend('LineItem', function() {
+    this.hasOne('invoice', 'Invoice', {inverse: 'lineItems'});
+    this.attr('name', 'string');
+    this.attr('quantity', 'number');
+    this.attr('rate', 'number');
+  });
+
   beforeEach(function() {
     BasicModel.mapper = TestMapper;
   });
@@ -1465,30 +1489,6 @@ describe('Model', function () {
   });
 
   describe('change tracking', function() {
-    var Company = Model.extend('Company', function() {
-      this.hasMany('invoices', 'Invoice', {inverse: 'company'});
-      this.attr('name', 'string');
-    });
-
-    var Address = Model.extend('Address', function() {
-      this.attr('name', 'string');
-      this.attr('address', 'string');
-    });
-
-    var Invoice = Model.extend('Invoice', function() {
-      this.hasOne('company', 'Company', {inverse: 'invoices'});
-      this.hasOne('billingAddress', 'Address', {owner: true});
-      this.hasMany('lineItems', 'LineItem', {owner: true, inverse: 'invoice'});
-      this.attr('name', 'string');
-    });
-
-    var LineItem = Model.extend('LineItem', function() {
-      this.hasOne('invoice', 'Invoice', {inverse: 'lineItems'});
-      this.attr('name', 'string');
-      this.attr('quantity', 'number');
-      this.attr('rate', 'number');
-    });
-
     beforeEach(function() {
       this.company = Company.load({id: 123, name: 'Acme, Inc.'});
 
@@ -1814,28 +1814,20 @@ describe('Model', function () {
   });
 
   describe('validations', function() {
-    var ValidatedModel = Model.extend('ValidatedModel', function() {
-      this.attr('name', 'string');
-      this.attr('num', 'number');
-      this.validate('name', 'nameIsLowerCase');
-      this.validate('name', function() {
-        if (this.name && this.name.length >= 10) {
-          this.addError('name', 'must be less than 10 characters');
-        }
+    beforeEach(function() {
+      this.company = Company.load({id: 123, name: 'Acme, Inc.'});
+
+      this.invoice = Invoice.load({
+        id: 8,
+        company: 123,
+        name: 'A',
+        billingAddress: {id: 20, name: 'Joe Blow', address: '123 Fake St.'},
+        lineItems: [
+          {id: 10, name: 'foo', quantity: 10, rate: 3.5},
+          {id: 11, name: 'bar', quantity: 3, rate: 12.25},
+          {id: 12, name: 'baz', quantity: 8, rate: 5},
+        ]
       });
-      this.validate('num', 'numIsInteger');
-
-      this.prototype.nameIsLowerCase = function() {
-        if (this.name && this.name.toLowerCase() !== this.name) {
-          this.addError('name', 'must be lower case');
-        }
-      };
-
-      this.prototype.numIsInteger = function() {
-        if (!String(this.num).match(/^\d+$/)) {
-          this.addError('num', 'is not an integer');
-        }
-      };
     });
 
     describe('#addError', function() {
@@ -1868,6 +1860,97 @@ describe('Model', function () {
         this.m.on('change:errors', spy);
         this.m.addError('str', 'foo');
         expect(spy).toHaveBeenCalledWith('change:errors', {object: this.m});
+      });
+    });
+
+    describe('#hasOwnErrors', function() {
+      it('returns true when the receiver has a validation error on one of its properties', function() {
+        expect(this.invoice.hasOwnErrors).toBe(false);
+        this.invoice.addError('name', 'foo');
+        expect(this.invoice.hasOwnErrors).toBe(true);
+      });
+
+      it('returns false when the receiver has no validation errors on any of its properties', function() {
+        expect(this.invoice.hasOwnErrors).toBe(false);
+      });
+
+      it('returns false when an owned associated model has errors', function() {
+        this.invoice.billingAddress.addError('name', 'bar');
+        expect(this.invoice.hasOwnErrors).toBe(false);
+      });
+
+      describe('change event', function() {
+        beforeEach(function() {
+          this.spy = jasmine.createSpy();
+          this.invoice.on('change:hasOwnErrors', this.spy);
+        });
+
+        it('is fired when a validation error is added', function() {
+          this.invoice.addError('name', 'x');
+          expect(this.spy).toHaveBeenCalled();
+        });
+
+        it('is not fired when an owned associated model has a validation error added', function() {
+          this.invoice.billingAddress.addError('name', 'y');
+          expect(this.spy).not.toHaveBeenCalled();
+        });
+
+        it('is not fired when an unowned associated model has a validation error added', function() {
+          this.invoice.company.addError('name', 'z');
+          expect(this.spy).not.toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe('#hasErrors', function() {
+      it('returns true when the receiver has a validation error on one of its properties', function() {
+        expect(this.invoice.hasErrors).toBe(false);
+        this.invoice.addError('name', 'foo');
+        expect(this.invoice.hasErrors).toBe(true);
+      });
+
+      it('returns true when the recevier has an owned hasOne associated model with a validation error', function() {
+        expect(this.invoice.hasErrors).toBe(false);
+        this.invoice.billingAddress.addError('name', 'bar');
+        expect(this.invoice.hasErrors).toBe(true);
+      });
+
+      it('returns true when the receiver has an owned hasMany associated model with a validation error', function() {
+        expect(this.invoice.hasErrors).toBe(false);
+        this.invoice.lineItems.at(0).addError('name', 'baz');
+        expect(this.invoice.hasErrors).toBe(true);
+      });
+
+      it('returns false when the receiver and its owned associated models have no validation errors', function() {
+        expect(this.invoice.hasErrors).toBe(false);
+      });
+
+      it('returns false when a non-owned associated model has validation errors', function() {
+        expect(this.invoice.hasErrors).toBe(false);
+        this.invoice.company.addError('name', 'abc');
+        expect(this.invoice.hasErrors).toBe(false);
+      });
+
+      describe('change event', function() {
+        beforeEach(function() {
+          this.spy = jasmine.createSpy();
+          this.invoice.on('change:hasErrors', this.spy);
+        });
+
+        it('is fired when a validation error is added', function() {
+          this.invoice.addError('name', 'x');
+          expect(this.spy).toHaveBeenCalled();
+        });
+
+        it('is fired when an owned associated model has a validation error added', function() {
+          this.invoice.billingAddress.addError('name', 'y');
+          expect(this.spy).toHaveBeenCalled();
+        });
+
+        it('is not fired when an unowned associated model has a validation error added', function() {
+          this.invoice.company.addError('name', 'z');
+          expect(this.spy).not.toHaveBeenCalled();
+        });
       });
     });
   });
