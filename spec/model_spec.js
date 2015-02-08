@@ -1814,6 +1814,44 @@ describe('Model', function () {
   });
 
   describe('validations', function() {
+    var ValidatedFoo = Model.extend('ValidatedFoo', function() {
+      this.attr('name', 'string');
+      this.attr('num', 'number');
+
+      this.validate('name', 'nameIsLowerCase');
+      this.validate('name', function() {
+        if (this.name && this.name.length >= 10) {
+          this.addError('name', 'must be less than 10 characters');
+        }
+      });
+
+      this.validate('num', 'numIsInteger');
+
+      this.hasMany('bars', 'ValidatedBar', {owner: true});
+
+      this.prototype.nameIsLowerCase = function() {
+        if (this.name && this.name.toLowerCase() !== this.name) {
+          this.addError('name', 'must be lower case');
+        }
+      };
+
+      this.prototype.numIsInteger = function() {
+        if (!String(this.num).match(/^\d+$/)) {
+          this.addError('num', 'is not an integer');
+        }
+      };
+    });
+
+    var ValidatedBar = Model.extend('ValidatedBar', function() {
+      this.attr('x', 'number');
+
+      this.validate('x', function() {
+        if (this.x && this.x % 2 !== 0) {
+          this.addError('x', 'must be even');
+        }
+      });
+    });
+
     beforeEach(function() {
       this.company = Company.load({id: 123, name: 'Acme, Inc.'});
 
@@ -1951,6 +1989,73 @@ describe('Model', function () {
           this.invoice.company.addError('name', 'z');
           expect(this.spy).not.toHaveBeenCalled();
         });
+      });
+    });
+
+    describe('#validateProp', function() {
+      it('runs all registered validators for the given property name', function() {
+        var m = new ValidatedFoo({name: 'FooBarBazQuux'});
+        m.validateProp('name');
+        expect(m.errors.name).toEqual(['must be lower case', 'must be less than 10 characters']);
+      });
+
+      it('clears existing validation errors on the given property name', function() {
+        var m = new ValidatedFoo({name: 'Foo'});
+        m.addError('name', 'abc');
+        expect(m.errors.name).toEqual(['abc']);
+        m.validateProp('name');
+        expect(m.errors.name).toEqual(['must be lower case']);
+      });
+
+      it('does not clear existing validation errors on other properties', function() {
+        var m = new ValidatedFoo({name: 'Foo'});
+        m.addError('num', 'xyz');
+        expect(m.errors.num).toEqual(['xyz']);
+        m.validateProp('name');
+        expect(m.errors.num).toEqual(['xyz']);
+      });
+
+      it('returns true when all validations pass', function() {
+        var m = new ValidatedFoo({name: 'foo'});
+        expect(m.validateProp('name')).toBe(true);
+      });
+
+      it('returns false when some validation fails', function() {
+        var m = new ValidatedFoo({name: 'Foo'});
+        expect(m.validateProp('name')).toBe(false);
+      });
+    });
+
+    describe('#validate', function() {
+      it('runs validators for all properties', function() {
+        var m = new ValidatedFoo({name: 'Foo', num: 3.14});
+
+        expect(m.errors).toEqual({});
+        m.validate();
+        expect(m.errors).toEqual({name: ['must be lower case'], num: ['is not an integer']});
+      });
+
+      it('runs validate on owned associated models', function() {
+        var m = new ValidatedFoo({name: 'foo', num: 10, bars: [new ValidatedBar({x: 3})]});
+
+        expect(m.bars.at(0).errors).toEqual({});
+        m.validate();
+        expect(m.bars.at(0).errors).toEqual({x: ['must be even']});
+      });
+
+      it('returns true when no validation errors are found', function() {
+        var m = new ValidatedFoo({name: 'foo', num: 10});
+        expect(m.validate()).toBe(true);
+      });
+
+      it('returns false when a validation error is found on the receiver', function() {
+        var m = new ValidatedFoo({name: 'Foo', num: 10});
+        expect(m.validate()).toBe(false);
+      });
+
+      it('returns false when a validation error is found on an owned associated model', function() {
+        var m = new ValidatedFoo({name: 'foo', num: 10, bars: [new ValidatedBar({x: 2}), new ValidatedBar({x: 3})]});
+        expect(m.validate()).toBe(false);
       });
     });
   });

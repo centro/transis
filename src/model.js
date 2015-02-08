@@ -256,7 +256,21 @@ var Model = BasisObject.extend('Basis.Model', function() {
     });
   };
 
+  // Public: Add a validator for the given attribute. The validator function or method should use
+  // the `Model#addError` method to record a validation error when one is detected.
+  //
+  // name - The name of the property to validate.
+  // f    - A validator function or the name of an instance method.
+  //
+  // Returns the receiver.
   this.validate = function(name, f) {
+    if (!this.prototype.hasOwnProperty('validators')) {
+      this.prototype.validators = Object.create(this.prototype.validators);
+    }
+
+    (this.prototype.validators[name] = this.prototype.validators[name] || []).push(f);
+
+    return this;
   };
 
   // Public: Loads the given model attributes into the identity map. This method should be called by
@@ -427,8 +441,11 @@ var Model = BasisObject.extend('Basis.Model', function() {
     return promise;
   };
 
-  // Internal: Hold the association descriptors created by `.hasOne` and `.hasMany`.
+  // Internal: Holds the association descriptors created by `.hasOne` and `.hasMany`.
   this.prototype.associations = {};
+
+  // Internal: Holds the validators registered by `.validate`.
+  this.prototype.validators = {};
 
   // Internal: Initializes the model by setting up some internal properties.
   this.prototype.init = function(props) {
@@ -739,8 +756,62 @@ var Model = BasisObject.extend('Basis.Model', function() {
     return this;
   };
 
+  // Public: Runs registered validators for the given property. This will clear any existing
+  // validation errors for the given property.
+  //
+  // name - The name of the property to run validations for.
+  //
+  // Returns `true` if no validation errors are found on the given attribute and `false` otherwise.
+  this.prototype.validateProp = function(name) {
+    if (!this.validators[name]) { return true; }
+
+    this._clearErrors(name);
+
+    for (let i = 0, n = this.validators[name].length; i < n; i++) {
+      let validator = this.validators[name][i];
+      if (typeof validator === 'function') { validator.call(this); }
+      else if (typeof validator === 'string' && validator in this) { this[validator](); }
+      else { throw new Error(`${this.constructor}#validateProp: don't know how to execute validator: \`${validator}\``); }
+    }
+
+    return !(name in this.errors);
+  };
+
+  // Public: Runs all registered validators for all properties and also validates owned
+  // associations.
+  //
+  // Returns `true` if no validation errors are found and `false` otherwise.
+  this.prototype.validate = function() {
+    var associations = this.associations;
+
+    for (let name in this.validators) { this.validateProp(name); }
+
+    for (let name in associations) {
+      let desc = associations[name];
+
+      if (!desc.owner) { continue; }
+
+      if (desc.type === 'hasOne') {
+        this[name] && this[name].validate();
+      }
+      else if (desc.type === 'hasMany') {
+        this[name].forEach(m => m.validate());
+      }
+    }
+
+    return !this.hasErrors;
+  };
+
   this.prototype.toString = function() {
     return `#<${this.constructor} (${this.stateString()}):${this.id}>`;
+  };
+
+  // Internal: Clears validation errors from the `errors` hash. If a name is given, only the errors
+  // for the property of that name are cleared, otherwise all errors are cleared.
+  this.prototype._clearErrors = function(name) {
+    if (name) { delete this.errors[name]; } else { this.errors = {}; }
+    this.didChange('errors');
+    return this;
   };
 
   // Internal: Called by an inverse association when a model was removed from the inverse side.
