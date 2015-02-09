@@ -348,6 +348,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
 
     model.sourceState = LOADED;
     model._clearChanges();
+    model._clearErrors();
 
     return model;
   };
@@ -809,7 +810,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
   // Internal: Clears validation errors from the `errors` hash. If a name is given, only the errors
   // for the property of that name are cleared, otherwise all errors are cleared.
   this.prototype._clearErrors = function(name) {
-    if (name) { delete this.errors[name]; } else { this.errors = {}; }
+    if (name) { delete this.errors[name]; } else { this.__errors = {}; }
     this.didChange('errors');
     return this;
   };
