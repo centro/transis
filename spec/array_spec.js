@@ -686,4 +686,12 @@ describe('Array', function() {
       expect(a).toEqual(A());
     });
   });
+
+  describe('#flatten', function() {
+    it('returns a new array that removes all levels of nested arrays', function() {
+      var a = A(1, 2, [3, 4], A([5, 6, 7]), 8, [9], [[10, 11], 12], [[[[13]]]]);
+
+      expect(a.flatten()).toEqual(A(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13));
+    });
+  });
 });

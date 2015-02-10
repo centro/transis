@@ -368,6 +368,30 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
     return this;
   };
 
+  // Public: Builds a new array that is the one-dimensional flattening of the receiver. In other
+  // words, for every item that is itself an array, its items are added to the new array.
+  //
+  // Returns a new `Basis.Array` instance.
+  this.prototype.flatten = function() {
+    var a = BasisArray.A();
+
+    for (let i = 0, n = this.length; i < n; i++) {
+      let el = this.at(i);
+
+      if (el instanceof BasisArray) {
+        a = a.concat(el.flatten());
+      }
+      else if (Array.isArray(el)) {
+        a = a.concat(BasisArray.wrap(el).flatten());
+      }
+      else {
+        a.push(el);
+      }
+    }
+
+    return a;
+  };
+
   this.prototype.toString = function() {
     return `#<Basis.Array:${this.objectId} [${this.__elements__}]>`;
   };
