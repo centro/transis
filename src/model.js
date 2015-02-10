@@ -4,6 +4,7 @@ import BasisObject from "./object";
 import BasisArray from "./array";
 import QueryArray from "./query_array";
 import HasManyArray from "./has_many_array";
+import Validations from "./validations";
 import * as attrs from "./attrs";
 import * as util from "./util";
 
@@ -905,5 +906,7 @@ Model.registerAttr('number', attrs.NumberAttr);
 Model.registerAttr('boolean', attrs.BooleanAttr);
 Model.registerAttr('date', attrs.DateAttr);
 Model.registerAttr('datetime', attrs.DateTimeAttr);
+
+Object.assign(Model, Validations);
 
 export default Model;
