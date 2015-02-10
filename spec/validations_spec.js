@@ -74,4 +74,44 @@ describe('Model validations', function() {
       });
     });
   });
+
+  describe('.validatesNumber', function() {
+    var ValidatesNumberModel = Model.extend('ValidatesNumberModel', function() {
+      this.attr('foo', 'number');
+      this.attr('bar', 'number');
+      this.validatesNumber('foo');
+      this.validatesNumber('bar', {nonnegative: true});
+    });
+
+    beforeEach(function() {
+      this.m = new ValidatesNumberModel;
+    });
+
+    it('adds a validation error if the given value could not be parsed into a number', function() {
+      this.m.foo = 'abc';
+      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.errors.foo).toEqual(['is not a number']);
+      this.m.foo = '9';
+      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.errors.foo).toBeUndefined();
+    });
+
+    it('does not add a validation error if the attribute is null', function() {
+      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.errors.foo).toBeUndefined();
+    });
+
+    it('does not add a validation error if the attribute is empty', function() {
+      this.m.foo = '';
+      expect(this.m.validateProp('foo')).toBe(true);
+    });
+
+    it('ensures the value is non-negative when the nonnegative option is specified', function() {
+      this.m.bar = 9;
+      expect(this.m.validateProp('bar')).toBe(true);
+      this.m.bar = -1;
+      expect(this.m.validateProp('bar')).toBe(false);
+      expect(this.m.errors.bar).toEqual(['must not be negative']);
+    });
+  });
 });
