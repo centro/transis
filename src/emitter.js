@@ -11,7 +11,9 @@ function trigger(reg, event, data) {
   }
 }
 
-var Emitter = {
+function Emitter() {}
+
+Emitter.prototype = {
   on: function(event, handler, opts = {}) {
     var reg, events;
 

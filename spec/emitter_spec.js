@@ -6,13 +6,13 @@ class Foo {
   methHandler2() {}
   methHandler3() {}
 }
-Object.assign(Foo.prototype, Emitter);
+Object.assign(Foo.prototype, Emitter.prototype);
 
 class Bar {
   methHandler1() {}
   methHandler2() {}
 }
-Object.assign(Bar.prototype, Emitter);
+Object.assign(Bar.prototype, Emitter.prototype);
 
 var f, b, funcHandler1, funcHandler2 = null;
 

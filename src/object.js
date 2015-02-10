@@ -208,6 +208,6 @@ BasisObject.prototype._setProp = function(name, value) {
 
 BasisObject.displayName = 'Basis.Object';
 
-Object.assign(BasisObject.prototype, Emitter);
+Object.assign(BasisObject.prototype, Emitter.prototype);
 
 export default BasisObject;
