@@ -82,7 +82,7 @@ function mapperDeleteSuccess() {
   IdMap.delete(this);
   this.isBusy = false;
   this.sourceState = DELETED;
-  this.error = undefined;
+  this._clearErrors();
 
   for (let name in this.associations) {
     let desc = this.associations[name];
@@ -401,11 +401,10 @@ var Model = BasisObject.extend('Basis.Model', function() {
       model.__promise__ = this._callMapper('get', [id, getOpts])
         .then((result) => {
           model.isBusy = false;
-          model.error = undefined;
           this.load(result);
         }, (error) => {
           model.isBusy = false;
-          model.error = error;
+          model._loadErrors(error);
           throw error;
         });
     }
@@ -502,8 +501,6 @@ var Model = BasisObject.extend('Basis.Model', function() {
   });
 
   this.prop('isBusy');
-
-  this.prop('error');
 
   // Public: Returns an object of changes made for properties on the receiver. For simple properties
   // and `hasOne` associations, the original value is stored. For `hasMany` associations, the added
@@ -610,11 +607,10 @@ var Model = BasisObject.extend('Basis.Model', function() {
     this.__promise__ = this.constructor._callMapper(this.isNew ? 'create' : 'update', [this, opts])
       .then((attrs) => {
         this.isBusy = false;
-        this.error = undefined;
         this.load(attrs);
       }, (error) => {
         this.isBusy = false;
-        this.error = error;
+        this._loadErrors(error);
       });
 
     return this;
@@ -644,7 +640,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
           mapperDeleteSuccess.call(this);
         }, (error) => {
           this.isBusy = false;
-          this.error = error;
+          this._loadErrors(error);
         });
     }
 
@@ -806,6 +802,33 @@ var Model = BasisObject.extend('Basis.Model', function() {
 
   this.prototype.toString = function() {
     return `#<${this.constructor} (${this.stateString()}):${this.id}>`;
+  };
+
+  // Internal: Load error message(s) received from the mapper. When passed an object, the keys of
+  // the object are assumed to be attribute names and the values the error message for that
+  // attribute. When given a string, an error is added to the `base` attribute.
+  //
+  // errors - Either an object mapping attribute names to their error messages or a string.
+  //
+  // Returns the receiver.
+  this.prototype._loadErrors = function(errors) {
+    if (typeof errors === 'object') {
+      for (let k in errors) {
+        if (Array.isArray(errors[k])) {
+          errors[k].forEach(function(error) {
+            this.addError(k, error);
+          }, this);
+        }
+        else {
+          this.addError(k, String(errors[k]));
+        }
+      }
+    }
+    else {
+      this.addError('base', String(errors));
+    }
+
+    return this;
   };
 
   // Internal: Clears validation errors from the `errors` hash. If a name is given, only the errors

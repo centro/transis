@@ -895,11 +895,11 @@ describe('Model', function () {
         });
       });
 
-      it('sets the error property when the mapper rejects the promise', function(done) {
+      it('adds an error when the mapper rejects the promise', function(done) {
         var m = BasicModel.get(708);
-        this.reject('error!');
+        this.reject({str: ['error 1', 'error 2'], num: 'error 3'});
         this.delay(function() {
-          expect(m.error).toBe('error!');
+          expect(m.errors).toEqual({str: ['error 1', 'error 2'], num: ['error 3']});
           done();
         });
       });
@@ -908,11 +908,11 @@ describe('Model', function () {
         var m = BasicModel.get(708);
         this.reject('blah');
         this.delay(() => {
-          expect(m.error).toBe('blah');
+          expect(m.errors.base).toEqual(['blah']);
           BasicModel.get(708);
           this.resolve({id: 708, str: 'asdf'});
           this.delay(() => {
-            expect(m.error).toBeUndefined();
+            expect(m.errors).toEqual({});
             done();
           });
         });
@@ -1064,24 +1064,24 @@ describe('Model', function () {
         });
       });
 
-      it('sets the error property when the mapper rejects the promise', function(done) {
+      it('adds an error when the mapper rejects the promise', function(done) {
         this.model.save();
         this.reject('failed');
         this.delay(() => {
-          expect(this.model.error).toBe('failed');
+          expect(this.model.errors.base).toEqual(['failed']);
           done();
         });
       });
 
-      it('clears the error property when the mapper resolves the promise', function(done) {
+      it('clears the errors when the mapper resolves the promise', function(done) {
         this.model.save();
         this.reject('failed');
         this.delay(() => {
-          expect(this.model.error).toBe('failed');
+          expect(this.model.errors.base).toEqual(['failed']);
           this.model.save();
           this.resolve({id: 123});
           this.delay(() => {
-            expect(this.model.error).toBeUndefined();
+            expect(this.model.errors).toEqual({});
             done();
           });
         });
@@ -1160,26 +1160,26 @@ describe('Model', function () {
         });
       });
 
-      it('sets the error property when the mapper rejects the promise', function(done) {
+      it('adds an error when the mapper rejects the promise', function(done) {
         this.model.save();
-        expect(this.model.error).toBeUndefined();
-        this.reject('no');
+        expect(this.model.errors.base).toBeUndefined();
+        this.reject({str: 'no'});
         this.delay(() => {
-          expect(this.model.error).toBe('no');
+          expect(this.model.errors.str).toEqual(['no']);
           done();
         });
       });
 
-      it('clears the error property when the mapper resolves the promise', function(done) {
+      it('clears the errors when the mapper resolves the promise', function(done) {
         this.model.save();
-        expect(this.model.error).toBeUndefined();
+        expect(this.model.errors.base).toBeUndefined();
         this.reject('no');
         this.delay(() => {
-          expect(this.model.error).toBe('no');
+          expect(this.model.errors.base).toEqual(['no']);
           this.model.save();
           this.resolve({id: 800});
           this.delay(() => {
-            expect(this.model.error).toBeUndefined();
+            expect(this.model.errors.base).toBeUndefined();
             done();
           });
         });
