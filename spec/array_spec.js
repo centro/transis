@@ -608,6 +608,33 @@ describe('Array', function() {
     });
   });
 
+  describe('#every', function() {
+    it('returns true when every element of the array passes the test function', function() {
+      expect(A(2,4,6,8).every(function(x) { return x % 2 === 0; })).toBe(true);
+    });
+
+    it('returns false when some element of the array does not pass the test function', function() {
+      expect(A(2,4,5,6,8).every(function(x) { return x % 2 === 0; })).toBe(false);
+    });
+
+    it('stops processing the array as soon as an element is found that does not pass the test', function() {
+      var spy = jasmine.createSpy().and.callFake(function(x) { return x % 2 === 0; });
+
+      expect(A(2,4,6,7,8,10,12).every(spy)).toBe(false);
+      expect(spy.calls.count()).toBe(4);
+    });
+
+    it('passes the current element, index, and array to the test function', function() {
+      var a = A('a', 'b', 'c'),
+          spy = jasmine.createSpy().and.callFake(function(x) { return true; });
+
+      expect(a.every(spy)).toBe(true);
+      expect(spy).toHaveBeenCalledWith('a', 0, a);
+      expect(spy).toHaveBeenCalledWith('b', 1, a);
+      expect(spy).toHaveBeenCalledWith('c', 2, a);
+    });
+  });
+
   describe('#reduce', function() {
     it('applies the given function to each element in the array', function() {
       expect(A(1,2,3,4,5).reduce(function(acc, x) { return acc + x; }), 0).toBe(15);

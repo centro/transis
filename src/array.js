@@ -300,6 +300,23 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
     return false;
   };
 
+  // Public: Tests whether all elements of the array pass the given test function.
+  //
+  // f   - Function to test each element, it is passed the following arguments:
+  //   current - The current value of the array.
+  //   index   - the current index of the array.
+  //   array   - The array `every` was called on.
+  // ctx - Object used as `this` when executing `callback` (default: `null`).
+  //
+  // Returns `true` if all elements of the array pass the test function and `false` otherwise.
+  this.prototype.every = function(f, ctx = null) {
+    for (let i = 0, n = this.length; i < n; i++) {
+      if (!f.call(ctx, this.__elements__[i], i, this)) { return false; }
+    }
+
+    return true;
+  };
+
   // Public: Applies the given function against an accumulator and each element of the array in
   // order to reduce it to a single value.
   //
