@@ -23,31 +23,31 @@ describe('Model validations', function() {
     });
 
     it('adds a validation error if the attribute is not set', function() {
-      expect(this.m.validateProp('str')).toBe(false);
+      expect(this.m.validateAttr('str')).toBe(false);
       expect(this.m.errors.str).toEqual(['must be present']);
       this.m.str = 'abc';
-      expect(this.m.validateProp('str')).toBe(true);
+      expect(this.m.validateAttr('str')).toBe(true);
       expect(this.m.errors.str).toBeUndefined();
     });
 
     it('does not add a validation error when a value is set by coerced to null', function() {
       this.m.num = 'blah';
-      expect(this.m.validateProp('num')).toBe(true);
+      expect(this.m.validateAttr('num')).toBe(true);
     });
 
     it('works properly with hasOne associations', function() {
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['must be present']);
       this.m.foo = new Foo;
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('works properly with hasMany associations', function() {
-      expect(this.m.validateProp('bars')).toBe(false);
+      expect(this.m.validateAttr('bars')).toBe(false);
       expect(this.m.errors.bars).toEqual(['must be present']);
       this.m.bars.push(new Bar);
-      expect(this.m.validateProp('bars')).toBe(true);
+      expect(this.m.validateAttr('bars')).toBe(true);
       expect(this.m.errors.bars).toBeUndefined();
     });
 
@@ -55,21 +55,21 @@ describe('Model validations', function() {
       it('does not add a validation error when the if function returns false', function() {
         this.m.num = 1;
         this.m.conditionalNum = null;
-        expect(this.m.validateProp('conditionalNum')).toBe(true);
+        expect(this.m.validateAttr('conditionalNum')).toBe(true);
         expect(this.m.errors.conditionalNum).toBeUndefined();
       });
 
       it('does not add a validation error when the if function returns true and the attribute is set', function() {
         this.m.num = 2;
         this.m.conditionalNum = 9;
-        expect(this.m.validateProp('conditionalNum')).toBe(true);
+        expect(this.m.validateAttr('conditionalNum')).toBe(true);
         expect(this.m.errors.conditionalNum).toBeUndefined();
       });
 
       it('adds a validation error when the if function returns true and the attribute is not set', function() {
         this.m.num = 2;
         this.conditionalNum = null;
-        expect(this.m.validateProp('conditionalNum')).toBe(false);
+        expect(this.m.validateAttr('conditionalNum')).toBe(false);
         expect(this.m.errors.conditionalNum).toEqual(['must be present']);
       });
     });
@@ -89,28 +89,28 @@ describe('Model validations', function() {
 
     it('adds a validation error if the given value could not be parsed into a number', function() {
       this.m.foo = 'abc';
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not a number']);
       this.m.foo = '9';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error if the attribute is null', function() {
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error if the attribute is empty', function() {
       this.m.foo = '';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
     });
 
     it('ensures the value is non-negative when the nonnegative option is specified', function() {
       this.m.bar = 9;
-      expect(this.m.validateProp('bar')).toBe(true);
+      expect(this.m.validateAttr('bar')).toBe(true);
       this.m.bar = -1;
-      expect(this.m.validateProp('bar')).toBe(false);
+      expect(this.m.validateAttr('bar')).toBe(false);
       expect(this.m.errors.bar).toEqual(['must not be negative']);
     });
   });
@@ -127,21 +127,21 @@ describe('Model validations', function() {
 
     it('adds a validation error if the given value could not be parsed into a date', function() {
       this.m.foo = 'abc';
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not a date']);
       this.m.foo = '2014-10-27';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error if the attribute is null', function() {
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error if the attribute is empty', function() {
       this.m.foo = '';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
     });
   });
 
@@ -157,34 +157,34 @@ describe('Model validations', function() {
 
     it('adds a validation error when the attribute was not a email', function() {
       this.m.foo = 'abc';
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not an email']);
 
       this.m.foo = 'abc@def';
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not an email']);
 
       this.m.foo = 'abc.yolo';
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not an email']);
 
       this.m.foo = 5;
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not an email']);
 
       this.m.foo = 'abc@def.com';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error when the attribute is null', function() {
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error when the attribute is empty', function() {
       this.m.foo = '';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
     });
   });
 
@@ -200,40 +200,40 @@ describe('Model validations', function() {
 
     it('adds a validation error when the attribute is not a valid phone number', function() {
       this.m.foo = '(5557) 555-5555';
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not a phone number']);
 
       this.m.foo = '12345678901';
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not a phone number']);
 
       this.m.foo = 12345678901;
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not a phone number']);
     });
 
     it('does not add a validation error when the attribute is set to a valid phone number', function() {
       this.m.foo = '(555) 555-5555';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
 
       this.m.foo = '1234567890';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
 
       this.m.foo = 1234567890;
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error when the attribute is null', function() {
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error when the attribute is empty', function() {
       this.m.foo = '';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
   });
@@ -250,21 +250,21 @@ describe('Model validations', function() {
 
     it('adds a validation error if the given value could not be parsed into a duration', function() {
       this.m.foo = 'abc';
-      expect(this.m.validateProp('foo')).toBe(false);
+      expect(this.m.validateAttr('foo')).toBe(false);
       expect(this.m.errors.foo).toEqual(['is not a duration']);
       this.m.foo = '1:05';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error if the attribute is null', function() {
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
       expect(this.m.errors.foo).toBeUndefined();
     });
 
     it('does not add a validation error if the attribute is empty', function() {
       this.m.foo = '';
-      expect(this.m.validateProp('foo')).toBe(true);
+      expect(this.m.validateAttr('foo')).toBe(true);
     });
   });
 });

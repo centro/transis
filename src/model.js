@@ -758,13 +758,13 @@ var Model = BasisObject.extend('Basis.Model', function() {
     return this;
   };
 
-  // Public: Runs registered validators for the given property. This will clear any existing
-  // validation errors for the given property.
+  // Public: Runs registered validators for the given attribute. This will clear any existing
+  // validation errors for the given attribute.
   //
-  // name - The name of the property to run validations for.
+  // name - The name of the attribute to run validations for.
   //
   // Returns `true` if no validation errors are found on the given attribute and `false` otherwise.
-  this.prototype.validateProp = function(name) {
+  this.prototype.validateAttr = function(name) {
     if (!this.validators[name]) { return true; }
 
     this._clearErrors(name);
@@ -773,7 +773,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
       let validator = this.validators[name][i];
       if (typeof validator === 'function') { validator.call(this); }
       else if (typeof validator === 'string' && validator in this) { this[validator](); }
-      else { throw new Error(`${this.constructor}#validateProp: don't know how to execute validator: \`${validator}\``); }
+      else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
     }
 
     return !(name in this.errors);
@@ -786,7 +786,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
   this.prototype.validate = function() {
     var associations = this.associations;
 
-    for (let name in this.validators) { this.validateProp(name); }
+    for (let name in this.validators) { this.validateAttr(name); }
 
     for (let name in associations) {
       let desc = associations[name];

@@ -1992,10 +1992,10 @@ describe('Model', function () {
       });
     });
 
-    describe('#validateProp', function() {
+    describe('#validateAttr', function() {
       it('runs all registered validators for the given property name', function() {
         var m = new ValidatedFoo({name: 'FooBarBazQuux'});
-        m.validateProp('name');
+        m.validateAttr('name');
         expect(m.errors.name).toEqual(['must be lower case', 'must be less than 10 characters']);
       });
 
@@ -2003,7 +2003,7 @@ describe('Model', function () {
         var m = new ValidatedFoo({name: 'Foo'});
         m.addError('name', 'abc');
         expect(m.errors.name).toEqual(['abc']);
-        m.validateProp('name');
+        m.validateAttr('name');
         expect(m.errors.name).toEqual(['must be lower case']);
       });
 
@@ -2011,18 +2011,18 @@ describe('Model', function () {
         var m = new ValidatedFoo({name: 'Foo'});
         m.addError('num', 'xyz');
         expect(m.errors.num).toEqual(['xyz']);
-        m.validateProp('name');
+        m.validateAttr('name');
         expect(m.errors.num).toEqual(['xyz']);
       });
 
       it('returns true when all validations pass', function() {
         var m = new ValidatedFoo({name: 'foo'});
-        expect(m.validateProp('name')).toBe(true);
+        expect(m.validateAttr('name')).toBe(true);
       });
 
       it('returns false when some validation fails', function() {
         var m = new ValidatedFoo({name: 'Foo'});
-        expect(m.validateProp('name')).toBe(false);
+        expect(m.validateAttr('name')).toBe(false);
       });
     });
 
