@@ -62,3 +62,54 @@ export function parseDateTime(s) {
   if (s.match(NO_TZ_RE)) { s += 'Z'; }
   return (n = Date.parse(s)) ? new Date(n) : null;
 }
+
+const EMAIL_FORMAT = /^([^@\s]+)@([-a-z0-9]+\.+[a-z]{2,})$/i;
+
+// Public: Parses a string containing an email.
+//
+// s - The string to parse.
+//
+// Returns the email string.
+export function parseEmail(s) {
+  s = String(s);
+  return EMAIL_FORMAT.test(s) ? s : null;
+}
+
+const PHONE_FORMAT = /^\d{10}$/;
+const PHONE_CHARS  = /[\(\)\s-]/g;
+
+// Public: Parses a string containing an phone number.
+//
+// s - The string to parse.
+//
+// Returns the phone string.
+export function parsePhone(s) {
+  s = String(s);
+  return PHONE_FORMAT.test(s.replace(PHONE_CHARS, '')) ? s : null;
+}
+
+const DURATION_RE = /^\s*(?:(?::?\d+)|(?::?\d+:\d+)|(?:\d+:\d+:\d+))\s*$/;
+
+// Public: Parses a string containing a time duration. The format is: "HH:MM:SS" where hours and
+// minutes are optional.
+//
+// s - The string to parse.
+//
+// Returns the number of seconds or `null` if parsing fails.
+export function parseDuration(s) {
+  s = String(s);
+
+  if (!DURATION_RE.test(s)) { return null; }
+
+  var parts = s.split(':').map(function(p) { return +p; });
+
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  else if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+  else {
+    return parts[0];
+  }
+}

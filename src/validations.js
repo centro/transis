@@ -1,5 +1,6 @@
 import BasisArray from "./array";
 import * as util from "./util";
+import * as parsers from "./parsers";
 
 function isBlank(v) {
   return v == null ||
@@ -59,6 +60,84 @@ var Validations = {
 
     return this;
   },
+
+  // Public: Adds a validator to the model that checks to make sure the given attributes are valid
+  // dates.
+  //
+  // ...names - One or more attribute names.
+  //
+  // Returns the receiver.
+  validatesDate: function() {
+    Array.from(arguments).forEach(function(name) {
+      this.validate(name, function() {
+        var v = this[`${name}BeforeCoercion`];
+
+        if (!isBlank(v) && !(v instanceof Date) && !parsers.parseDate(v)) {
+          this.addError(name, 'is not a date');
+        }
+      });
+    }, this);
+  },
+
+  // Public: Adds a validator to the model that checks to make sure the given attributes are valid
+  // emails.
+  //
+  // ...names - One or more attribute names.
+  //
+  // Returns the receiver.
+  validatesEmail: function() {
+    Array.from(arguments).forEach(function(name) {
+      this.validate(name, function() {
+        var v = this[`${name}BeforeCoercion`];
+
+        if (!isBlank(v) && !parsers.parseEmail(v)) {
+          this.addError(name, 'is not an email');
+        }
+      });
+    }, this);
+
+    return this;
+  },
+
+  // Public: Adds a validator to the model that checks to make sure the given attributes are valid
+  // phone numbers.
+  //
+  // ...names - One or more attribute names.
+  //
+  // Returns the receiver.
+  validatesPhone: function() {
+    Array.from(arguments).forEach(function(name) {
+      this.validate(name, function() {
+        var v = this[`${name}BeforeCoercion`];
+
+        if (!isBlank(v) && !parsers.parsePhone(v)) {
+          this.addError(name, 'is not a phone number');
+        }
+      });
+    }, this);
+
+    return this;
+  },
+
+  // Public: Adds a validator to the model that checks to make sure the given attributes are valid
+  // durations.
+  //
+  // ...names - One or more attribute names.
+  //
+  // Returns the receiver.
+  validatesDuration: function() {
+    Array.from(arguments).forEach(function(name) {
+      this.validate(name, function() {
+        var v = this[`${name}BeforeCoercion`];
+
+        if (!isBlank(v) && !parsers.parseDuration(v)) {
+          this.addError(name, 'is not a duration');
+        }
+      });
+    }, this);
+
+    return this;
+  }
 };
 
 export default Validations;

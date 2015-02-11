@@ -119,3 +119,38 @@ describe('parseDateTime', function() {
     expect(parsers.parseDateTime("2013-03-29T09:49:30+02:00")).toEqual(new Date(Date.UTC(2013, 2, 29, 9, 49, 30, 0) - (2 * 60 * 60 * 1000)));
   });
 });
+
+describe('parseDuration', function() {
+  it('returns null when given a string that that does not match the duration format', function() {
+    expect(parsers.parseDuration('foo')).toBeNull();
+    expect(parsers.parseDuration('11:')).toBeNull();
+    expect(parsers.parseDuration('11:22:33:44')).toBeNull();
+  });
+
+  it('converts seconds only into a number', function() {
+    expect(parsers.parseDuration('0')).toBe(0);
+    expect(parsers.parseDuration('1')).toBe(1);
+    expect(parsers.parseDuration('30')).toBe(30);
+    expect(parsers.parseDuration('120')).toBe(120);
+    expect(parsers.parseDuration(':30')).toBe(30);
+    expect(parsers.parseDuration(':120')).toBe(120);
+  });
+
+  it('converts minutes and seconds into the number of seconds', function() {
+    expect(parsers.parseDuration('0:0')).toBe(0);
+    expect(parsers.parseDuration('00:00')).toBe(0);
+    expect(parsers.parseDuration('1:2')).toBe(62);
+    expect(parsers.parseDuration('1:2')).toBe(62);
+    expect(parsers.parseDuration('01:02')).toBe(62);
+    expect(parsers.parseDuration('75:75')).toBe(4575);
+    expect(parsers.parseDuration(':3:45')).toBe(225);
+  });
+
+  it('converts hours, minutes, and seconds into the number of seconds', function() {
+    expect(parsers.parseDuration('0:0:0')).toBe(0);
+    expect(parsers.parseDuration('00:00:00')).toBe(0);
+    expect(parsers.parseDuration('1:2:3')).toBe(3723);
+    expect(parsers.parseDuration('25:75:80')).toBe(94580);
+  });
+});
+
