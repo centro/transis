@@ -721,4 +721,45 @@ describe('Array', function() {
       expect(a.flatten()).toEqual(A(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13));
     });
   });
+
+  describe('#compact', function() {
+    it('returns a new array without `null` or `undefined` items', function() {
+      expect(A(1,2,null,3,undefined,4,5).compact()).toEqual(A(1,2,3,4,5));
+      expect(A(1,2,3).compact()).toEqual(A(1,2,3));
+    });
+  });
+
+  describe('#uniq', function() {
+    it('returns a new array without duplicate items', function() {
+      var a = {}, b = {}, c = {}, d = {};
+      expect(A(1,2,2,3,3,3,4,4,4,4,5,5,5,5,5).uniq()).toEqual(A(1,2,3,4,5));
+      expect(A('foo', 'bar', 'foo', 'baz', 'bar', 'quux').uniq()).toEqual(A('foo', 'bar', 'baz', 'quux'));
+      expect(A(a,b,c,b,a,d).uniq()).toEqual(A(a,b,c,d));
+    });
+  });
+
+  describe('#sort', function() {
+    describe('with no argument', function() {
+      it('sorts the array by converting each element to a string and comparing them in Unicode point order', function() {
+        expect(A('apples', 'bananas', 'Cherries').sort()).toEqual(A('Cherries', 'apples', 'bananas'));
+        expect(A(1,2,10,21).sort()).toEqual(A(1,10,2,21));
+        expect(A('word', 'Word', '1 Word', '2 Words').sort()).toEqual(A('1 Word', '2 Words', 'Word', 'word'));
+      });
+    });
+
+    describe('with a compare function argument', function() {
+      it('sorts the array according to the function', function() {
+        var compareNumbers = function(a, b) { return a - b; };
+
+        expect(A(4, 2, 11, 5, 1, 3).sort(compareNumbers)).toEqual(A(1, 2, 3, 4, 5, 11));
+      });
+    });
+
+    it('sorts the array in place', function() {
+      var a = A('the', 'quick', 'brown', 'fox');
+
+      expect(a.sort()).toBe(a);
+      expect(a).toEqual(A('brown', 'fox', 'quick', 'the'));
+    });
+  });
 });

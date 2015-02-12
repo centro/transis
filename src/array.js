@@ -409,6 +409,31 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
     return a;
   };
 
+  // Public: Returns a new array with `null` and `undefined` items removed.
+  this.prototype.compact = function() {
+    return this.reduce(function(acc, el) {
+      if (el != null) { acc.push(el); }
+      return acc;
+    }, BasisArray.A());
+  };
+
+  // Public: Returns a new array containing only the unique items in the receiver.
+  this.prototype.uniq = function() {
+    var map = new Map;
+
+    return this.reduce(function(acc, el) {
+      if (!map.has(el)) { map.set(el, true); acc.push(el); }
+      return acc;
+    }, BasisArray.A());
+  };
+
+  // Public: Sorts the elements of the array in place and returns the array. The default sort order
+  // is according to string Unicode code points.
+  this.prototype.sort = function(f = undefined) {
+    this.__elements__.sort(f);
+    return this;
+  };
+
   this.prototype.toString = function() {
     return `#<Basis.Array:${this.objectId} [${this.__elements__}]>`;
   };
