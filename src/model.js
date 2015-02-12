@@ -930,6 +930,7 @@ Model.registerAttr('boolean', attrs.BooleanAttr);
 Model.registerAttr('date', attrs.DateAttr);
 Model.registerAttr('datetime', attrs.DateTimeAttr);
 
-Object.assign(Model, Validations);
+Object.assign(Model, Validations.static);
+Object.assign(Model.prototype, Validations.instance);
 
 export default Model;
