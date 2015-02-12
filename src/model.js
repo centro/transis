@@ -40,12 +40,13 @@ function checkOwnerOpts(desc) {
   }
 }
 
-// Internal: Handler for change events observed on objects associated via a `hasOne` association.
-// This propagates the event on the receiver.
-function onHasOneChange(event, data, desc) {
-  var ns = event.split(':')[1];
-  if (ns.indexOf('.') >= 0) { return; }
-  this.emit(`change:${desc.name}.${ns}`, data);
+// Internal: Handler for events observed on objects associated via a `hasOne` association. This
+// propagates the event on the receiver.
+function onHasOneEvent(event, data, desc) {
+  var [type, ns] = event.split(':');
+  if ((type === 'change' || type === 'splice') && ns.indexOf('.') === -1) {
+    this.emit(`${type}:${desc.name}.${ns}`, data);
+  }
 }
 
 // Internal: Sets the given object on a `hasOne` property.
@@ -72,8 +73,8 @@ function hasOneSet(desc, v, sync) {
   if (sync && inv && prev) { prev._inverseRemoved(inv, this); }
   if (sync && inv && v) { v._inverseAdded(inv, this); }
 
-  if (prev) { prev.off('change:*', onHasOneChange, {observer: this, context: desc}); }
-  if (v) { v.on('change:*', onHasOneChange, {observer: this, context: desc}); }
+  if (prev) { prev.off('*:*', onHasOneEvent, {observer: this, context: desc}); }
+  if (v) { v.on('*:*', onHasOneEvent, {observer: this, context: desc}); }
 }
 
 // Internal: Callback for a successful model deletion. Updates the model's state, removes it from

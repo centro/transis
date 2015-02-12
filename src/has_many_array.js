@@ -46,10 +46,11 @@ function onSplice(event, {array, i, n, added, removed}) {
   this.__owner__.emit(`splice:${desc.name}`, {array, i, n, added, removed});
 }
 
-function onChange(event, data) {
-  var ns = event.split(':')[1], desc = this.__desc__;
-  if (ns.indexOf('.') >= 0) { return; }
-  this.__owner__.emit(`change:${desc.name}.${ns}`, data);
+function onEvent(event, data) {
+  var [type, ns] = event.split(':'), desc = this.__desc__;
+  if ((type === 'change' || type === 'splice') && ns.indexOf('.') === -1) {
+    this.__owner__.emit(`${type}:${desc.name}.${ns}`, data);
+  }
 }
 
 function checkAssociatedType(o) {
@@ -66,7 +67,7 @@ var HasManyArray = BasisArray.extend('HasManyArray', function() {
     this.__owner__ = owner;
     this.__desc__ = desc;
     this.on('splice', onSplice);
-    this.on('change:*', onChange);
+    this.on('*:*', onEvent);
   };
 
   this.prototype.splice = function() {

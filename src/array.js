@@ -3,9 +3,11 @@ import * as util from "./util";
 
 var {slice, splice, concat, map, filter} = Array.prototype;
 
-function onElementChange(event, data) {
-  var ns = event.split(':')[1];
-  this.emit(`change:${ns}`, Object.assign({array: this}, data));
+function onElementEvent(event, data) {
+  var [type, ns] = event.split(':');
+  if (type === 'change' || type === 'splice') {
+    this.emit(`${type}:${ns}`, Object.assign({array: this}, data));
+  }
 }
 
 var BasisArray = BasisObject.extend('Basis.Array', function() {
@@ -66,7 +68,7 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
 
       for (i = 0, n = elements.length; i < n; i++) {
         if (elements[i] instanceof BasisObject) {
-          elements[i].on('change:*', onElementChange, {observer: this});
+          elements[i].on('*:*', onElementEvent, {observer: this});
         }
       }
     }
@@ -140,13 +142,13 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
 
     for (j = 0, m = removed.length; j < m; j++) {
       if (removed[j] instanceof BasisObject) {
-        removed[j].off('change:*', onElementChange, {observer: this});
+        removed[j].off('*:*', onElementEvent, {observer: this});
       }
     }
 
     for (j = 0, m = added.length; j < m; j++) {
       if (added[j] instanceof BasisObject) {
-        added[j].on('change:*', onElementChange, {observer: this});
+        added[j].on('*:*', onElementEvent, {observer: this});
       }
     }
 

@@ -146,8 +146,10 @@ describe('Model', function () {
 
   describe('.hasOne', function() {
     describe('with no inverse', function() {
+      var Baz = Model.extend('Baz');
       var Bar = Model.extend('Bar', function() {
         this.attr('x', 'number');
+        this.hasMany('bazs', Baz);
       });
       var Foo = Model.extend('Foo', function() {
         this.hasOne('bar', Bar);
@@ -184,6 +186,14 @@ describe('Model', function () {
         f.on('change:bar.x', spy);
         b.x = 2;
         expect(spy).toHaveBeenCalledWith('change:bar.x', {object: b, old: 1});
+      });
+
+      it('emits `splice:<name>.<prop name>` events when the associated model emits a splice event', function() {
+        var b = new Bar, f = new Foo({bar: b}), baz = new Baz, spy = jasmine.createSpy();
+
+        f.on('splice:bar.bazs', spy);
+        b.bazs.push(baz);
+        expect(spy).toHaveBeenCalledWith('splice:bar.bazs', {array: b.bazs, i: 0, n: 0, added: [baz], removed: []});
       });
     });
 
@@ -257,8 +267,10 @@ describe('Model', function () {
 
   describe('.hasMany', function() {
     describe('with no inverse', function() {
+      var Baz = Model.extend('Baz');
       var Bar = Model.extend('Bar', function() {
         this.attr('x', 'number');
+        this.hasMany('bazs', Baz);
       });
       var Foo = Model.extend('Foo', function() {
         this.hasMany('bars', Bar);
@@ -317,6 +329,16 @@ describe('Model', function () {
         f.on('change:bars.x', spy);
         b.x = 2;
         expect(spy).toHaveBeenCalledWith('change:bars.x', {array: f.bars, object: b, old: 1});
+      });
+
+      it('emits `splice:<name>.<prop name>` events when an associated model emits a splice event', function() {
+        var b = new Bar, f = new Foo({bars: b}), baz = new Baz, spy = jasmine.createSpy();
+
+        f.on('splice:bars.bazs', spy);
+        b.bazs.push(baz);
+        expect(spy).toHaveBeenCalledWith('splice:bars.bazs', {
+          array: b.bazs, i: 0, n: 0, added: [baz], removed: []
+        });
       });
     });
 
