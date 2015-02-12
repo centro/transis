@@ -36,6 +36,27 @@ describe('parseNumber', function() {
   });
 });
 
+describe('parsePercent', function() {
+  it('returns null when given unparseable strings', function() {
+    expect(parsers.parsePercent('foo')).toBeNull();
+    expect(parsers.parsePercent('')).toBeNull();
+    expect(parsers.parsePercent('.')).toBeNull();
+  });
+
+  it('converts the given string to a number', function() {
+    expect(parsers.parsePercent('4')).toBe(0.04);
+    expect(parsers.parsePercent('4.123')).toBe(0.04123);
+    expect(parsers.parsePercent('44')).toBe(0.44);
+    expect(parsers.parsePercent('128.23')).toBe(1.2823);
+  });
+
+  it('handles strings with a % sign', function() {
+      expect(parsers.parsePercent('2.5%')).toBe(0.025)
+      expect(parsers.parsePercent('99%')).toBe(0.99)
+      expect(parsers.parsePercent('110%')).toBe(1.1)
+  });
+});
+
 describe('parseDate', function() {
   it('returns null when given an invalid date string', function() {
     expect(parsers.parseDate('foo')).toBeNull();
