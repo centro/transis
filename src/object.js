@@ -112,6 +112,17 @@ BasisObject.prop = function(name, opts = {}) {
   return this;
 };
 
+// Public: Creates multiple props at once from the given object.
+//
+// props - An object mapping prop names to their options. See `Basis.Object#prop` for the available
+//         options.
+//
+// Returns the receiver.
+BasisObject.props = function(props) {
+  for (let name in props) { this.prop(name, props[name]); }
+  return this;
+};
+
 // Public: Returns a string containing the class's name.
 BasisObject.toString = function() { return this.displayName || this.name || '(Unknown)'; };
 

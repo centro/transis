@@ -271,6 +271,27 @@ describe('Basis.Object', function() {
     });
   });
 
+  describe('.props', function() {
+    var PropsTest = BasisObject.extend('PropsTest', function() {
+      this.props({
+        x: {},
+        y: {
+          readonly: true,
+          get: function() {
+            return this.x * 2;
+          }
+        }
+      });
+    });
+
+    it('defines a prop for each key in the given object', function() {
+      var t = new PropsTest({x: 4});
+
+      expect(t.x).toBe(4);
+      expect(t.y).toBe(8);
+    });
+  });
+
   describe('constructor', function() {
     it('sets the given props on the new instance', function() {
       var t = new Test({str: 'abc', num: 9});
