@@ -60,28 +60,28 @@ function checkAssociatedType(o) {
   }
 }
 
-class HasManyArray extends BasisArray {
-  constructor(owner, desc) {
-    super();
+var HasManyArray = BasisArray.extend('HasManyArray', function() {
+  this.prototype.init = function(owner, desc) {
+    this.constructor.__super__.init.call(this);
     this.__owner__ = owner;
     this.__desc__ = desc;
     this.on('splice', onSplice);
     this.on('change:*', onChange);
-  }
+  };
 
-  splice() {
+  this.prototype.splice = function() {
     var added = Array.from(arguments).slice(2);
     added.forEach((o) => checkAssociatedType.call(this, o));
-    return super.splice.apply(this, arguments);
-  }
+    return this.constructor.__super__.splice.apply(this, arguments);
+  };
 
-  _inverseAdd(model) {
+  this.prototype._inverseAdd = function(model) {
     this.__handlingInverse__ = true;
     this.push(model);
     this.__handlingInverse__ = false;
-  }
+  };
 
-  _inverseRemove(model) {
+  this.prototype._inverseRemove = function(model) {
     var i = this.indexOf(model);
 
     if (i >= 0) {
@@ -89,7 +89,7 @@ class HasManyArray extends BasisArray {
       this.splice(i, 1);
       this.__handlingInverse__ = false;
     }
-  }
-}
+  };
+});
 
 export default HasManyArray;
