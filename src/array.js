@@ -437,7 +437,7 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
   };
 
   this.prototype.toString = function() {
-    return `#<Basis.Array:${this.objectId} [${this.__elements__}]>`;
+    return `#<${this.constructor}:${this.objectId} [${this.__elements__}]>`;
   };
 });
 

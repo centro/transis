@@ -1,6 +1,7 @@
 import BasisObject from "./object";
 import BasisArray from "./array";
 import QueryArray from "./query_array";
+import ProxyArray from "./proxy_array";
 import Model from "./model";
 import * as util from "./util";
 import * as parsers from "./parsers";
@@ -11,4 +12,5 @@ export default Object.assign({
   A: BasisArray.A,
   Model,
   QueryArray,
+  ProxyArray,
 }, util, parsers);

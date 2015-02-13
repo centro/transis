@@ -1,4 +1,4 @@
-import BasisArray from "./array";
+import ProxyArray from "./proxy_array";
 
 function onSplice(event, {array, i, n, added, removed}) {
   var desc = this.__desc__, inverse = desc.inverse, name = desc.name, changes, i;
@@ -42,15 +42,6 @@ function onSplice(event, {array, i, n, added, removed}) {
       this.__owner__._setChange(name, changes);
     }
   }
-
-  this.__owner__.emit(`splice:${desc.name}`, {array, i, n, added, removed});
-}
-
-function onEvent(event, data) {
-  var [type, ns] = event.split(':'), desc = this.__desc__;
-  if ((type === 'change' || type === 'splice') && ns.indexOf('.') === -1) {
-    this.__owner__.emit(`${type}:${desc.name}.${ns}`, data);
-  }
 }
 
 function checkAssociatedType(o) {
@@ -61,13 +52,11 @@ function checkAssociatedType(o) {
   }
 }
 
-var HasManyArray = BasisArray.extend('HasManyArray', function() {
+var HasManyArray = ProxyArray.extend('Basis.HasManyArray', function() {
   this.prototype.init = function(owner, desc) {
-    this.constructor.__super__.init.call(this);
-    this.__owner__ = owner;
+    HasManyArray.__super__.init.call(this, owner, desc.name);
     this.__desc__ = desc;
     this.on('splice', onSplice);
-    this.on('*:*', onEvent);
   };
 
   this.prototype.splice = function() {
