@@ -44,7 +44,8 @@ var QueryArray = BasisArray.extend('Basis.QueryArray', function() {
       this.isBusy = true;
       this.__promise__ = this.modelClass._callMapper('query', [opts]).then(
         (objects) => {
-          this.replace(this.modelClass.loadAll(objects));
+          try { this.replace(this.modelClass.loadAll(objects)); }
+          catch (e) { console.error(e); throw e; }
           this.isBusy = false;
           this.error = undefined;
         },

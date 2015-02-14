@@ -402,7 +402,8 @@ var Model = BasisObject.extend('Basis.Model', function() {
       model.__promise__ = this._callMapper('get', [id, getOpts])
         .then((result) => {
           model.isBusy = false;
-          this.load(result);
+          try { this.load(result); }
+          catch (e) { console.error(e); throw e; }
         }, (error) => {
           model.isBusy = false;
           model._loadErrors(error);
@@ -608,7 +609,8 @@ var Model = BasisObject.extend('Basis.Model', function() {
     this.__promise__ = this.constructor._callMapper(this.isNew ? 'create' : 'update', [this, opts])
       .then((attrs) => {
         this.isBusy = false;
-        this.load(attrs);
+        try { this.load(attrs); }
+        catch (e) { console.error(e); throw e; }
       }, (error) => {
         this.isBusy = false;
         this._loadErrors(error);
