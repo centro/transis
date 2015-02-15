@@ -1,5 +1,3 @@
-import Emitter from "./emitter";
-
 var objectId = 0, subclasses = {};
 
 function BasisObject() {
@@ -218,7 +216,5 @@ BasisObject.prototype._setProp = function(name, value) {
 };
 
 BasisObject.displayName = 'Basis.Object';
-
-Object.assign(BasisObject.prototype, Emitter.prototype);
 
 export default BasisObject;
