@@ -164,7 +164,7 @@ describe('Basis.Object', function() {
         t.on('str', spy);
         t.str = 'xyz';
         BasisObject.flush();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith('str');
       });
 
       it('notifies `*` observers', function() {
@@ -173,7 +173,7 @@ describe('Basis.Object', function() {
         t.on('*', spy);
         t.str = 'xyz';
         BasisObject.flush();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith('*');
       });
 
       describe('with the readonly option', function() {
@@ -212,7 +212,7 @@ describe('Basis.Object', function() {
         expect(u.full).toBe('Joe Blow');
         u.first = 'Bob';
         BasisObject.flush();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith('full');
         expect(spy.calls.count()).toBe(1);
         u.last = 'Smith';
         BasisObject.flush();
@@ -226,7 +226,7 @@ describe('Basis.Object', function() {
         expect(u.greeting).toBe('Hello Joe Blow');
         u.last = 'Smith';
         BasisObject.flush();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith('greeting');
         expect(u.greeting).toBe('Hello Joe Smith');
       });
 
@@ -237,7 +237,7 @@ describe('Basis.Object', function() {
         u.first = 'Bob';
         u.last = 'Smith';
         BasisObject.flush();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith('full');
         expect(spy.calls.count()).toBe(1);
       });
 
@@ -248,7 +248,7 @@ describe('Basis.Object', function() {
         u.first = 'Bob';
         u.last = 'Smith';
         BasisObject.flush();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith('*');
         expect(spy.calls.count()).toBe(1);
       });
     });
