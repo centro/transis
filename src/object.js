@@ -10,34 +10,36 @@ function BasisObject() {
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  flushTimer = null;
+  while (Object.keys(changedObjects).length) {
+    for (let id in changedObjects) {
+      let object    = changedObjects[id];
+      let deps      = object.__deps__;
+      let changes   = Object.keys(object.__changedProps__);
+      let processed = {};
 
-  for (let id in changedObjects) {
-    let object    = changedObjects[id];
-    let deps      = object.__deps__;
-    let changes   = Object.keys(object.__changedProps__);
-    let processed = {};
+      delete changedObjects[id];
+      delete object.__changedProps__;
 
-    delete changedObjects[id];
-    delete object.__changedProps__;
+      while (changes.length) {
+        let prop = changes.shift();
 
-    while (changes.length) {
-      let prop = changes.shift();
+        if (processed[prop]) { continue; }
+        processed[prop] = true;
 
-      if (processed[prop]) { continue; }
-      processed[prop] = true;
-
-      if (deps && deps[prop]) {
-        for (let i = 0, n = deps[prop].length; i < n; i++) {
-          changes.push(deps[prop][i]);
+        if (deps && deps[prop]) {
+          for (let i = 0, n = deps[prop].length; i < n; i++) {
+            changes.push(deps[prop][i]);
+          }
         }
+
+        object._notify(prop);
       }
 
-      object._notify(prop);
+      object._notify('*');
     }
-
-    object._notify('*');
   }
+
+  flushTimer = null;
 }
 
 // Internal: Caches the given name/value pair on the receiver.
@@ -299,9 +301,9 @@ BasisObject.prototype._notify = function(prop) {
     }
   }
 
-  if (this.__proxies__ && prop.indexOf('.') === -1) {
+  if (this.__proxies__ && prop !== '*' && prop.indexOf('.') === -1) {
     for (let k in this.__proxies__) {
-      this.__proxies__[k].object._notify(`${this.__proxies__[k].name}.${prop}`);
+      this.__proxies__[k].object.didChange(`${this.__proxies__[k].name}.${prop}`);
     }
   }
 

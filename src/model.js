@@ -197,6 +197,17 @@ var Model = BasisObject.extend('Basis.Model', function() {
 
     checkOwnerOpts.call(this, desc);
 
+    if (desc.owner) {
+      if (!this.prototype.hasOwnProperty('__deps__')) {
+        this.prototype.__deps__ = Object.create(this.prototype.__deps__);
+      }
+
+      (this.prototype.__deps__[`${name}.hasErrors`] =
+        this.prototype.__deps__[`${name}.hasErrors`] || []).push('hasErrors');
+      (this.prototype.__deps__[`${name}.hasChanges`] =
+        this.prototype.__deps__[`${name}.hasChanges`] || []).push('hasChanges');
+    }
+
     this.prop(name, {
       get: function() { return this[`__${name}`]; },
       set: function(v) { hasOneSet.call(this, desc, v, true); }
@@ -238,6 +249,17 @@ var Model = BasisObject.extend('Basis.Model', function() {
     });
 
     checkOwnerOpts.call(this, desc);
+
+    if (desc.owner) {
+      if (!this.prototype.hasOwnProperty('__deps__')) {
+        this.prototype.__deps__ = Object.create(this.prototype.__deps__);
+      }
+
+      (this.prototype.__deps__[`${name}.hasErrors`] =
+        this.prototype.__deps__[`${name}.hasErrors`] || []).push('hasErrors');
+      (this.prototype.__deps__[`${name}.hasChanges`] =
+        this.prototype.__deps__[`${name}.hasChanges`] || []).push('hasChanges');
+    }
 
     this.prop(name, {
       get: function() {

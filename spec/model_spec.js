@@ -325,7 +325,7 @@ describe('Model', function () {
         expect(spy).toHaveBeenCalledWith('bars');
       });
 
-      it('notifies `change:<name>.<prop name>` events when an associated model changes', function() {
+      it('notifies `<name>.<prop name>` observers when an associated model changes', function() {
         var f = new Foo, b = new Bar({x: 1}), spy = jasmine.createSpy();
 
         f.bars = [b];
@@ -1905,6 +1905,8 @@ describe('Model', function () {
           {id: 12, name: 'baz', quantity: 8, rate: 5},
         ]
       });
+
+      BasisObject.flush();
     });
 
     describe('#addError', function() {
@@ -1932,11 +1934,12 @@ describe('Model', function () {
         expect(this.m.errors.str).toEqual(['foo']);
       });
 
-      it('triggers a `change:errors` event', function() {
+      it('notifies `errors` observers', function() {
         var spy = jasmine.createSpy();
-        this.m.on('change:errors', spy);
+        this.m.on('errors', spy);
         this.m.addError('str', 'foo');
-        expect(spy).toHaveBeenCalledWith('change:errors', {object: this.m});
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalledWith('errors');
       });
     });
 
@@ -1956,24 +1959,27 @@ describe('Model', function () {
         expect(this.invoice.hasOwnErrors).toBe(false);
       });
 
-      describe('change event', function() {
+      describe('observers', function() {
         beforeEach(function() {
           this.spy = jasmine.createSpy();
-          this.invoice.on('change:hasOwnErrors', this.spy);
+          this.invoice.on('hasOwnErrors', this.spy);
         });
 
-        it('is fired when a validation error is added', function() {
+        it('are fired when a validation error is added', function() {
           this.invoice.addError('name', 'x');
+          BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
-        it('is not fired when an owned associated model has a validation error added', function() {
+        it('are not fired when an owned associated model has a validation error added', function() {
           this.invoice.billingAddress.addError('name', 'y');
+          BasisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
 
-        it('is not fired when an unowned associated model has a validation error added', function() {
+        it('are not fired when an unowned associated model has a validation error added', function() {
           this.invoice.company.addError('name', 'z');
+          BasisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });
@@ -2008,24 +2014,27 @@ describe('Model', function () {
         expect(this.invoice.hasErrors).toBe(false);
       });
 
-      describe('change event', function() {
+      describe('observers', function() {
         beforeEach(function() {
           this.spy = jasmine.createSpy();
-          this.invoice.on('change:hasErrors', this.spy);
+          this.invoice.on('hasErrors', this.spy);
         });
 
-        it('is fired when a validation error is added', function() {
+        it('are fired when a validation error is added', function() {
           this.invoice.addError('name', 'x');
+          BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
-        it('is fired when an owned associated model has a validation error added', function() {
+        it('are fired when an owned associated model has a validation error added', function() {
           this.invoice.billingAddress.addError('name', 'y');
+          BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
-        it('is not fired when an unowned associated model has a validation error added', function() {
+        it('are not fired when an unowned associated model has a validation error added', function() {
           this.invoice.company.addError('name', 'z');
+          BasisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });
