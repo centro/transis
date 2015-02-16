@@ -1,27 +1,35 @@
+import BasisObject from "./object";
 import BasisArray from "./array";
 
-function onSplice(event, data) {
-  this.__owner__.emit(`splice:${this.__name__}`, data);
-}
-
-function onEvent(event, data) {
-  var [type, ns] = event.split(':');
-  if ((type === 'change' || type === 'splice') && ns.indexOf('.') === -1) {
-    this.__owner__.emit(`${type}:${this.__name__}.${ns}`, data);
-  }
-}
-
-// Public: The `Basis.ProxyArray` is a subclass of `Basis.Array` that proxies events emitted on the
-// array to an owner object.
+// Public: The `Basis.ProxyArray` is a subclass of `Basis.Array` that proxies prop changes
+// notifications an owner object.
 var ProxyArray = BasisArray.extend('Basis.ProxyArray', function() {
   this.prototype.init = function(owner, name) {
     ProxyArray.__super__.init.call(this);
 
     this.__owner__ = owner;
     this.__name__  = name;
+  };
 
-    this.on('splice', onSplice);
-    this.on('*:*', onEvent);
+  this.prototype._splice = function(i, n, added) {
+    var removed = ProxyArray.__super__._splice.call(this, i, n, added),
+        removedNative = removed.native;
+
+    this.__owner__.didChange(this.__name__);
+
+    for (let i = 0, n = removedNative.length; i < n; i++) {
+      if (removedNative[i] instanceof BasisObject) {
+        removedNative[i]._deregisterProxy(this.__owner__, this.__name__);
+      }
+    }
+
+    for (let i = 0, n = added.length; i < n; i++) {
+      if (added[i] instanceof BasisObject) {
+        added[i]._registerProxy(this.__owner__, this.__name__);
+      }
+    }
+
+    return removed;
   };
 });
 

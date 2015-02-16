@@ -286,7 +286,8 @@ BasisObject.prototype._setProp = function(name, value) {
   return old;
 };
 
-// Internal: Notifies observers of a prop change.
+// Internal: Notifies observers of a prop change and proxies the prop change to registered proxy
+// objects.
 BasisObject.prototype._notify = function(prop) {
   uncache.call(this, prop);
 
@@ -296,6 +297,26 @@ BasisObject.prototype._notify = function(prop) {
     }
   }
 
+  if (this.__proxies__ && prop.indexOf('.') === -1) {
+    for (let k in this.__proxies__) {
+      this.__proxies__[k].object._notify(`${this.__proxies__[k].name}.${prop}`);
+    }
+  }
+
+  return this;
+};
+
+// Internal: Registers a proxy object. All prop changes on the receiver will be proxied to the
+// given proxy object with the given name as a prefix for the property name.
+BasisObject.prototype._registerProxy = function(object, name) {
+  this.__proxies__ = this.__proxies__ || {};
+  this.__proxies__[`${object.objectId},${name}`] = {object, name};
+  return this;
+};
+
+// Internal: Deregisters a proxy object previously registered with `#_registerProxy`.
+BasisObject.prototype._deregisterProxy = function(object, name) {
+  if (this.__proxies__) { delete this.__proxies__[`${object.objectId},${name}`]; }
   return this;
 };
 

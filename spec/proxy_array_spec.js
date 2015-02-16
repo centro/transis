@@ -14,28 +14,22 @@ describe('ProxyArray', function() {
     this.a.push(new ProxyArrayModel({x: 1}));
     this.a.push(new ProxyArrayModel({x: 2}));
     this.a.push(new ProxyArrayModel({x: 3}));
-
-    this.owner.on('*', this.spy = jasmine.createSpy());
   });
 
-  it('proxies change events to the owner', function() {
+  it('proxies prop changes to the owner', function() {
+    var spy = jasmine.createSpy();
+    this.owner.on('things.x', spy);
     this.a.at(0).x = 10;
-    expect(this.spy).toHaveBeenCalledWith('change:things.x', {
-      array: this.a, object: this.a.at(0), old: 1
-    });
+    BasisObject.flush();
+    expect(spy).toHaveBeenCalledWith('things.x');
   });
 
   it('proxies splice events to the owner', function() {
-    var x = this.a.pop();
-    expect(this.spy).toHaveBeenCalledWith('splice:things', {
-      array: this.a, i: 2, n: 1, added: [], removed: [x]
-    });
-  });
-
-  it('does not proxy other event types to the owner', function() {
-    this.a.emit('foobar');
-    this.a.emit('x:y');
-    expect(this.spy).not.toHaveBeenCalled();
+    var spy = jasmine.createSpy();
+    this.owner.on('things', spy);
+    this.a.pop();
+    BasisObject.flush();
+    expect(spy).toHaveBeenCalledWith('things');
   });
 
   describe('#proxy', function() {
