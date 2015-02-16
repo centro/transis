@@ -158,21 +158,22 @@ describe('Basis.Object', function() {
         expect(t.__num__).toBeUndefined();
       });
 
-      it('emits a change event namespaced to the prop name', function() {
+      it('notifies observers of the prop', function() {
         var spy = jasmine.createSpy();
 
-        t.on('change:str', spy);
+        t.on('str', spy);
         t.str = 'xyz';
+        BasisObject.flush();
         expect(spy).toHaveBeenCalled();
       });
 
-      it('emits an event with the previous value of the property', function() {
+      it('notifies `*` observers', function() {
         var spy = jasmine.createSpy();
 
-        t.str = 'abc';
-        t.on('change:str', spy);
+        t.on('*', spy);
         t.str = 'xyz';
-        expect(spy).toHaveBeenCalledWith('change:str', {object: t, old: 'abc'});
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalled();
       });
 
       describe('with the readonly option', function() {
@@ -195,21 +196,60 @@ describe('Basis.Object', function() {
         this.prop('first');
         this.prop('last');
         this.prop('full', {
-          readonly: true, on: ['change:first', 'change:last'],
+          readonly: true, on: ['first', 'last'],
           get: function() { return `${this.first} ${this.last}`; }
+        });
+        this.prop('greeting', {
+          readonly: true, on: ['full'],
+          get: function() { return `Hello ${this.full}`; }
         });
       });
 
-      it('causes `change:<name>` events to be emitted whenever any of the events are observed', function() {
+      it('notifies observers of the prop when any of the dependent props change', function() {
         var u = new User({first: 'Joe', last: 'Blow'}), spy = jasmine.createSpy();
 
-        u.on('change:full', spy);
+        u.on('full', spy);
         expect(u.full).toBe('Joe Blow');
         u.first = 'Bob';
-        expect(spy).toHaveBeenCalledWith('change:full', {object: u});
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalled();
         expect(spy.calls.count()).toBe(1);
         u.last = 'Smith';
+        BasisObject.flush();
         expect(spy.calls.count()).toBe(2);
+      });
+
+      it('notifies observers of props that depend on computed props', function() {
+        var u = new User({first: 'Joe', last: 'Blow'}), spy = jasmine.createSpy();
+
+        u.on('greeting', spy);
+        expect(u.greeting).toBe('Hello Joe Blow');
+        u.last = 'Smith';
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalled();
+        expect(u.greeting).toBe('Hello Joe Smith');
+      });
+
+      it('notifies observers of a computed prop once when multiple dependencies change', function() {
+        var u = new User({first: 'Joe', last: 'Blow'}), spy = jasmine.createSpy();
+
+        u.on('full', spy);
+        u.first = 'Bob';
+        u.last = 'Smith';
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalled();
+        expect(spy.calls.count()).toBe(1);
+      });
+
+      it('notifies `*` observers once be flush cycle', function() {
+        var u = new User({first: 'Joe', last: 'Blow'}), spy = jasmine.createSpy();
+
+        u.on('*', spy);
+        u.first = 'Bob';
+        u.last = 'Smith';
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalled();
+        expect(spy.calls.count()).toBe(1);
       });
     });
 
@@ -220,7 +260,7 @@ describe('Basis.Object', function() {
         spy = jasmine.createSpy().and.callFake(function() { return this.a * 2; });
         Foo = BasisObject.extend('Foo', function() {
           this.prop('a');
-          this.prop('doubleA', {cache: true, readonly: true, on: ['change:a'], get: spy});
+          this.prop('doubleA', {cache: true, readonly: true, on: ['a'], get: spy});
         });
       });
 
@@ -248,25 +288,17 @@ describe('Basis.Object', function() {
         expect(f.doubleA).toBe(6);
         expect(spy.calls.count()).toBe(1);
         f.a = 5;
+        BasisObject.flush();
         expect(f.doubleA).toBe(10);
         expect(spy.calls.count()).toBe(2);
         expect(f.doubleA).toBe(10);
         expect(spy.calls.count()).toBe(2);
         f.a = 21;
+        BasisObject.flush();
         expect(f.doubleA).toBe(42);
         expect(spy.calls.count()).toBe(3);
         expect(f.doubleA).toBe(42);
         expect(spy.calls.count()).toBe(3);
-      });
-
-      it('clears the cache when the didChange method is called with the cached property name', function() {
-        var f = new Foo({a: 3});
-
-        expect(f.doubleA).toBe(6);
-        expect(spy.calls.count()).toBe(1);
-        f.didChange('a');
-        expect(f.doubleA).toBe(6);
-        expect(spy.calls.count()).toBe(2);
       });
     });
   });

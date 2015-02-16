@@ -1,9 +1,54 @@
-var objectId = 0, subclasses = {};
+var objectId = 0, subclasses = {}, changedObjects = {}, flushTimer;
 
 function BasisObject() {
   Object.defineProperty(this, 'objectId', {value: ++objectId});
   this.init.apply(this, arguments);
 };
+
+// Internal: Flushes the current change queue. This notifies observers of the changed props as well
+// as observers of any props that depend on the changed props. Observers are only invoked once per
+// flush, regardless of how many of their dependent props have changed. Additionaly, cached values
+// are cleared where appropriate.
+function flush() {
+  flushTimer = null;
+
+  for (let id in changedObjects) {
+    let object    = changedObjects[id];
+    let deps      = object.__deps__;
+    let changes   = Object.keys(object.__changedProps__);
+    let processed = {};
+
+    delete changedObjects[id];
+    delete object.__changedProps__;
+
+    while (changes.length) {
+      let prop = changes.shift();
+
+      if (processed[prop]) { continue; }
+      processed[prop] = true;
+
+      if (deps[prop]) {
+        for (let i = 0, n = deps[prop].length; i < n; i++) {
+          changes.push(deps[prop][i]);
+        }
+      }
+
+      uncache.call(object, prop);
+
+      if (object.__observers__ && object.__observers__[prop]) {
+        for (let i = 0, n = object.__observers__[prop].length; i < n; i++) {
+          object.__observers__[prop][i]();
+        }
+      }
+    }
+
+    if (object.__observers__ && object.__observers__['*']) {
+      for (let i = 0, n = object.__observers__['*'].length; i < n; i++) {
+        object.__observers__['*'][i]();
+      }
+    }
+  }
+}
 
 // Internal: Caches the given name/value pair on the receiver.
 function cache(name, value) { (this.__cache__ = this.__cache__ || {})[name] = value; }
@@ -17,11 +62,12 @@ function isCached(name) { return this.__cache__ ? this.__cache__.hasOwnProperty(
 // Internal: Returns the cached value for the given name.
 function getCached(name) { return this.__cache__ ? this.__cache__[name] : undefined; }
 
-// Internal: Dependent event observer. Clears cached values and emits change events for the
-// the property whose dependency was changed.
-function onDependentEvent(event, data, desc) {
-  this.didChange(desc.name);
-}
+// Public: Flush the pending change queue. This should only be used in specs.
+BasisObject.flush = function() {
+  clearTimeout(flushTimer);
+  flush();
+  return this;
+};
 
 // Public: Creates a subclass of `Basis.Object`.
 BasisObject.extend = function(name, f) {
@@ -66,8 +112,7 @@ BasisObject.resolve = function(name, raise = true) {
 };
 
 // Public: Defines a property on the class's prototype. Properties defined with this method are
-// observable using the `Basis.Object#on` method. When changed, they emit `change:<name>` events.
-// The object being changed and the old value of the property are passed along in the event.
+// observable using the `Basis.Object#on` method.
 //
 // name - A string containing the name of the property.
 // opts - An object containing one or more of the following keys:
@@ -75,9 +120,8 @@ BasisObject.resolve = function(name, raise = true) {
 //   set       - A custom property setter function.
 //   readonly  - Makes the property readonly. Should only be used with the `get` option.
 //   default   - Specify a default value for the property.
-//   on        - An array of event names that when observed, cause the property to change. This
-//               should be used with custom `get` functions in order to make the property
-//               observable.
+//   on        - An array of dependent prop names. Observers of the prop are notified when any of
+//               these props change.
 //   cache     - Set this to true to enable property caching. This is useful with computed
 //               properties that have their dependent events defined. If dependent events aren't
 //               defined, then the initially cached value will never be cleared.
@@ -99,6 +143,14 @@ BasisObject.prop = function(name, opts = {}) {
   }
 
   this.prototype.__props__[name] = descriptor;
+
+  if (!this.prototype.hasOwnProperty('__deps__')) {
+    this.prototype.__deps__ = Object.create(this.prototype.__deps__ || null);
+  }
+
+  descriptor.on.forEach(function(prop) {
+    (this.prototype.__deps__[prop] = this.prototype.__deps__[prop] || []).push(name);
+  }, this);
 
   Object.defineProperty(this.prototype, name, {
     get: function() { return this._getProp(name); },
@@ -135,26 +187,52 @@ BasisObject.toString = function() { return this.displayName || this.name || '(Un
 BasisObject.prototype.init = function(props = {}) {
   for (let k in props) { if (k in this) { this[k] = props[k]; } }
 
-  for (let k in this.__props__) {
-    this.__props__[k].on.forEach((event) => {
-      this.on(event, onDependentEvent, {context: this.__props__[k]})
-    });
-  }
-
   return this;
 };
 
-// Public: Emits a `change:<name>` event and clears the cache for the property that changed. This
-// method should be called when a computed property that does not manage its own dependencies via
-// the `on` option changes.
+// Public: Register a callback to be invoked when the given prop changes. Callbacks are invoked
+// asynchronously whenever the property is changed directly or one of its dependent properties is
+// changed.
 //
-// name - The name of the property that changed.
-// opts - An object to pass as the data argument with the emitted `change` event.
+// prop     - The name of the property to observe.
+// callback - A function to invoke when the prop changes.
 //
 // Returns the receiver.
-BasisObject.prototype.didChange = function(name, opts = {}) {
-  uncache.call(this, name);
-  this.emit(`change:${name}`, Object.assign(opts, {object: this}));
+BasisObject.prototype.on = function(prop, callback) {
+  this.__observers__ = this.__observers__ || {};
+  this.__observers__[prop] = this.__observers__[prop] || [];
+  this.__observers__[prop].push(callback);
+  return this;
+};
+
+// Public: Remove a prop observer.
+//
+// prop     - The name of the property to stop observing.
+// callback - The function passed to `Basis.Object#on`.
+//
+// Returns the receiver.
+BasisObject.prototype.off = function(prop, callback) {
+  if (this.__observers__ && this.__observers__[prop]) {
+    for (let i = this.__observers__[prop].length - 1; i >= 0; i--) {
+      if (this.__observers__[prop][i] === callback) {
+        this.__observers__[prop].splice(i, 1);
+      }
+    }
+  }
+  return this;
+};
+
+// Public: Registers a property change and asynchronously triggers property observers. This is
+// called automatically when a prop is set. This should only be used when the state of a prop is
+// managed by external code.
+//
+// name - The name of the prop that has changed.
+//
+// Returns the receiver.
+BasisObject.prototype.didChange = function(name) {
+  (this.__changedProps__ = this.__changedProps__ || {})[name] = true;
+  changedObjects[this.objectId] = this;
+  if (!flushTimer) { flushTimer = setTimeout(flush); }
   return this;
 };
 
@@ -189,7 +267,10 @@ BasisObject.prototype._getProp = function(name) {
   return value;
 };
 
-// Internal: Sets the value of the given property and emits a `change:<name>` event.
+// Internal: Sets the value of the given property.
+//
+// name - The name of the prop to change.
+// value - The new value of the prop.
 //
 // Returns the previous value.
 // Throws `Error` if there is no property with the given name.
