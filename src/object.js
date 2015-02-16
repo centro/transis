@@ -33,20 +33,10 @@ function flush() {
         }
       }
 
-      uncache.call(object, prop);
-
-      if (object.__observers__ && object.__observers__[prop]) {
-        for (let i = 0, n = object.__observers__[prop].length; i < n; i++) {
-          object.__observers__[prop][i]();
-        }
-      }
+      object._notify(prop);
     }
 
-    if (object.__observers__ && object.__observers__['*']) {
-      for (let i = 0, n = object.__observers__['*'].length; i < n; i++) {
-        object.__observers__['*'][i]();
-      }
-    }
+    object._notify('*');
   }
 }
 
@@ -233,6 +223,19 @@ BasisObject.prototype.didChange = function(name) {
   (this.__changedProps__ = this.__changedProps__ || {})[name] = true;
   changedObjects[this.objectId] = this;
   if (!flushTimer) { flushTimer = setTimeout(flush); }
+  return this;
+};
+
+// Internal: Notifies observers of a prop change.
+BasisObject.prototype._notify = function(prop) {
+  uncache.call(this, prop);
+
+  if (this.__observers__ && this.__observers__[prop]) {
+    for (let i = 0, n = this.__observers__[prop].length; i < n; i++) {
+      this.__observers__[prop][i]();
+    }
+  }
+
   return this;
 };
 
