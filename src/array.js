@@ -3,13 +3,6 @@ import * as util from "./util";
 
 var {slice, splice, concat, map, filter} = Array.prototype;
 
-function onElementEvent(event, data) {
-  var [type, ns] = event.split(':');
-  if (type === 'change' || type === 'splice') {
-    this.emit(`${type}:${ns}`, Object.assign({array: this}, data));
-  }
-}
-
 var BasisArray = BasisObject.extend('Basis.Array', function() {
   // Public: Returns a new `Basis.Array` containing the given arguments as contents.
   //
@@ -65,12 +58,6 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
     }
     else {
       this.__elements__ = elements;
-
-      for (i = 0, n = elements.length; i < n; i++) {
-        if (elements[i] instanceof BasisObject) {
-          elements[i].on('*:*', onElementEvent, {observer: this});
-        }
-      }
     }
 
     BasisArray.__super__.init.call(this);
@@ -115,12 +102,15 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
     return false;
   };
 
+  // Internal: Performs the actual splice. This method is called by `Array#splice` and is always
+  // passed the number of elements to remove and an array of items to add whereas the `splice`
+  // method is more flexible in the arguments that it accepts.
+  this.prototype._splice = function(i, n, added) {
+    return BasisArray.from(splice.apply(this.__elements__, [i, n].concat(added)));
+  };
+
   // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
-  // made through this method. In addition to making the mutation, this method also emits `splice`
-  // events.
-  //
-  // The `splice` events contain the array that was mutated, the index at which the mutation starts,
-  // the number of elements removed, and native arrays containing the removed and added elements.
+  // made through this method.
   //
   // i        - The index to start the mutation, may be negative.
   // n        - The number of items to remove, starting from `i`. If not given, then all items
@@ -138,23 +128,7 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
 
     if (n === undefined) { n = this.length - index; }
 
-    removed = splice.apply(this.__elements__, [index, n].concat(added));
-
-    for (j = 0, m = removed.length; j < m; j++) {
-      if (removed[j] instanceof BasisObject) {
-        removed[j].off('*:*', onElementEvent, {observer: this});
-      }
-    }
-
-    for (j = 0, m = added.length; j < m; j++) {
-      if (added[j] instanceof BasisObject) {
-        added[j].on('*:*', onElementEvent, {observer: this});
-      }
-    }
-
-    this.emit('splice', {array: this, i: index, n, added, removed});
-
-    return BasisArray.from(removed);
+    return this._splice(index, n, added);
   };
 
   // Public: Adds one or more elements to the end of the array and returns the new length.
