@@ -27,7 +27,7 @@ function flush() {
       if (processed[prop]) { continue; }
       processed[prop] = true;
 
-      if (deps[prop]) {
+      if (deps && deps[prop]) {
         for (let i = 0, n = deps[prop].length; i < n; i++) {
           changes.push(deps[prop][i]);
         }
@@ -226,19 +226,6 @@ BasisObject.prototype.didChange = function(name) {
   return this;
 };
 
-// Internal: Notifies observers of a prop change.
-BasisObject.prototype._notify = function(prop) {
-  uncache.call(this, prop);
-
-  if (this.__observers__ && this.__observers__[prop]) {
-    for (let i = 0, n = this.__observers__[prop].length; i < n; i++) {
-      this.__observers__[prop][i](prop);
-    }
-  }
-
-  return this;
-};
-
 // Public: Indicates whether the receiver is equal to the given object. The default implementation
 // simply does an identity comparison using the `===` operator. You'll likely want to override
 // this method in your sub-types in order to perform a more meaningful comparison.
@@ -297,6 +284,19 @@ BasisObject.prototype._setProp = function(name, value) {
   this.didChange(name, {old});
 
   return old;
+};
+
+// Internal: Notifies observers of a prop change.
+BasisObject.prototype._notify = function(prop) {
+  uncache.call(this, prop);
+
+  if (this.__observers__ && this.__observers__[prop]) {
+    for (let i = 0, n = this.__observers__[prop].length; i < n; i++) {
+      this.__observers__[prop][i](prop);
+    }
+  }
+
+  return this;
 };
 
 BasisObject.displayName = 'Basis.Object';
