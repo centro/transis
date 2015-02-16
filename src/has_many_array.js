@@ -1,6 +1,6 @@
 import ProxyArray from "./proxy_array";
 
-function onSplice(event, {array, i, n, added, removed}) {
+function processSplice(i, n, added, removed) {
   var desc = this.__desc__, inverse = desc.inverse, name = desc.name, changes, i;
 
   if (inverse && !this.__handlingInverse__) {
@@ -56,13 +56,14 @@ var HasManyArray = ProxyArray.extend('Basis.HasManyArray', function() {
   this.prototype.init = function(owner, desc) {
     HasManyArray.__super__.init.call(this, owner, desc.name);
     this.__desc__ = desc;
-    this.on('splice', onSplice);
   };
 
-  this.prototype.splice = function() {
-    var added = Array.from(arguments).slice(2);
+  this.prototype._splice = function(i, n, added) {
+    var removed;
     added.forEach((o) => checkAssociatedType.call(this, o));
-    return this.constructor.__super__.splice.apply(this, arguments);
+    removed = HasManyArray.__super__._splice.call(this, i, n, added);
+    processSplice.call(this, i, n, added, removed.native);
+    return removed;
   };
 
   this.prototype._inverseAdd = function(model) {

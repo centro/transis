@@ -1,4 +1,5 @@
 import "es6-shim";
+import BasisObject from "../object";
 import Model from "../model";
 import IdMap from "../id_map";
 import BasisArray from "../array";
@@ -170,30 +171,34 @@ describe('Model', function () {
         }).toThrow(new Error(`Foo#bar: expected an object of type \`Bar\` but received \`${b}\` instead`));
       });
 
-      it('emits `change:<name>` events when the associated model is set', function() {
+      it('notifies `<name>` observers when the associated model is set', function() {
         var f = new Foo, b = new Bar, spy = jasmine.createSpy();
 
-        f.on('change:bar', spy);
+        f.on('bar', spy);
         f.bar = b;
-        expect(spy).toHaveBeenCalledWith('change:bar', {object: f, old: undefined});
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalledWith('bar');
         f.bar = undefined;
-        expect(spy).toHaveBeenCalledWith('change:bar', {object: f, old: b});
+        BasisObject.flush();
+        expect(spy.calls.count()).toBe(2);
       });
 
-      it('emits `change:<name>.<prop name>` events when the associated model changes', function() {
+      it('notifies `<name>.<prop name>` observers when the associated model changes', function() {
         var b = new Bar({x: 1}), f = new Foo({bar: b}), spy = jasmine.createSpy();
 
-        f.on('change:bar.x', spy);
+        f.on('bar.x', spy);
         b.x = 2;
-        expect(spy).toHaveBeenCalledWith('change:bar.x', {object: b, old: 1});
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalledWith('bar.x');
       });
 
-      it('emits `splice:<name>.<prop name>` events when the associated model emits a splice event', function() {
+      it('notifies `<name>.<prop name>` events when the associated model has a hasMany mutation', function() {
         var b = new Bar, f = new Foo({bar: b}), baz = new Baz, spy = jasmine.createSpy();
 
-        f.on('splice:bar.bazs', spy);
+        f.on('bar.bazs', spy);
         b.bazs.push(baz);
-        expect(spy).toHaveBeenCalledWith('splice:bar.bazs', {array: b.bazs, i: 0, n: 0, added: [baz], removed: []});
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalledWith('bar.bazs');
       });
     });
 
@@ -301,44 +306,42 @@ describe('Model', function () {
         }).toThrow(new Error(`Foo#bars: expected an object of type \`Bar\` but received \`${b}\` instead`));
       });
 
-      it('emits a `splice:<name>` event when models are added', function() {
+      it('notifies `<name>` observers when models are added', function() {
         var f = new Foo, b = new Bar, spy = jasmine.createSpy();
 
-        f.on('splice:bars', spy);
+        f.on('bars', spy);
         f.bars.push(b);
-        expect(spy).toHaveBeenCalledWith('splice:bars', {
-          array: f.bars, i: 0, n: 0, added: [b], removed: []
-        });
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalledWith('bars');
       });
 
-      it('emits a `splice:<name>` event when models are removed', function() {
+      it('notifies `<name>` observers when models are removed', function() {
         var f = new Foo, b = new Bar, spy = jasmine.createSpy();
 
         f.bars.push(b);
-        f.on('splice:bars', spy);
+        f.on('bars', spy);
         f.bars.pop();
-        expect(spy).toHaveBeenCalledWith('splice:bars', {
-          array: f.bars, i: 0, n: 1, added: [], removed: [b]
-        });
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalledWith('bars');
       });
 
-      it('emits `change:<name>.<prop name>` events when an associated model changes', function() {
+      it('notifies `change:<name>.<prop name>` events when an associated model changes', function() {
         var f = new Foo, b = new Bar({x: 1}), spy = jasmine.createSpy();
 
         f.bars = [b];
-        f.on('change:bars.x', spy);
+        f.on('bars.x', spy);
         b.x = 2;
-        expect(spy).toHaveBeenCalledWith('change:bars.x', {array: f.bars, object: b, old: 1});
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalledWith('bars.x');
       });
 
-      it('emits `splice:<name>.<prop name>` events when an associated model emits a splice event', function() {
+      it('notifies `<name>.<prop name>` observers when an associated model has a hasMany mutation', function() {
         var b = new Bar, f = new Foo({bars: b}), baz = new Baz, spy = jasmine.createSpy();
 
-        f.on('splice:bars.bazs', spy);
+        f.on('bars.bazs', spy);
         b.bazs.push(baz);
-        expect(spy).toHaveBeenCalledWith('splice:bars.bazs', {
-          array: b.bazs, i: 0, n: 0, added: [baz], removed: []
-        });
+        BasisObject.flush();
+        expect(spy).toHaveBeenCalledWith('bars.bazs');
       });
     });
 
@@ -1525,6 +1528,8 @@ describe('Model', function () {
           {id: 12, name: 'baz', quantity: 8, rate: 5},
         ]
       });
+
+      BasisObject.flush();
     });
 
     it('keeps track of changes to attributes in the `changes` property', function() {
@@ -1533,12 +1538,13 @@ describe('Model', function () {
       expect(this.invoice.changes).toEqual({name: 'A'});
     });
 
-    it('emits a `change:changes` event when an attribute changes', function() {
+    it('notifies `changes` observers when an attribute changes', function() {
       var spy = jasmine.createSpy();
 
-      this.invoice.on('change:changes', spy);
+      this.invoice.on('changes', spy);
       this.invoice.name = 'B';
-      expect(spy).toHaveBeenCalledWith('change:changes', {object: this.invoice});
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('changes');
     });
 
     it('does not keep track of intermediate changes', function() {
@@ -1573,12 +1579,13 @@ describe('Model', function () {
       expect(this.invoice.changes.company).toBeUndefined();
     });
 
-    it('emits a `change:changes` event when an owned hasOne association changes', function() {
+    it('notifies `changes` observers when an owned hasOne association changes', function() {
       var spy = jasmine.createSpy();
 
-      this.invoice.on('change:changes', spy);
+      this.invoice.on('changes', spy);
       this.invoice.billingAddress = new Address;
-      expect(spy).toHaveBeenCalledWith('change:changes', {object: this.invoice});
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('changes');
     });
 
     it('keeps track of changes to owned hasMany associations when models are added', function() {
@@ -1609,12 +1616,13 @@ describe('Model', function () {
       expect(this.invoice.changes.lineItems).toEqual({removed: [removed], added: [added]});
     });
 
-    it('emits a `change:changes` event when an owned hasMany association is mutated', function() {
+    it('notifies `changes` observers when an owned hasMany association is mutated', function() {
       var spy = jasmine.createSpy();
 
-      this.invoice.on('change:changes', spy);
+      this.invoice.on('changes', spy);
       this.invoice.lineItems.pop();
-      expect(spy).toHaveBeenCalledWith('change:changes', {object: this.invoice});
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('changes');
     });
 
     it('keeps track of changes to owned hasMany associations when they are set', function() {
@@ -1738,29 +1746,33 @@ describe('Model', function () {
         expect(this.invoice.hasOwnChanges).toBe(false);
       });
 
-      describe('change event', function() {
+      describe('observers', function() {
         beforeEach(function() {
           this.spy = jasmine.createSpy();
-          this.invoice.on('change:hasOwnChanges', this.spy);
+          this.invoice.on('hasOwnChanges', this.spy);
         });
 
-        it('is fired when an attribute changes', function() {
+        it('are fired when an attribute changes', function() {
           this.invoice.name = 'B';
+          BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
-        it('is fired when an owned hasMany association is mutated', function() {
+        it('are fired when an owned hasMany association is mutated', function() {
           this.invoice.lineItems.pop();
+          BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
-        it('is not fired when an owned associated model changes', function() {
+        it('are not fired when an owned associated model changes', function() {
           this.invoice.billingAddress.name = 'Bob Smith';
+          BasisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
 
-        it('is not fired when an unowned associated model changes', function() {
+        it('are not fired when an unowned associated model changes', function() {
           this.invoice.company.name = 'Foo';
+          BasisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });
@@ -1801,34 +1813,39 @@ describe('Model', function () {
         expect(this.invoice.hasChanges).toBe(false);
       });
 
-      describe('change event', function() {
+      describe('observers', function() {
         beforeEach(function() {
           this.spy = jasmine.createSpy();
-          this.invoice.on('change:hasChanges', this.spy);
+          this.invoice.on('hasChanges', this.spy);
         });
 
-        it('is fired when an attribute changes', function() {
+        it('are fired when an attribute changes', function() {
           this.invoice.name = 'B';
+          BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
-        it('is fired when an owned hasMany association is mutated', function() {
+        it('are fired when an owned hasMany association is mutated', function() {
           this.invoice.lineItems.pop();
+          BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
-        it('is fired when an owned hasOne associated model changes', function() {
+        it('are fired when an owned hasOne associated model changes', function() {
           this.invoice.billingAddress.name = 'Bob Smith';
+          BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
-        it('is fired when an owned hasMany associated model changes', function() {
+        it('are fired when an owned hasMany associated model changes', function() {
           this.invoice.lineItems.at(0).name = 'xyz';
+          BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
-        it('is not fired when an unowned associated model changes', function() {
+        it('are not fired when an unowned associated model changes', function() {
           this.invoice.company.name = 'Foo';
+          BasisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });

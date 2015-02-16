@@ -222,7 +222,9 @@ BasisObject.prototype.off = function(prop, callback) {
 BasisObject.prototype.didChange = function(name) {
   (this.__changedProps__ = this.__changedProps__ || {})[name] = true;
   changedObjects[this.objectId] = this;
+
   if (!flushTimer) { flushTimer = setTimeout(flush); }
+
   return this;
 };
 

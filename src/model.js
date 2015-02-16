@@ -40,15 +40,6 @@ function checkOwnerOpts(desc) {
   }
 }
 
-// Internal: Handler for events observed on objects associated via a `hasOne` association. This
-// propagates the event on the receiver.
-function onHasOneEvent(event, data, desc) {
-  var [type, ns] = event.split(':');
-  if ((type === 'change' || type === 'splice') && ns.indexOf('.') === -1) {
-    this.emit(`${type}:${desc.name}.${ns}`, data);
-  }
-}
-
 // Internal: Sets the given object on a `hasOne` property.
 //
 // desc - An association descriptor.
@@ -73,8 +64,8 @@ function hasOneSet(desc, v, sync) {
   if (sync && inv && prev) { prev._inverseRemoved(inv, this); }
   if (sync && inv && v) { v._inverseAdded(inv, this); }
 
-  if (prev) { prev.off('*:*', onHasOneEvent, {observer: this, context: desc}); }
-  if (v) { v.on('*:*', onHasOneEvent, {observer: this, context: desc}); }
+  if (prev) { prev._deregisterProxy(this, name); }
+  if (v) { v._registerProxy(this, name); }
 }
 
 // Internal: Callback for a successful model deletion. Updates the model's state, removes it from
@@ -457,13 +448,6 @@ var Model = BasisObject.extend('Basis.Model', function() {
     this.isBusy      = false;
     this.__promise__ = Promise.resolve();
 
-    for (let name in this.associations) {
-      if (this.associations[name].owner) {
-        this.__props__.hasChanges.on.push(`change:${name}.hasChanges`);
-        this.__props__.hasErrors.on.push(`change:${name}.hasErrors`);
-      }
-    }
-
     Model.__super__.init.call(this, props);
   }
 
@@ -483,22 +467,22 @@ var Model = BasisObject.extend('Basis.Model', function() {
   this.prop('sourceState');
 
   this.prop('isNew', {
-    readonly: true, on: ['change:sourceState'],
+    readonly: true, on: ['sourceState'],
     get: function() { return this.sourceState === NEW; }
   });
 
   this.prop('isEmpty', {
-    readonly: true, on: ['change:sourceState'],
+    readonly: true, on: ['sourceState'],
     get: function() { return this.sourceState === EMPTY; }
   });
 
   this.prop('isLoaded', {
-    readonly: true, on: ['change:sourceState'],
+    readonly: true, on: ['sourceState'],
     get: function() { return this.sourceState === LOADED; }
   });
 
   this.prop('isDeleted', {
-    readonly: true, on: ['change:sourceState'],
+    readonly: true, on: ['sourceState'],
     get: function() { return this.sourceState === DELETED; }
   });
 
@@ -515,14 +499,14 @@ var Model = BasisObject.extend('Basis.Model', function() {
   // Public: Returns a boolean indicating whether the model has any property changes or any
   // owned `hasMany` associations that have been mutated.
   this.prop('hasOwnChanges', {
-    readonly: true, on: ['change:changes'],
+    readonly: true, on: ['changes'],
     get: function() { return Object.keys(this.changes).length > 0; }
   });
 
   // Public: Returns a boolean indicating whether the model has any changes or if any of its owned
   // associated models have changes.
   this.prop('hasChanges', {
-    readonly: true, on: ['change:changes'],
+    readonly: true, on: ['changes'],
     get: function() {
       if (this.hasOwnChanges) { return true; }
 
@@ -551,14 +535,14 @@ var Model = BasisObject.extend('Basis.Model', function() {
   // Public: Returns a boolean indicating whether the model has any validation errors on its own
   // properties.
   this.prop('hasOwnErrors', {
-    readonly: true, on: ['change:errors'],
+    readonly: true, on: ['errors'],
     get: function() { return Object.keys(this.errors).length > 0; }
   });
 
   // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
   // its owned associated models have validation errors.
   this.prop('hasErrors', {
-    readonly: true, on: ['change:errors'],
+    readonly: true, on: ['errors'],
     get: function() {
       if (this.hasOwnErrors) { return true; }
 
