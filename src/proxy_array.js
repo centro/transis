@@ -26,8 +26,6 @@ var ProxyArray = BasisArray.extend('Basis.ProxyArray', function() {
     var removed = ProxyArray.__super__._splice.call(this, i, n, added),
         removedNative = removed.native;
 
-    this.__owner__.didChange(this.__name__);
-
     for (let i = 0, n = removedNative.length; i < n; i++) {
       if (removedNative[i] instanceof BasisObject) {
         removedNative[i]._deregisterProxy(this.__owner__, this.__name__);
@@ -41,6 +39,11 @@ var ProxyArray = BasisArray.extend('Basis.ProxyArray', function() {
     }
 
     return removed;
+  };
+
+  this.prototype.didChange = function(prop) {
+    ProxyArray.__super__.didChange.call(this, prop);
+    if (prop === '@') { this.__owner__.didChange(this.__name__); }
   };
 });
 
