@@ -425,6 +425,10 @@ var Model = BasisObject.extend('Basis.Model', function() {
     return model;
   };
 
+  // Public: Clears all models from the id map. This will subsequently cause the model layer to go
+  // to the mapper for any model that had previously been loaded.
+  this.clearIdMap = function() { IdMap.clear(); return this; };
+
   // Internal: Invokes the given method on the receiver's mapper, ensuring that it returns a
   // Thennable (Promise-like) object.
   //
