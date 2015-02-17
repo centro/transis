@@ -731,4 +731,15 @@ describe('Array', function() {
       expect(a).toEqual(A('brown', 'fox', 'quick', 'the'));
     });
   });
+
+  describe('#toJSON', function() {
+    it('returns the underlying native array', function() {
+      var a = A(1,2,3);
+      expect(a.toJSON()).toBe(a.native);
+    });
+
+    it('allows JSON.stringify to serialize the array like a native array', function() {
+      expect(JSON.stringify(A(1,2,3))).toBe(JSON.stringify([1,2,3]));
+    });
+  });
 });

@@ -389,6 +389,8 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
   this.prototype.toString = function() {
     return `#<${this.constructor}:${this.objectId} [${this.__elements__}]>`;
   };
+
+  this.prototype.toJSON = function() { return this.native; };
 });
 
 export default BasisArray;
