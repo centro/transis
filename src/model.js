@@ -489,22 +489,22 @@ var Model = BasisObject.extend('Basis.Model', function() {
   this.prop('sourceState');
 
   this.prop('isNew', {
-    readonly: true, on: ['sourceState'],
+    on: ['sourceState'],
     get: function() { return this.sourceState === NEW; }
   });
 
   this.prop('isEmpty', {
-    readonly: true, on: ['sourceState'],
+    on: ['sourceState'],
     get: function() { return this.sourceState === EMPTY; }
   });
 
   this.prop('isLoaded', {
-    readonly: true, on: ['sourceState'],
+    on: ['sourceState'],
     get: function() { return this.sourceState === LOADED; }
   });
 
   this.prop('isDeleted', {
-    readonly: true, on: ['sourceState'],
+    on: ['sourceState'],
     get: function() { return this.sourceState === DELETED; }
   });
 
@@ -514,21 +514,20 @@ var Model = BasisObject.extend('Basis.Model', function() {
   // and `hasOne` associations, the original value is stored. For `hasMany` associations, the added
   // and removed models are stored.
   this.prop('changes', {
-    readonly: true,
     get: function() { return this.__changes = this.__changes || {}; }
   });
 
   // Public: Returns a boolean indicating whether the model has any property changes or any
   // owned `hasMany` associations that have been mutated.
   this.prop('hasOwnChanges', {
-    readonly: true, on: ['changes'],
+    on: ['changes'],
     get: function() { return Object.keys(this.changes).length > 0; }
   });
 
   // Public: Returns a boolean indicating whether the model has any changes or if any of its owned
   // associated models have changes.
   this.prop('hasChanges', {
-    readonly: true, on: ['changes'],
+    on: ['changes'],
     get: function() {
       if (this.hasOwnChanges) { return true; }
 
@@ -550,21 +549,20 @@ var Model = BasisObject.extend('Basis.Model', function() {
   // Public: Object containing any validation errors on the model. The keys of the object are theo
   // properties that have errors and the values are an array of error messages.
   this.prop('errors', {
-    readonly: true,
     get: function() { return this.__errors = this.__errors || {}; }
   });
 
   // Public: Returns a boolean indicating whether the model has any validation errors on its own
   // properties.
   this.prop('hasOwnErrors', {
-    readonly: true, on: ['errors'],
+    on: ['errors'],
     get: function() { return Object.keys(this.errors).length > 0; }
   });
 
   // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
   // its owned associated models have validation errors.
   this.prop('hasErrors', {
-    readonly: true, on: ['errors'],
+    on: ['errors'],
     get: function() {
       if (this.hasOwnErrors) { return true; }
 

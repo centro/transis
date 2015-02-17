@@ -110,7 +110,6 @@ BasisObject.resolve = function(name, raise = true) {
 // opts - An object containing one or more of the following keys:
 //   get       - A custom property getter function.
 //   set       - A custom property setter function.
-//   readonly  - Makes the property readonly. Should only be used with the `get` option.
 //   default   - Specify a default value for the property.
 //   on        - An array of dependent prop names. Observers of the prop are notified when any of
 //               these props change.
@@ -124,11 +123,10 @@ BasisObject.prop = function(name, opts = {}) {
     name: name,
     get: null,
     set: null,
-    readonly: false,
     default: undefined,
     on: [],
     cache: false
-  }, opts);
+  }, opts, {readonly: opts.get && !opts.set});
 
   if (!this.prototype.hasOwnProperty('__props__')) {
     this.prototype.__props__ = Object.create(this.prototype.__props__ || null);
