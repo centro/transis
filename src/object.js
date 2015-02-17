@@ -172,16 +172,20 @@ BasisObject.toString = function() { return this.displayName || this.name || '(Un
 //
 // props - An object containing properties to set. Only properties defined via `Basis.Object.prop`
 //         are settable.
+BasisObject.prototype.init = function(props) { if (props) { this.set(props); } };
+
+// Public: Set multiple props at once. This method take special care to only set props that are
+// defined with `Basis.Object.prop` and are not readonly.
 //
-// Returns the receiver.
-BasisObject.prototype.init = function(props = {}) {
+// props - An object containing props to set.
+//
+// Returns nothing.
+BasisObject.prototype.set = function(props) {
   for (let k in props) {
     if (this.__props__ && this.__props__[k] && !this.__props__[k].readonly) {
       this[k] = props[k];
     }
   }
-
-  return this;
 };
 
 // Public: Register a callback to be invoked when the given prop changes. Callbacks are invoked

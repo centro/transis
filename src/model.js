@@ -334,9 +334,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
     }
 
     // set non-association attributes
-    for (let k in attrs) {
-      if (k in model) { model[k] = attrs[k]; }
-    }
+    model.set(attrs);
 
     // set id if necessary
     if (model.id === undefined) { model.id = id; }
