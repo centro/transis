@@ -40,13 +40,11 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
     return b;
   };
 
-  Object.defineProperties(this.prototype, {
-    // Public: Returns the current length of the array.
-    length: { get: function() { return this.__elements__.length; } },
+  this.prop('native', {get: function() { return this.__elements__; }});
 
-    // Public: Returns the backing native array.
-    native: { get: function() { return this.__elements__; } }
-  });
+  this.prop('length', {get: function() { return this.__elements__.length; }});
+
+  this.prop('@', {get: function() { return this; }});
 
   // Public: The `Basis.Array` constructor. With a single number argument, an array is created with
   // the same length. In every other case, the array is initialized with the given arguments.
@@ -106,6 +104,8 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
   // passed the number of elements to remove and an array of items to add whereas the `splice`
   // method is more flexible in the arguments that it accepts.
   this.prototype._splice = function(i, n, added) {
+    if (n !== added.length) { this.didChange('length'); }
+    this.didChange('@');
     return BasisArray.from(splice.apply(this.__elements__, [i, n].concat(added)));
   };
 

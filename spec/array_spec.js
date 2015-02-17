@@ -98,6 +98,52 @@ describe('Array', function() {
     });
   });
 
+  describe('length prop', function() {
+    beforeEach(function() {
+      this.a = A(1,2,3);
+      BasisObject.flush();
+      this.spy = jasmine.createSpy();
+      this.a.on('length', this.spy);
+    });
+
+    it('returns the length of the array', function() {
+      expect(this.a.length).toBe(3);
+    });
+
+    it('notifies observers when the array length is changed', function() {
+      this.a.pop();
+      BasisObject.flush();
+      expect(this.spy).toHaveBeenCalledWith('length');
+      this.a.push(10);
+      BasisObject.flush();
+      expect(this.spy.calls.count()).toBe(2);
+    });
+
+    it('does not notify observers on a splice that does not result in a length change', function() {
+      this.a.splice(0, 1, 10);
+      BasisObject.flush();
+      expect(this.spy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('@ prop', function() {
+    beforeEach(function() {
+      this.a = A(1,2,3);
+      BasisObject.flush();
+      this.spy = jasmine.createSpy();
+      this.a.on('@', this.spy);
+    });
+
+    it('notifies observers when the array is spliced', function() {
+      this.a.push(4);
+      BasisObject.flush();
+      expect(this.spy).toHaveBeenCalledWith('@');
+      this.a.pop();
+      BasisObject.flush();
+      expect(this.spy.calls.count()).toBe(2);
+    });
+  });
+
   describe('#at', function() {
     var a;
 
