@@ -43,5 +43,17 @@ describe('ProxyArray', function() {
       expect(p.__name__).toBe('foos');
       expect(p).toEqual(a);
     });
+
+    it('does not immediately trigger a change on the owner', function() {
+      var owner = new BasisObject;
+      var a = BasisArray.A(1,2,3);
+      var spy = jasmine.createSpy();
+
+      owner.on('foos', spy);
+      a.proxy(owner, 'foos');
+      BasisObject.flush();
+
+      expect(spy).not.toHaveBeenCalled();
+    });
   });
 });
