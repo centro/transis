@@ -175,7 +175,11 @@ BasisObject.toString = function() { return this.displayName || this.name || '(Un
 //
 // Returns the receiver.
 BasisObject.prototype.init = function(props = {}) {
-  for (let k in props) { if (k in this) { this[k] = props[k]; } }
+  for (let k in props) {
+    if (this.__props__ && this.__props__[k] && !this.__props__[k].readonly) {
+      this[k] = props[k];
+    }
+  }
 
   return this;
 };

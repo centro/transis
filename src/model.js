@@ -473,14 +473,14 @@ var Model = BasisObject.extend('Basis.Model', function() {
     Model.__super__.init.call(this, props);
   }
 
-  Object.defineProperty(this.prototype, 'id', {
-    get: function() { return this.__id__; },
+  this.prop('id', {
+    get: function() { return this.__id; },
     set: function(id) {
-      if (this.__id__) {
+      if (this.__id) {
         throw new Error(`${this.constructor}#id=: overwriting a model's identity is not allowed: ${this}`);
       }
 
-      this.__id__ = id;
+      this.__id = id;
 
       IdMap.insert(this);
     }

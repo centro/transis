@@ -338,6 +338,12 @@ describe('Basis.Object', function() {
       expect('blah' in t).toBe(false);
       expect(t.blah).toBeUndefined();
     });
+
+    it('does not set readonly props', function() {
+      expect(function() {
+        new Test({ro: 1});
+      }).not.toThrow();
+    });
   });
 
   describe('#objectId', function() {
