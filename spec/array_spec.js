@@ -27,35 +27,11 @@ describe('Array', function() {
     });
   });
 
-  describe('.from', function() {
-    it('creates a new Basis.Array with the contents of the given native array', function() {
-      var a = [1, 2];
-
-      expect(BasisArray.from(a) instanceof BasisArray).toBe(true);
-      expect(BasisArray.from(a)).toEqual(a);
-    });
-
-    it('creates a new BasisArray with the contents of the given Arguments object', function() {
-      var args = (function() { return arguments; })('a', 'b', 'c');
-
-      expect(BasisArray.from(args) instanceof BasisArray).toBe(true);
-      expect(BasisArray.from(args)).toEqual(A('a', 'b', 'c'));
-    });
-
-    it('creates a new Basis.Array with the contents of the given Basis.Array', function() {
-      var a = A(1, 2);
-
-      expect(BasisArray.from(a) instanceof BasisArray).toBe(true);
-      expect(BasisArray.from(a)).not.toBe(a);
-      expect(BasisArray.from(a)).toEqual(a);
-    });
-  });
-
   describe('.wrap', function() {
-    it('creates a new Basis.Array with the given array as the backing __elements__', function() {
+    it('creates a new Basis.Array from the given native array', function() {
       var a = [1,2,3];
 
-      expect(BasisArray.wrap(a).__elements__).toBe(a);
+      expect(BasisArray.wrap(a).native).toEqual(a);
     });
 
     it('throws a TypeError exception when given a non-array', function() {
@@ -70,17 +46,8 @@ describe('Array', function() {
   });
 
   describe('constructor', function() {
-    it('creates an array of the given size when passed a single number', function() {
-      var a = new BasisArray(3);
-
-      expect(a.length).toBe(3);
-      expect(a.at(0)).toBeUndefined();
-      expect(a.at(1)).toBeUndefined();
-      expect(a.at(2)).toBeUndefined();
-    });
-
     it('creates an array whose contents are the given arguments', function() {
-      var a1 = new BasisArray(1, 2), a2 = new BasisArray('a', 'b', 'c');
+      var a1 = new BasisArray(1, 2), a2 = new BasisArray('a', 'b', 'c'), a3 = new BasisArray(4);
 
       expect(a1.length).toBe(2);
       expect(a1.at(0)).toBe(1);
@@ -89,6 +56,8 @@ describe('Array', function() {
       expect(a2.at(0)).toBe('a');
       expect(a2.at(1)).toBe('b');
       expect(a2.at(2)).toBe('c');
+      expect(a3.length).toBe(1);
+      expect(a3.at(0)).toBe(4);
     });
 
     it('creates an empty array when no arguments are given', function() {

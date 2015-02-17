@@ -8,21 +8,7 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
   //
   // Returns a new `Basis.Array`.
   this.A = function() {
-    var a = new BasisArray;
-    a.push.apply(a, arguments);
-    return a;
-  };
-
-  // Public: Returns a new `Basis.Array` containing the contents of the given array-like object.
-  //
-  // a - Any array-like object (a native array, `Arguments` object, or `Basis.Array` instance).
-  //
-  // Returns a new `Basis.Array`.
-  this.from = function(a) {
-    var b = new BasisArray(a.length), i, n;
-    if (a instanceof BasisArray) { a = a.__elements__; }
-    for (i = 0, n = a.length; i < n; i++) { b.__elements__[i] = a[i]; }
-    return b;
+    return new (BasisArray.bind.apply(BasisArray, [null].concat(slice.call(arguments))));
   };
 
   // Public: Wraps a native array with a `Basis.Array`.
@@ -35,9 +21,7 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
       throw new TypeError(`Basis.Array.wrap: expected a native array but received \`${a}\` instead`);
     }
 
-    var b = new BasisArray;
-    b.__elements__ = a;
-    return b;
+    return BasisArray.A.apply(null, a);
   };
 
   this.prop('native', {get: function() { return this.__elements__; }});
@@ -46,19 +30,11 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
 
   this.prop('@', {get: function() { return this; }});
 
-  // Public: The `Basis.Array` constructor. With a single number argument, an array is created with
-  // the same length. In every other case, the array is initialized with the given arguments.
+  // Public: The `Basis.Array` constructor. Creates an array initialized with the given arguments as
+  // its contents.
   this.prototype.init = function() {
-    var elements = slice.call(arguments), i, n;
-
-    if (elements.length === 1 && typeof elements[0] === 'number') {
-      this.__elements__ = new Array(elements[0]);
-    }
-    else {
-      this.__elements__ = elements;
-    }
-
     BasisArray.__super__.init.call(this);
+    this.__elements__ = slice.call(arguments);
   };
 
   // Public: Element reference and assignment method. When given one argument, returns the item at
@@ -106,7 +82,7 @@ var BasisArray = BasisObject.extend('Basis.Array', function() {
   this.prototype._splice = function(i, n, added) {
     if (n !== added.length) { this.didChange('length'); }
     this.didChange('@');
-    return BasisArray.from(splice.apply(this.__elements__, [i, n].concat(added)));
+    return BasisArray.wrap(splice.apply(this.__elements__, [i, n].concat(added)));
   };
 
   // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
