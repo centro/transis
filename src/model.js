@@ -476,13 +476,13 @@ var Model = BasisObject.extend('Basis.Model', function() {
   }
 
   this.prop('id', {
-    get: function() { return this.__id; },
+    get: function() { return this.attrs.id; },
     set: function(id) {
-      if (this.__id) {
+      if (this.attrs.id) {
         throw new Error(`${this.constructor}#id=: overwriting a model's identity is not allowed: ${this}`);
       }
 
-      this.__id = id;
+      this.attrs.id = id;
 
       IdMap.insert(this);
     }
