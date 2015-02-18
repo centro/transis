@@ -945,6 +945,21 @@ describe('Model', function () {
     });
   });
 
+  describe('#attrs', function() {
+    it('returns an objects containing the raw values of all attributes', function() {
+      var m = new BasicModel({str: 'abc', num: 1});
+      expect(m.attrs()).toEqual({str: 'abc', num: 1, strWithDefault: 'zzz'});
+
+      m = new BasicModel({id: 12, str: 'abc', num: 1, strWithDefault: 'ggg'});
+      expect(m.attrs()).toEqual({id: 12, str: 'abc', num: 1, strWithDefault: 'ggg'});
+    });
+
+    it('returns an empty object with the model has no attributes defined', function() {
+      var X = Model.extend('NoAttributesModel');
+      expect((new X).attrs()).toEqual({});
+    });
+  });
+
   describe('#get', function() {
     beforeEach(function() {
       var _this = this;

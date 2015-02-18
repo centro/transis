@@ -583,6 +583,21 @@ var Model = BasisObject.extend('Basis.Model', function() {
     }
   });
 
+  // Public: Returns an object containing the raw values of all the receiver's attributes.
+  this.prototype.attrs = function() {
+    var attrs = {}
+
+    for (let k in this.__props__) {
+      if (this.__props__[k].attr) {
+        attrs[k] = this[k];
+      }
+    }
+
+    if (typeof this.id !== 'undefined') { attrs.id = this.id; }
+
+    return attrs;
+  };
+
   // Public: Refreshes the model by getting it from the data mapper.
   //
   // opts - An object to forward along to the mapper (default: `{}`).
