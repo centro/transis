@@ -110,14 +110,14 @@ describe('Model', function () {
       expect('str' in BasicModel.prototype).toBe(true);
     });
 
-    it('defines a property that sets its value on the attrs object', function() {
-      expect(this.m.attrs.str).toBeUndefined();
+    it('defines a property that sets its value on a property prefixed with `__`', function() {
+      expect(this.m.__str).toBeUndefined();
       this.m.str = 'abc';
-      expect(this.m.attrs.str).toBe('abc');
+      expect(this.m.__str).toBe('abc');
     });
 
-    it('defines a property that gets its value from the attrs object', function() {
-      this.m.attrs.str = 'xyz';
+    it('defines a property that gets its value from a property prefixed with `__`', function() {
+      this.m.__str = 'xyz';
       expect(this.m.str).toBe('xyz');
     });
 

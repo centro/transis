@@ -160,9 +160,10 @@ var Model = BasisObject.extend('Basis.Model', function() {
     if (typeof converter === 'function') { converter = new converter(opts); }
 
     this.prop(name, {
-      get: function() { return this.attrs[name]; },
+      attr: true,
+      get: function() { return this[`__${name}`]; },
       set: function(v) {
-        this.attrs[name] = converter.coerce(v);
+        this[`__${name}`] = converter.coerce(v);
         this[`${name}BeforeCoercion`] = v;
       },
       default: 'default' in opts ? opts.default : undefined
@@ -467,7 +468,6 @@ var Model = BasisObject.extend('Basis.Model', function() {
 
   // Internal: Initializes the model by setting up some internal properties.
   this.prototype.init = function(props) {
-    this.attrs       = {};
     this.sourceState = NEW;
     this.isBusy      = false;
     this.__promise__ = Promise.resolve();
@@ -476,13 +476,13 @@ var Model = BasisObject.extend('Basis.Model', function() {
   }
 
   this.prop('id', {
-    get: function() { return this.attrs.id; },
+    get: function() { return this.__id; },
     set: function(id) {
-      if (this.attrs.id) {
+      if (this.__id) {
         throw new Error(`${this.constructor}#id=: overwriting a model's identity is not allowed: ${this}`);
       }
 
-      this.attrs.id = id;
+      this.__id = id;
 
       IdMap.insert(this);
     }
