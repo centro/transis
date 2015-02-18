@@ -19,6 +19,7 @@ describe('Model', function () {
     this.attr('str', 'string');
     this.attr('strWithDefault', 'string', {default: 'zzz'});
     this.attr('num', 'number');
+    this.attr('date', 'date');
   });
 
   var Author = Model.extend('Author', function() {
@@ -946,12 +947,12 @@ describe('Model', function () {
   });
 
   describe('#attrs', function() {
-    it('returns an objects containing the raw values of all attributes', function() {
-      var m = new BasicModel({str: 'abc', num: 1});
-      expect(m.attrs()).toEqual({str: 'abc', num: 1, strWithDefault: 'zzz'});
+    it('returns an object containing the raw values of all attributes', function() {
+      var m = new BasicModel({str: 'abc', num: 1, date: new Date(2013, 9, 26)});
+      expect(m.attrs()).toEqual({str: 'abc', num: 1, strWithDefault: 'zzz', date: '2013-10-26'});
 
-      m = new BasicModel({id: 12, str: 'abc', num: 1, strWithDefault: 'ggg'});
-      expect(m.attrs()).toEqual({id: 12, str: 'abc', num: 1, strWithDefault: 'ggg'});
+      m = new BasicModel({id: 12, str: 'abc', num: 1, strWithDefault: 'ggg', date: new Date(2013, 9, 26)});
+      expect(m.attrs()).toEqual({id: 12, str: 'abc', num: 1, strWithDefault: 'ggg', date: '2013-10-26'});
     });
 
     it('returns an empty object with the model has no attributes defined', function() {

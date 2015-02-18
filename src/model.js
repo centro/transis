@@ -161,6 +161,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
 
     this.prop(name, {
       attr: true,
+      converter,
       get: function() { return this[`__${name}`]; },
       set: function(v) {
         this[`__${name}`] = converter.coerce(v);
@@ -585,11 +586,11 @@ var Model = BasisObject.extend('Basis.Model', function() {
 
   // Public: Returns an object containing the raw values of all the receiver's attributes.
   this.prototype.attrs = function() {
-    var attrs = {}
+    var attrs = {};
 
     for (let k in this.__props__) {
       if (this.__props__[k].attr) {
-        attrs[k] = this[k];
+        attrs[k] = this.__props__[k].converter.serialize(this[k]);
       }
     }
 
