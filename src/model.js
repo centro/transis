@@ -573,7 +573,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
         if (!this.associations[name].owner) { continue; }
 
         if (this.associations[name].type === 'hasOne') {
-          if (this[name].hasErrors) { return true; }
+          if (this[name] && this[name].hasErrors) { return true; }
         }
         else if (this.associations[name].type === 'hasMany') {
           return this[name].some((m) => m.hasErrors);
