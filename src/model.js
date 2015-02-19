@@ -472,6 +472,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
     this.sourceState = NEW;
     this.isBusy      = false;
     this.__promise__ = Promise.resolve();
+    this._clearChanges();
 
     Model.__super__.init.call(this, props);
   }

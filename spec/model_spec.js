@@ -1795,6 +1795,14 @@ describe('Model', function () {
     });
 
     describe('#hasChanges', function() {
+      it('returns false for a NEW model with no attrs set', function() {
+        expect((new BasicModel).hasChanges).toBe(false);
+      });
+
+      it('returns true for a NEW model with attrs set', function() {
+        expect((new BasicModel({str: 'a'})).hasChanges).toBe(true);
+      });
+
       it('returns true when the receiver has a changed property', function() {
         expect(this.invoice.hasChanges).toBe(false);
         this.invoice.name = 'B';
