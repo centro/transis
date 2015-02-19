@@ -85,16 +85,37 @@ describe('QueryArray', function () {
       });
     });
 
-    it('loads the resolved array of objects and replaces the contents of the array with the loaded models', function(done) {
-      this.a.query();
-      this.resolve([{id: 600, str: 's1'}, {id: 601, str: 's2'}]);
-      this.delay(() => {
-        expect(this.a.length).toBe(2);
-        expect(this.a.at(0).id).toBe(600);
-        expect(this.a.at(0).str).toBe('s1');
-        expect(this.a.at(1).id).toBe(601);
-        expect(this.a.at(1).str).toBe('s2');
-        done();
+    describe('when resolved with an array', function() {
+      it('loads the resolved array of objects and replaces the contents of the array with the loaded models', function(done) {
+        this.a.query();
+        this.resolve([{id: 600, str: 's1'}, {id: 601, str: 's2'}]);
+        this.delay(() => {
+          expect(this.a.length).toBe(2);
+          expect(this.a.at(0).id).toBe(600);
+          expect(this.a.at(0).str).toBe('s1');
+          expect(this.a.at(1).id).toBe(601);
+          expect(this.a.at(1).str).toBe('s2');
+          done();
+        });
+      });
+    });
+
+    describe('when resolved with an object containing `results` and `meta` keys', function() {
+      it('loads the results key and sets the meta property', function(done) {
+        this.a.query();
+        this.resolve({
+          meta: {total: 121, current_page: 1, next_page: 2},
+          results: [{id: 600, str: 's1'}, {id: 601, str: 's2'}]
+        });
+        this.delay(() => {
+          expect(this.a.length).toBe(2);
+          expect(this.a.at(0).id).toBe(600);
+          expect(this.a.at(0).str).toBe('s1');
+          expect(this.a.at(1).id).toBe(601);
+          expect(this.a.at(1).str).toBe('s2');
+          expect(this.a.meta).toEqual({total: 121, current_page: 1, next_page: 2});
+          done();
+        });
       });
     });
 

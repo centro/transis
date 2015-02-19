@@ -8,6 +8,9 @@ var QueryArray = BasisArray.extend('Basis.QueryArray', function() {
 
   this.prop('error');
 
+  // Public: Metadata provided by the mapper. May be used for paging.
+  this.prop('meta');
+
   this.prototype.init = function(modelClass) {
     QueryArray.__super__.init.call(this);
     this.modelClass  = modelClass;
@@ -43,8 +46,16 @@ var QueryArray = BasisArray.extend('Basis.QueryArray', function() {
     else {
       this.isBusy = true;
       this.__promise__ = this.modelClass._callMapper('query', [opts]).then(
-        (objects) => {
-          try { this.replace(this.modelClass.loadAll(objects)); }
+        (result) => {
+          try {
+            if (Array.isArray(result)) {
+              this.replace(this.modelClass.loadAll(result));
+            }
+            else if (result.results) {
+              this.replace(this.modelClass.loadAll(result.results));
+              this.meta = result.meta;
+            }
+          }
           catch (e) { console.error(e); throw e; }
           this.isBusy = false;
           this.error = undefined;
