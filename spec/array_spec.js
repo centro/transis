@@ -698,4 +698,63 @@ describe('Array', function() {
       expect(a).toEqual(A('brown', 'fox', 'quick', 'the'));
     });
   });
+
+  describe('#proxy', function() {
+    var Test = BasisObject.extend(function() {
+      this.prop('x');
+    });
+
+    beforeEach(function() {
+      this.to = new BasisObject;
+      this.a  = A(new Test({x: 1}), new Test({x: 2}), new Test({x: 3}));
+      this.a.proxy(this.to, 'things');
+    });
+
+    it('causes the array to begin proxying element prop changes to the given object', function() {
+      var spy = jasmine.createSpy();
+      this.to.on('things.x', spy);
+      this.a[0].x = 10;
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('things.x');
+    });
+
+    it('handles added objects', function() {
+      var spy = jasmine.createSpy(), t = new Test({x: 10});
+      this.a.push(t);
+      BasisObject.flush();
+
+      this.to.on('things.x', spy);
+      t.x = 11;
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('things.x');
+    });
+
+    it('handles removed objects', function() {
+      var spy = jasmine.createSpy();
+      var t = this.a.pop();
+      BasisObject.flush();
+
+      this.to.on('things.x', spy);
+      t.x = 11;
+      BasisObject.flush();
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('proxies splice events to the given object', function() {
+      var spy = jasmine.createSpy();
+      this.to.on('things', spy);
+      this.a.pop();
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('things');
+    });
+
+    it('does not immediately trigger a change on the given object', function() {
+      var to = new BasisObject, spy = jasmine.createSpy();
+
+      to.on('foos', spy);
+      A(new Test({x: 1})).proxy(to, 'foos');
+      BasisObject.flush();
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
 });

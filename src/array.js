@@ -99,9 +99,28 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   // passed the number of elements to remove and an array of items to add whereas the `splice`
   // method is more flexible in the arguments that it accepts.
   this.prototype._splice = function(i, n, added) {
+    var removed = splice.apply(this, [i, n].concat(added));
+
     if (n !== added.length) { this.didChange('size'); }
     this.didChange('@');
-    return splice.apply(this, [i, n].concat(added));
+
+    if (this.__proxy__) {
+      removed.forEach(function(x) {
+        if (x instanceof BasisObject || x instanceof BasisArray) {
+          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
+        }
+      }, this);
+
+      added.forEach(function(x) {
+        if (x instanceof BasisObject || x instanceof BasisArray) {
+          x._registerProxy(this.__proxy__.to, this.__proxy__.name);
+        }
+      }, this);
+
+      this.__proxy__.to.didChange(this.__proxy__.name);
+    }
+
+    return removed;
   };
   
   // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
@@ -245,6 +264,41 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
       if (!map.has(el)) { map.set(el, true); acc.push(el); }
       return acc;
     }, BasisArray.of());
+  };
+
+  // Public: Causes the array to begin proxying prop change notifications on itself as well as its
+  // elements to the given proxy object.
+  //
+  // to   - The object to proxy prop changes to.
+  // name - The name to use as a prefix on the proxied prop name.
+  //
+  // Returns the receiver.
+  this.prototype.proxy = function(to, name) {
+    if (this.__proxy__) { this.unproxy(); }
+
+    this.__proxy__ = {to, name};
+
+    this.forEach(function(x) {
+      if (x instanceof BasisObject || x instanceof BasisArray) {
+        x._registerProxy(to, name);
+      }
+    });
+
+    return this;
+  };
+
+  // Public: Stop proxying prop changes.
+  this.prototype.unproxy = function() {
+    if (this.__proxy__) {
+      this.forEach(function(x) {
+        if (x instanceof BasisObject || x instanceof BasisArray) {
+          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
+        }
+      }, this);
+      delete this.__proxy__;
+    }
+
+    return this;
   };
 }).call(BasisArray);
 
