@@ -3,7 +3,7 @@ import IdMap from "./id_map";
 import BasisObject from "./object";
 import BasisArray from "./array";
 import QueryArray from "./query_array";
-import HasManyArray from "./has_many_array";
+//import HasManyArray from "./has_many_array";
 import Validations from "./validations";
 import * as attrs from "./attrs";
 import * as util from "./util";

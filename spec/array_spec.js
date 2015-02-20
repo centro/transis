@@ -2,10 +2,10 @@ import "es6-shim";
 import BasisArray from "../array";
 import BasisObject from "../object";
 
-var A = BasisArray.A;
+var A = BasisArray.of;
 
 describe('Array', function() {
-  describe('.A', function() {
+  describe('.of', function() {
     it('returns a Basis.Array containing all of the given arguments', function() {
       var a1 = A(1,2,3), a2 = A(9);
 
@@ -25,64 +25,31 @@ describe('Array', function() {
       expect(a instanceof BasisArray).toBe(true);
       expect(a.length).toBe(0);
     });
-  });
 
-  describe('.wrap', function() {
-    it('creates a new Basis.Array from the given native array', function() {
-      var a = [1,2,3];
+    it('generates an objectId', function() {
+      var a1 = A(), a2 = A();
 
-      expect(BasisArray.wrap(a).native).toEqual(a);
-    });
-
-    it('throws a TypeError exception when given a non-array', function() {
-      expect(function() {
-        BasisArray.wrap({});
-      }).toThrow(new TypeError(`Basis.Array.wrap: expected a native array but received \`${{}}\` instead`));
-
-      expect(function() {
-        BasisArray.wrap(4);
-      }).toThrow(new TypeError(`Basis.Array.wrap: expected a native array but received \`${4}\` instead`));
+      expect(typeof a1.objectId).toBe('number');
+      expect(typeof a2.objectId).toBe('number');
+      expect(a1.objectId < a2.objectId).toBe(true);
     });
   });
 
-  describe('constructor', function() {
-    it('creates an array whose contents are the given arguments', function() {
-      var a1 = new BasisArray(1, 2), a2 = new BasisArray('a', 'b', 'c'), a3 = new BasisArray(4);
-
-      expect(a1.length).toBe(2);
-      expect(a1.at(0)).toBe(1);
-      expect(a1.at(1)).toBe(2);
-      expect(a2.length).toBe(3);
-      expect(a2.at(0)).toBe('a');
-      expect(a2.at(1)).toBe('b');
-      expect(a2.at(2)).toBe('c');
-      expect(a3.length).toBe(1);
-      expect(a3.at(0)).toBe(4);
-    });
-
-    it('creates an empty array when no arguments are given', function() {
-      var a = new BasisArray;
-
-      expect(a.length).toBe(0);
-    });
-  });
-
-  describe('length prop', function() {
+  describe('size prop', function() {
     beforeEach(function() {
       this.a = A(1,2,3);
-      BasisObject.flush();
       this.spy = jasmine.createSpy();
-      this.a.on('length', this.spy);
+      this.a.on('size', this.spy);
     });
 
     it('returns the length of the array', function() {
-      expect(this.a.length).toBe(3);
+      expect(this.a.size).toBe(3);
     });
 
     it('notifies observers when the array length is changed', function() {
       this.a.pop();
       BasisObject.flush();
-      expect(this.spy).toHaveBeenCalledWith('length');
+      expect(this.spy).toHaveBeenCalledWith('size');
       this.a.push(10);
       BasisObject.flush();
       expect(this.spy.calls.count()).toBe(2);
@@ -116,7 +83,7 @@ describe('Array', function() {
   describe('#at', function() {
     var a;
 
-    beforeEach(function() { a = new BasisArray('the', 'quick', 'brown', 'fox'); });
+    beforeEach(function() { a = A('the', 'quick', 'brown', 'fox'); });
 
     describe('given just an index', function() {
       it('returns the value at the given index when given a positive index in range', function() {
@@ -628,7 +595,7 @@ describe('Array', function() {
     it('throws a TypeError when the array is empty and no initial value is provided', function() {
       expect(function() {
         A().reduce(function() {});
-      }).toThrow(new TypeError(`Basis.Array#reduce: reduce of an empty array with no initial value`));
+      }).toThrow();
     });
   });
 
@@ -729,17 +696,6 @@ describe('Array', function() {
 
       expect(a.sort()).toBe(a);
       expect(a).toEqual(A('brown', 'fox', 'quick', 'the'));
-    });
-  });
-
-  describe('#toJSON', function() {
-    it('returns the underlying native array', function() {
-      var a = A(1,2,3);
-      expect(a.toJSON()).toBe(a.native);
-    });
-
-    it('allows JSON.stringify to serialize the array like a native array', function() {
-      expect(JSON.stringify(A(1,2,3))).toBe(JSON.stringify([1,2,3]));
     });
   });
 });

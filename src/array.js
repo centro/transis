@@ -1,43 +1,64 @@
 import BasisObject from "./object";
 import * as util from "./util";
 
-var {slice, splice, concat, map, filter} = Array.prototype;
+var iframe;
 
-var BasisArray = BasisObject.extend(function() {
+var BasisArray = (function() {
+  // http://danielmendel.github.io/blog/2013/02/20/subclassing-javascript-arrays/
+
+  if (typeof exports !== 'undefined') {
+    // node.js
+    return require('vm').runInNewContext('Array');
+  }
+  else {
+    // browser
+    iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    frames[frames.length - 1].document.write('<script>parent._Array = Array;</script>');
+    var _Array = window._Array;
+    delete window._Array;
+    document.body.removeChild(iframe);
+    return _Array;
+  }
+}());
+
+Object.assign(BasisArray, BasisObject);
+Object.assign(BasisArray.prototype, BasisObject.prototype);
+
+// Internal: Copy over polyfilled methods from `Array` to `Basis.Array`.
+['findIndex', 'find'].forEach(function(x) {
+  BasisArray.prototype[x] = Array.prototype[x];
+});
+
+var {concat, slice, splice} = BasisArray.prototype;
+
+// Public: Returns a new `Basis.Array` containing the given arguments as contents. This is the main
+// `Basis.Array` constructor, never use the `Basis.Array` constructor function directly.
+//
+// ...elements - The elements to add to the array.
+//
+// Returns a new `Basis.Array`.
+BasisArray.of = function() {
+  var a = new BasisArray(arguments.length), i, n;
+  BasisObject.call(a);
+  for (i = 0, n = arguments.length; i < n; i++) { a[i] = arguments[i]; }
+  return a;
+};
+
+// Public: Creates a new `Basis.Array` from the given array-like object. Useful for converting a
+// regular array to a `Basis.Array`.
+//
+// a - An array-like object.
+//
+// Returns a new `Basis.Array`.
+BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
+
+(function() {
   this.displayName = 'Basis.Array';
 
-  // Public: Returns a new `Basis.Array` containing the given arguments as contents.
-  //
-  // Returns a new `Basis.Array`.
-  this.A = function() {
-    return new (BasisArray.bind.apply(BasisArray, [null].concat(slice.call(arguments))));
-  };
-
-  // Public: Wraps a native array with a `Basis.Array`.
-  //
-  // a - A native array object.
-  //
-  // Returns a new `Basis.Array`.
-  this.wrap = function(a) {
-    if (!Array.isArray(a)) {
-      throw new TypeError(`Basis.Array.wrap: expected a native array but received \`${a}\` instead`);
-    }
-
-    return BasisArray.A.apply(null, a);
-  };
-
-  this.prop('native', {get: function() { return this.__elements__; }});
-
-  this.prop('length', {get: function() { return this.__elements__.length; }});
-
+  this.prop('size', {get: function() { return this.length; }});
   this.prop('@', {get: function() { return this; }});
-
-  // Public: The `Basis.Array` constructor. Creates an array initialized with the given arguments as
-  // its contents.
-  this.prototype.init = function() {
-    BasisArray.__super__.init.call(this);
-    this.__elements__ = slice.call(arguments);
-  };
 
   // Public: Element reference and assignment method. When given one argument, returns the item at
   // the specified index. When passed, two arguments, the second argument is set as the item at the
@@ -54,11 +75,11 @@ var BasisArray = BasisObject.extend(function() {
   // Returns `v` when given two arguments.
   this.prototype.at = function(i, v) {
     var length = this.length;
-
+  
     if (i < 0) { i = length + i; }
-
+  
     if (arguments.length === 1) {
-      return (i >= 0 && i < length) ? this.__elements__[i] : undefined;
+      return (i >= 0 && i < length) ? this[i] : undefined;
     }
     else {
       this.splice(i, 1, v);
@@ -72,21 +93,17 @@ var BasisArray = BasisObject.extend(function() {
   // other - A `Basis.Array` or native array to compare to the receiver.
   //
   // Returns `true` if the arrays are equal and `false` otherwise.
-  this.prototype.eq = function(other) {
-    if (other instanceof BasisArray) { return util.eq(this.__elements__, other.__elements__); }
-    if (other instanceof Array) { return util.eq(this.__elements__, other); }
-    return false;
-  };
+  this.prototype.eq = function(other) { return util.eq(this, other); };
 
   // Internal: Performs the actual splice. This method is called by `Array#splice` and is always
   // passed the number of elements to remove and an array of items to add whereas the `splice`
   // method is more flexible in the arguments that it accepts.
   this.prototype._splice = function(i, n, added) {
-    if (n !== added.length) { this.didChange('length'); }
+    if (n !== added.length) { this.didChange('size'); }
     this.didChange('@');
-    return BasisArray.wrap(splice.apply(this.__elements__, [i, n].concat(added)));
+    return splice.apply(this, [i, n].concat(added));
   };
-
+  
   // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
   // made through this method.
   //
@@ -99,13 +116,13 @@ var BasisArray = BasisObject.extend(function() {
   // Throws `Error` when given an index that is out of range.
   this.prototype.splice = function(i, n) {
     var added = slice.call(arguments, 2), index = i < 0 ? this.length + i : i, removed, j, m;
-
+  
     if (index < 0) {
       throw new Error(`Basis.Array#splice: index ${i} is too small for ${this}`);
     }
-
+  
     if (n === undefined) { n = this.length - index; }
-
+  
     return this._splice(index, n, added);
   };
 
@@ -119,7 +136,7 @@ var BasisArray = BasisObject.extend(function() {
     this.splice.apply(this, [this.length, 0].concat(args));
     return this.length;
   };
-
+  
   // Public: Adds one or more elements to the beginning of the array and returns the new length.
   //
   // ...elements - One or more objects to add to the beginning of the array.
@@ -130,33 +147,19 @@ var BasisArray = BasisObject.extend(function() {
     this.splice.apply(this, [0, 0].concat(args));
     return this.length;
   };
-
+  
   // Public: Removes the last element from the array and returns the element.
   //
   // Returns the last element in the array or `undefined` if the array length is 0.
   this.prototype.pop = function() {
     return this.length > 0 ? this.splice(-1, 1).at(0) : undefined;
   };
-
+  
   // Public: Removes the first element from the array and returns the element.
   //
   // Returns the first element in the array or `undefined` if the array length is 0.
   this.prototype.shift = function() {
     return this.length > 0 ? this.splice(0, 1).at(0) : undefined;
-  };
-
-  // Public: Returns a new `Basis.Array` comprised of the receiver joined with the array(s) or
-  // value(s) provided as arguments.
-  //
-  // ...value - Arrays or values to concatenate into the new array.
-  //
-  // Returns a new `Basis.Array`.
-  this.prototype.concat = function() {
-    var args = slice.call(arguments).map(function(arg) {
-      return arg instanceof BasisArray ? arg.__elements__ : arg;
-    });
-
-    return BasisArray.wrap(concat.apply(this.__elements__, args));
   };
 
   // Public: Returns a shallow copy of a portion of an array into a new array.
@@ -169,156 +172,19 @@ var BasisArray = BasisObject.extend(function() {
   //
   // Returns a new `Basis.Array`.
   this.prototype.slice = function() {
-    return BasisArray.wrap(slice.apply(this.__elements__, arguments));
+    var a = slice.apply(this, arguments);
+    return a instanceof BasisArray ? a : BasisArray.from(a);
   };
 
-  // Public: Creates a new array with the results of calling the given function on every element in
-  // the array.
+  // Public: Returns a new `Basis.Array` comprised of the receiver joined with the array(s) or
+  // value(s) provided as arguments.
   //
-  // callback - Function that produces a new element of the array. It takes three arguments:
-  //   current - The current element being processed.
-  //   index   - The index of the current element.
-  //   array   - The array map was called on.
-  // ctx      - Value to use as this when invoking callback.
+  // ...value - Arrays or values to concatenate into the new array.
   //
   // Returns a new `Basis.Array`.
-  this.prototype.map = function() {
-    return BasisArray.wrap(map.apply(this.__elements__, arguments));
-  };
-
-  // Public: Creates a new array with all elements that pass the test implemented by the provided
-  // function.
-  //
-  // callback - Function to test each element of the array. Return true to keep the element and
-  //            false to discard.
-  // ctx      - Value to use as this when invoking callback.
-  //
-  // Returns a new `Basis.Array`.
-  this.prototype.filter = function() {
-    return BasisArray.wrap(filter.apply(this.__elements__, arguments));
-  };
-
-  // Public: Returns the first index at which the given element can be found in the array using a
-  // strict equality (`===`) test. If the element is not found, then `-1` is returned.
-  //
-  // e - The element to search for.
-  // i - The index at which to start the search (default: `0`).
-  //
-  // Returns the index at which the element is found or `-1` if its not found.
-  this.prototype.indexOf = function(e, i) {
-    return this.__elements__.indexOf(e, i);
-  };
-
-  // Public: Returns the first index of the array which satisfies the given testing function.
-  //
-  // f    - Function to execute on each value of the array. Its passed the current item, index, and
-  //        array.
-  // ctx  - Object used as `this` when executing `callback` (default: `null`).
-  //
-  // Returns the index of the first item that satisfies the testing function or `-1` if one is not
-  //   found.
-  this.prototype.findIndex = function(f, ctx = null) {
-    for (let i = 0, n = this.length; i < n; i++) {
-      if (f.call(ctx, this.at(i), i, this)) { return i; }
-    }
-
-    return -1;
-  };
-
-  // Public: Returns the first item of the array which satisfies the given testing function.
-  //
-  // f    - Function to execute on each value of the array. Its passed the current item, index, and
-  //        array.
-  // ctx  - Object used as `this` when executing `callback` (default: `null`).
-  //
-  // Returns the first item that satisfies the testing function or `undefined` if one is not found.
-  this.prototype.find = function(f, ctx = null) {
-    var i = this.findIndex(f, ctx);
-    return i === -1 ? undefined : this.at(i);
-  };
-
-  // Public: Tests whether some element of the array passes the given test function.
-  //
-  // f   - Function to test each element, it is passed the following arguments:
-  //   current - The current value of the array.
-  //   index   - the current index of the array.
-  //   array   - The array `some` was called on.
-  // ctx - Object used as `this` when executing `callback` (default: `null`).
-  //
-  // Returns `true` if some element of the array passes the test function and `false` otherwise.
-  this.prototype.some = function(f, ctx = null) {
-    for (let i = 0, n = this.length; i < n; i++) {
-      if (f.call(ctx, this.__elements__[i], i, this)) { return true; }
-    }
-
-    return false;
-  };
-
-  // Public: Tests whether all elements of the array pass the given test function.
-  //
-  // f   - Function to test each element, it is passed the following arguments:
-  //   current - The current value of the array.
-  //   index   - the current index of the array.
-  //   array   - The array `every` was called on.
-  // ctx - Object used as `this` when executing `callback` (default: `null`).
-  //
-  // Returns `true` if all elements of the array pass the test function and `false` otherwise.
-  this.prototype.every = function(f, ctx = null) {
-    for (let i = 0, n = this.length; i < n; i++) {
-      if (!f.call(ctx, this.__elements__[i], i, this)) { return false; }
-    }
-
-    return true;
-  };
-
-  // Public: Applies the given function against an accumulator and each element of the array in
-  // order to reduce it to a single value.
-  //
-  // f   - Function to apply to each element of the array. It is passed the following arguments:
-  //   acc     - The current accumulator value.
-  //   current - The current element being processed.
-  //   index   - The index of the current element.
-  //   array   - The array `reduce` was called on.
-  // init - Initial value of the accumulator, if this is not provided then the first element of the
-  //        array is used.
-  //
-  // Returns the final value of the accumulator.
-  this.prototype.reduce = function(f, init) {
-    var acc = arguments.length > 1 ? init : this.__elements__[0];
-
-    if (this.length === 0 && arguments.length < 2) {
-      throw new TypeError(`Basis.Array#reduce: reduce of an empty array with no initial value`);
-    }
-
-    for (let i = arguments.length > 1 ? 0 : 1, n = this.length; i < n; i++) {
-      acc = f(acc, this.__elements__[i], i, this);
-    }
-
-    return acc;
-  };
-
-  // Public: Executes the given function once for every element in the array.
-  //
-  // f   - Function to execute for each element of the array. It is passed the following arguments:
-  //   current - The current element of the array.
-  //   index   - The index of the current element.
-  //   array   - The array `forEach` was called on.
-  // ctx - Object used as `this` when executing `f` (default: `null`).
-  this.prototype.forEach = function(f, ctx = null) {
-    for (let i = 0, n = this.length; i < n; i++) {
-      f.call(ctx, this.__elements__[i], i, this);
-    }
-
-    return undefined;
-  };
-
-  // Public: Joins all of the elements of the array into a string.
-  //
-  // sep - The string to use as the separator (default: `","`).
-  //
-  // Returns a string.
-  this.prototype.join = function(sep = ',') {
-    return this.__elements__.join(sep);
+  this.prototype.concat = function() {
+    var a = concat.apply(this, arguments);
+    return a instanceof BasisArray ? a : BasisArray.from(a);
   };
 
   // Public: Replaces the contents of the receiver with the contents of the given array.
@@ -327,7 +193,7 @@ var BasisArray = BasisObject.extend(function() {
   //
   // Returns the receiver.
   this.prototype.replace = function(a) {
-    this.splice.apply(this, new BasisArray(0, this.length).concat(a).__elements__);
+    this.splice.apply(this, [0, this.length].concat(a));
     return this;
   };
 
@@ -344,22 +210,22 @@ var BasisArray = BasisObject.extend(function() {
   //
   // Returns a new `Basis.Array` instance.
   this.prototype.flatten = function() {
-    var a = BasisArray.A();
-
+    var a = BasisArray.of();
+  
     for (let i = 0, n = this.length; i < n; i++) {
-      let el = this.at(i);
-
+      let el = this[i];
+  
       if (el instanceof BasisArray) {
         a = a.concat(el.flatten());
       }
       else if (Array.isArray(el)) {
-        a = a.concat(BasisArray.wrap(el).flatten());
+        a = a.concat(BasisArray.from(el).flatten());
       }
       else {
         a.push(el);
       }
     }
-
+  
     return a;
   };
 
@@ -368,31 +234,18 @@ var BasisArray = BasisObject.extend(function() {
     return this.reduce(function(acc, el) {
       if (el != null) { acc.push(el); }
       return acc;
-    }, BasisArray.A());
+    }, BasisArray.of());
   };
 
   // Public: Returns a new array containing only the unique items in the receiver.
   this.prototype.uniq = function() {
     var map = new Map;
-
+  
     return this.reduce(function(acc, el) {
       if (!map.has(el)) { map.set(el, true); acc.push(el); }
       return acc;
-    }, BasisArray.A());
+    }, BasisArray.of());
   };
-
-  // Public: Sorts the elements of the array in place and returns the array. The default sort order
-  // is according to string Unicode code points.
-  this.prototype.sort = function(f = undefined) {
-    this.__elements__.sort(f);
-    return this;
-  };
-
-  this.prototype.toString = function() {
-    return `#<${this.constructor}:${this.objectId} [${this.__elements__}]>`;
-  };
-
-  this.prototype.toJSON = function() { return this.native; };
-});
+}).call(BasisArray);
 
 export default BasisArray;
