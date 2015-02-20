@@ -4,7 +4,7 @@ import BasisArray from "../array";
 import ProxyArray from "../proxy_array";
 
 describe('ProxyArray', function() {
-  var ProxyArrayModel = BasisObject.extend('ProxyArrayModel', function() {
+  var ProxyArrayModel = BasisObject.extend(function() {
     this.prop('x');
   });
 

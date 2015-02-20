@@ -52,7 +52,9 @@ function checkAssociatedType(o) {
   }
 }
 
-var HasManyArray = ProxyArray.extend('Basis.HasManyArray', function() {
+var HasManyArray = ProxyArray.extend(function() {
+  this.displayName = 'Basis.HasManyArray';
+
   this.prototype.init = function(owner, desc) {
     HasManyArray.__super__.init.call(this, owner, desc.name);
     this.__desc__ = desc;

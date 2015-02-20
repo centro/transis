@@ -1,9 +1,11 @@
-var objectId = 0, subclasses = {}, changedObjects = {}, flushTimer;
+var objectId = 0, changedObjects = {}, flushTimer;
 
 function BasisObject() {
   Object.defineProperty(this, 'objectId', {value: ++objectId});
   this.init.apply(this, arguments);
 };
+
+BasisObject.displayName = 'Basis.Object';
 
 // Internal: Flushes the current change queue. This notifies observers of the changed props as well
 // as observers of any props that depend on the changed props. Observers are only invoked once per
@@ -62,45 +64,18 @@ BasisObject.flush = function() {
 };
 
 // Public: Creates a subclass of `Basis.Object`.
-BasisObject.extend = function(name, f) {
-  if (typeof name !== 'string') {
-    throw new Error(`${this}.extend: a name is required`);
-  }
-
+BasisObject.extend = function(f) {
   var subclass = function() { BasisObject.apply(this, arguments); };
 
   for (let k in this) { if (this.hasOwnProperty(k)) { subclass[k] = this[k]; } }
 
-  subclass.displayName = name;
   subclass.prototype = Object.create(this.prototype);
   subclass.prototype.constructor = subclass;
   subclass.__super__ = this.prototype;
 
   if (typeof f === 'function') { f.call(subclass); }
 
-  subclasses[name] = subclass;
-  subclass.objectId = ++objectId;
-
   return subclass;
-};
-
-// Internal: Returns the `Basis.Object` subclass with the given name.
-//
-// name  - A string representing the name of a `Basis.Object` subclass.
-// raise - A boolean indicating whether an exception should be raised if the name can't be resolved
-//         (default: `true`).
-//
-// Returns the resolved subclass constructor function or `undefined` if a class with the given name
-//   is not known.
-// Throws `Error` if the `raise` argument is `true` and the name cannot not be resolved.
-BasisObject.resolve = function(name, raise = true) {
-  var klass = (typeof name === 'function') ? name : subclasses[name];
-
-  if (!klass && raise) {
-    throw new Error(`Basis.Object.resolve: could not resolve subclass: \`${name}\``);
-  }
-
-  return klass;
 };
 
 // Public: Defines a property on the class's prototype. Properties defined with this method are

@@ -3,7 +3,9 @@ import * as util from "./util";
 
 var {slice, splice, concat, map, filter} = Array.prototype;
 
-var BasisArray = BasisObject.extend('Basis.Array', function() {
+var BasisArray = BasisObject.extend(function() {
+  this.displayName = 'Basis.Array';
+
   // Public: Returns a new `Basis.Array` containing the given arguments as contents.
   //
   // Returns a new `Basis.Array`.

@@ -8,20 +8,39 @@ import Validations from "./validations";
 import * as attrs from "./attrs";
 import * as util from "./util";
 
-var registeredAttrs = {};
+var registeredAttrs = {}, subclasses = {};
 
 const NEW     = 'new';
 const EMPTY   = 'empty';
 const LOADED  = 'loaded';
 const DELETED = 'deleted';
 
-// Internal: Checks to make sure the given object is of the type specified in the given association
-// descriptor.
+// Internal: Returns the `Basis.Model` subclass with the given name.
+//
+// name  - A string representing the name of a `Basis.Model` subclass.
+// raise - A boolean indicating whether an exception should be raised if the name can't be
+//         resolved (default: `true`).
+//
+// Returns the resolved subclass constructor function or `undefined` if a class with the given
+//   name is not known.
+// Throws `Error` if the `raise` argument is `true` and the name cannot not be resolved.
+function resolve(name, raise = true) {
+  var klass = (typeof name === 'function') ? name : subclasses[name];
+
+  if (!klass && raise) {
+    throw new Error(`${Basis.Model}.resolve: could not resolve subclass: \`${name}\``);
+  }
+
+  return klass;
+};
+
+// Internal: Checks to make sure the given object is of the type specified in the given
+// association descriptor.
 //
 // Returns nothing.
 // Throws `Error` if the given object isn't of the type specified in the association descriptor.
 function checkAssociatedType(desc, o) {
-  var klass = BasisObject.resolve(desc.klass);
+  var klass = resolve(desc.klass);
 
   if (!(o instanceof klass)) {
     throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
@@ -34,7 +53,7 @@ function checkOwnerOpts(desc) {
   var klass, inv;
 
   if (desc.owner && desc.inverse &&
-      (klass = this.resolve(desc.klass, false)) && klass.prototype.associations &&
+      (klass = resolve(desc.klass, false)) && klass.prototype.associations &&
         (inv = klass.prototype.associations[desc.inverse]) && inv.owner) {
     throw new Error(`${this}.${desc.name}: both sides of the association are marked as owner`);
   }
@@ -53,7 +72,7 @@ function hasOneSet(desc, v, sync) {
       k     = `__${name}`,
       prev  = this[k],
       inv   = desc.inverse,
-      klass = BasisObject.resolve(desc.klass);
+      klass = resolve(desc.klass);
 
   if (v && !(v instanceof klass)) {
     throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${klass}\` but received \`${v}\` instead`);
@@ -96,7 +115,24 @@ function mapperDeleteSuccess() {
 // Internal: Capitalizes the given word.
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-var Model = BasisObject.extend('Basis.Model', function() {
+
+var Model = BasisObject.extend(function() {
+  this.displayName = 'Basis.Model';
+
+  // Public: Creates a subclass of `Basis.Model`. This method overrides the `Basis.Object.extend`
+  // method in order to force `Model` subclasses to be named.
+  this.extend = function(name, f) {
+    if (typeof name !== 'string') { throw new Error(`${this}.extend: a name is required`); }
+
+    var subclass = BasisObject.extend.call(this);
+    subclass.displayName = name;
+    subclasses[name] = subclass;
+
+    if (typeof f === 'function') { f.call(subclass); }
+
+    return subclass;
+  };
+
   // Public: Returns an empty instance of the model class. An empty instance contains only an id
   // and must be retrieved from the mapper before any of its attributes will be available. Since the
   // model's data mapper will likely need to perform an async action to retrieve data, this method
@@ -266,7 +302,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
     this.prop(name, {
       get: function() {
         if (this[k]) { return this[k]; }
-        desc.klass = BasisObject.resolve(desc.klass);
+        desc.klass = resolve(desc.klass);
         return this[k] = new HasManyArray(this, desc);
       },
       set: function(a) { this[k].replace(a); }
@@ -343,7 +379,7 @@ var Model = BasisObject.extend('Basis.Model', function() {
 
     // load and set each association
     for (let name in associated) {
-      let klass = BasisObject.resolve(associations[name].klass);
+      let klass = resolve(associations[name].klass);
       let data = associated[name];
 
       if (!data) { continue; }

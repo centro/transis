@@ -3,7 +3,9 @@ import BasisArray from "./array";
 
 // Public: The `Basis.ProxyArray` is a subclass of `Basis.Array` that proxies prop change
 // notifications an owner object.
-var ProxyArray = BasisArray.extend('Basis.ProxyArray', function() {
+var ProxyArray = BasisArray.extend(function() {
+  this.displayName = 'Basis.ProxyArray';
+
   // Public: The `Basis.ProxyArray` constructor.
   //
   // owner    - The owner object where prop change notifications are proxied to.

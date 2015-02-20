@@ -3,7 +3,9 @@ import BasisArray from "./array";
 // Public: The `QueryArray` class is a subclass of `Basis.Array` that can be used to load a
 // collection of model objects from the model class's mapper. An instance of this class is returned
 // by `Basis.Model.buildQuery` and `Basis.Model.query`.
-var QueryArray = BasisArray.extend('Basis.QueryArray', function() {
+var QueryArray = BasisArray.extend(function() {
+  this.displayName = 'Basis.QueryArray';
+
   this.prop('isBusy');
 
   this.prop('error');

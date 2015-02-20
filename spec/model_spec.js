@@ -70,6 +70,29 @@ describe('Model', function () {
 
   afterEach(function() { IdMap.clear(); });
 
+  describe('.extend', function() {
+    var Child = Model.extend('Child', function() {
+      this.prototype.init = function() {};
+    });
+
+    var Grandchild = Child.extend('Grandchild', function() {
+      this.prototype.init = function() {};
+    });
+
+    it("sets the name argument as the subclass's displayName property", function() {
+      expect(Child.displayName).toBe('Child');
+      expect(Grandchild.displayName).toBe('Grandchild');
+    });
+
+    describe('with no name argument', function() {
+      it('throws an exception', function() {
+        expect(function() {
+          Model.extend();
+        }).toThrow(new Error('Basis.Model.extend: a name is required'));
+      });
+    });
+  });
+
   describe('.empty', function() {
     it('returns an instance of the class with sourceState set to EMPTY and the given id', function() {
       var m = Model.empty(127);

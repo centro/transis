@@ -2,7 +2,7 @@ import "es6-shim";
 import BasisObject from "../object";
 
 describe('Basis.Object', function() {
-  var Test = BasisObject.extend('Test', function() {
+  var Test = BasisObject.extend(function() {
     this.prop('str');
 
     this.prop('num', {
@@ -21,19 +21,12 @@ describe('Basis.Object', function() {
   });
 
   describe('.extend', function() {
-    var Child = BasisObject.extend('Child', function() {
-      this.prototype.init = function() {
-      };
+    var Child = BasisObject.extend(function() {
+      this.prototype.init = function() {};
     });
 
-    var Grandchild = Child.extend('Grandchild', function() {
-      this.prototype.init = function() {
-      };
-    });
-
-    it("sets the name argument as the subclass's displayName property", function() {
-      expect(Child.displayName).toBe('Child');
-      expect(Grandchild.displayName).toBe('Grandchild');
+    var Grandchild = Child.extend(function() {
+      this.prototype.init = function() {};
     });
 
     it('copies the static properties to the subclass', function() {
@@ -75,30 +68,6 @@ describe('Basis.Object', function() {
 
       new Grandchild({baz: 3});
       expect(Grandchild.prototype.init).toHaveBeenCalledWith({baz: 3});
-    });
-
-    describe('with no name argument', function() {
-      it('throws an exception', function() {
-        expect(function() {
-          BasisObject.extend();
-        }).toThrow(new Error('Basis.Object.extend: a name is required'));
-      });
-    });
-  });
-
-  describe('.resolve', function() {
-    it('returns the Basis.Object subclass of the given name', function() {
-      var A = BasisObject.extend('A'), B = A.extend('B'), C = B.extend('C')
-
-      expect(BasisObject.resolve('A')).toBe(A);
-      expect(BasisObject.resolve('B')).toBe(B);
-      expect(BasisObject.resolve('C')).toBe(C);
-    });
-
-    it('throws an error when a subclass with the given name is not known', function() {
-      expect(function() {
-        BasisObject.resolve('Abcdef');
-      }).toThrow(new Error('Basis.Object.resolve: could not resolve subclass: `Abcdef`'));
     });
   });
 
@@ -192,7 +161,7 @@ describe('Basis.Object', function() {
     });
 
     describe('with on option', function() {
-      var User = BasisObject.extend('User', function() {
+      var User = BasisObject.extend(function() {
         this.prop('first');
         this.prop('last');
         this.prop('full', {
@@ -258,7 +227,7 @@ describe('Basis.Object', function() {
 
       beforeEach(function() {
         spy = jasmine.createSpy().and.callFake(function() { return this.a * 2; });
-        Foo = BasisObject.extend('Foo', function() {
+        Foo = BasisObject.extend(function() {
           this.prop('a');
           this.prop('doubleA', {cache: true, readonly: true, on: ['a'], get: spy});
         });
@@ -304,7 +273,7 @@ describe('Basis.Object', function() {
   });
 
   describe('.props', function() {
-    var PropsTest = BasisObject.extend('PropsTest', function() {
+    var PropsTest = BasisObject.extend(function() {
       this.props({
         x: {},
         y: {
