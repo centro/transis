@@ -2,8 +2,6 @@ import pluralize from "pluralize";
 import IdMap from "./id_map";
 import BasisObject from "./object";
 import BasisArray from "./array";
-import QueryArray from "./query_array";
-//import HasManyArray from "./has_many_array";
 import Validations from "./validations";
 import * as attrs from "./attrs";
 import * as util from "./util";
@@ -411,11 +409,107 @@ var Model = BasisObject.extend(function() {
   // Returns an array of loaded model instances.
   this.loadAll = function(objects) { return objects.map((object) => this.load(object)); };
 
-  // Public: Creates a new `Basis.QueryArray` but does not invoke its `query` method. This is useful
-  // for cases where you want to initialize an empty query, but not yet run it.
+  // Public: Creates a new query array but does not invoke its `query` method. This is useful for
+  // cases where you want to initialize an empty query, but not yet run it.
   //
-  // Returns a new `Basis.QueryArray`.
-  this.buildQuery = function() { return new QueryArray(this); };
+  // The array returned by this method is decorated with the following additional properties:
+  //
+  //   modelClass - The `Basis.Model` subclass that `buildQuery` was invoked on.
+  //   isBusy     - Boolean property indicating whether a query is in progress.
+  //   error      - An error message set on the array when the mapper fails to fulfill its promise.
+  //   meta       - Metadata provided by the mapper. May be used for paging results.
+  //
+  // And with these additional methods:
+  //
+  //   query: Execute a query by invoking the `query` method on the modelClass's mapper. This will
+  //   put the array into a busy state (indicated by the `isBusy` property) until the mapper has
+  //   fulfilled its promise. When the promise is successfully resolved, the returned data is loaded
+  //   via `Basis.Model.loadAll` and the materialized models are replaced into the array. When the
+  //   promise is rejected, the error message returned by the mapper is made available on the `error`
+  //   property.
+  //   
+  //   If the this method is called while the array is currently busy, then the call to the mapper
+  //   is queued until the current query completes.
+  //   
+  //   opts - An object to pass along to the mapper (default: `{}`).
+  //   
+  //   Returns the receiver.
+  //   
+  //   then: Registers fulfillment and rejection handlers on the latest promise object returned by
+  //   the modelClass's mapper. If the `query` method has yet to be called, then the `onFulfilled`
+  //   handler is invoked immediately.
+  //   
+  //   When resolved, the `onFulfilled` handler is called with no arguments. When rejected, the
+  //   `onFulfilled` handler is called with the error message from the mapper.
+  //   
+  //   onFulfilled - A function to be invoked when the latest promise from the mapper is resolved.
+  //   onRejected  - A function to be invoked when the latest promise from the mapper is rejected.
+  //   
+  //   Returns a new `Promise` that will be resolved with the return value of `onFulfilled`.
+  //   
+  //   catch: Registers a rejection handler on the latest promise object returned by the
+  //   modelClass's mapper.
+  //   
+  //   onRejected - A function to be invoked when the latest promise from the mapper is rejected.
+  //   
+  //   Returns a new `Promise` that is resolved to the return value of the callback if it is called.
+  //
+  // Returns a new `Basis.Array` decorated with the properties and methods described above.
+  this.buildQuery = function() {
+    var modelClass = this, promise = Promise.resolve(), a = BasisArray.of(), queued;
+
+    a.props({
+      modelClass: {get: function() { return modelClass; }},
+      isBusy: {default: false},
+      error: {},
+      meta: {}
+    });
+
+    a.query = function(opts = {}) {
+      if (this.isBusy) {
+        if (!queued) {
+          promise = promise.then(() => {
+            this.query(queued);
+            queued = undefined;
+            return promise;
+          });
+        }
+
+        queued = opts;
+      }
+      else {
+        this.isBusy = true;
+        promise = modelClass._callMapper('query', [opts]).then(
+          (result) => {
+            try {
+              if (Array.isArray(result)) {
+                this.replace(modelClass.loadAll(result));
+              }
+              else if (result.results) {
+                this.replace(modelClass.loadAll(result.results));
+                this.meta = result.meta;
+              }
+            }
+            catch (e) { console.error(e); throw e; }
+            this.isBusy = false;
+            this.error = undefined;
+          },
+          (e) => {
+            this.isBusy = false;
+            this.error = e;
+            throw e;
+          }
+        );
+      }
+
+      return this;
+    };
+
+    a.then = function(f1, f2) { return promise.then(f1, f2); };
+    a.catch = function(f) { return promise.catch(f); };
+
+    return a;
+  };
 
   // Public: Creates a new `Basis.QueryArray` and invokes its `query` method with the given options.
   //
