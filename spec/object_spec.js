@@ -277,7 +277,6 @@ describe('Basis.Object', function() {
       this.props({
         x: {},
         y: {
-          readonly: true,
           get: function() {
             return this.x * 2;
           }
@@ -325,6 +324,54 @@ describe('Basis.Object', function() {
       expect(o1.objectId).not.toBe(o2.objectId);
       expect(o2.objectId).not.toBe(o3.objectId);
       expect(o1.objectId).not.toBe(o3.objectId);
+    });
+  });
+
+  describe('#prop', function() {
+    beforeEach(function() {
+      this.t = new Test;
+      this.t.prop('x');
+    });
+
+    it("generates an enumerable property with the given name on the receiver and not the receiver's prototype", function() {
+      expect('x' in this.t).toBe(true);
+      expect('x' in new Test).toBe(false);
+    });
+
+    it('notifies observers when changed', function() {
+      var spy = jasmine.createSpy();
+
+      this.t.on('x', spy);
+      this.t.x = 9;
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('x');
+    });
+
+    it('notifies `*` observers', function() {
+      var spy = jasmine.createSpy();
+
+      this.t.on('*', spy);
+      this.t.x = 9;
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('*');
+    });
+  });
+
+  describe('#props', function() {
+    beforeEach(function() {
+      this.t = new Test;
+      this.t.props({
+        x: {},
+        y: {get: function() { return 9; }}
+      });
+    });
+
+    it("defines a prop for each key in the given object directly on the receiver", function() {
+      expect('x' in this.t).toBe(true);
+      expect('y' in this.t).toBe(true);
+      expect('x' in new Test).toBe(false);
+      expect('y' in new Test).toBe(false);
+      expect(this.t.y).toBe(9);
     });
   });
 });
