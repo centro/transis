@@ -56,6 +56,41 @@ function isCached(name) { return this.__cache__ ? this.__cache__.hasOwnProperty(
 // Internal: Returns the cached value for the given name.
 function getCached(name) { return this.__cache__ ? this.__cache__[name] : undefined; }
 
+// Internal: Defines a property on the given object. See the docs for `Basis.prop`.
+//
+// Returns nothing.
+function defineProp(object, name, opts = {}) {
+  var descriptor = Object.assign({
+    name: name,
+    get: null,
+    set: null,
+    default: undefined,
+    on: [],
+    cache: false
+  }, opts, {readonly: opts.get && !opts.set});
+
+  if (!object.hasOwnProperty('__props__')) {
+    object.__props__ = Object.create(object.__props__ || null);
+  }
+
+  object.__props__[name] = descriptor;
+
+  if (!object.hasOwnProperty('__deps__')) {
+    object.__deps__ = Object.create(object.__deps__ || null);
+  }
+
+  descriptor.on.forEach(function(prop) {
+    (object.__deps__[prop] = object.__deps__[prop] || []).push(name);
+  });
+
+  Object.defineProperty(object, name, {
+    get: function() { return this._getProp(name); },
+    set: descriptor.readonly ? undefined : function(value) { this._setProp(name, value); },
+    configurable: false,
+    enumerable: true
+  });
+}
+
 // Public: Flush the pending change queue. This should only be used in specs.
 BasisObject.flush = function() {
   clearTimeout(flushTimer);
@@ -94,36 +129,7 @@ BasisObject.extend = function(f) {
 //
 // Returns the receiver.
 BasisObject.prop = function(name, opts = {}) {
-  var descriptor = Object.assign({
-    name: name,
-    get: null,
-    set: null,
-    default: undefined,
-    on: [],
-    cache: false
-  }, opts, {readonly: opts.get && !opts.set});
-
-  if (!this.prototype.hasOwnProperty('__props__')) {
-    this.prototype.__props__ = Object.create(this.prototype.__props__ || null);
-  }
-
-  this.prototype.__props__[name] = descriptor;
-
-  if (!this.prototype.hasOwnProperty('__deps__')) {
-    this.prototype.__deps__ = Object.create(this.prototype.__deps__ || null);
-  }
-
-  descriptor.on.forEach(function(prop) {
-    (this.prototype.__deps__[prop] = this.prototype.__deps__[prop] || []).push(name);
-  }, this);
-
-  Object.defineProperty(this.prototype, name, {
-    get: function() { return this._getProp(name); },
-    set: descriptor.readonly ? undefined : function(value) { this._setProp(name, value); },
-    configurable: false,
-    enumerable: true
-  });
-
+  defineProp(this.prototype, name, opts);
   return this;
 };
 
@@ -148,6 +154,16 @@ BasisObject.toString = function() { return this.displayName || this.name || '(Un
 // props - An object containing properties to set. Only properties defined via `Basis.Object.prop`
 //         are settable.
 BasisObject.prototype.init = function(props) { if (props) { this.set(props); } };
+
+// Public: Defines an observable property directly on the receiver. See the `Basis.Object.prop`
+// method for available options.
+BasisObject.prototype.prop = function(name, opts = {}) {
+  defineProp(this, name, opts);
+  return this;
+};
+
+// Public: Creates multiple props at once from the given object directly on the receiver.
+BasisObject.prototype.props = BasisObject.props;
 
 // Public: Set multiple props at once. This method take special care to only set props that are
 // defined with `Basis.Object.prop` and are not readonly.
