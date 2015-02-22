@@ -4,7 +4,7 @@ import Model from "../model";
 import IdMap from "../id_map";
 import BasisArray from "../array";
 
-var A = BasisArray.A;
+var A = BasisArray.of;
 
 describe('Model', function () {
   var TestMapper = {
@@ -1924,7 +1924,7 @@ describe('Model', function () {
     });
 
     it('keeps track of changes to owned hasMany associations when they are set', function() {
-      var li1 = new LineItem, li2 = new LineItem, old = this.invoice.lineItems.slice().native;
+      var li1 = new LineItem, li2 = new LineItem, old = this.invoice.lineItems.slice();
 
       expect(this.invoice.changes.lineItems).toBeUndefined();
       this.invoice.lineItems = [li1, li2];

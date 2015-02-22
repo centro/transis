@@ -40,8 +40,8 @@ function resolve(name, raise = true) {
 function checkAssociatedType(desc, o) {
   var klass = resolve(desc.klass);
 
-  if (!(o instanceof klass)) {
-    throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
+  if (o && !(o instanceof klass)) {
+    throw new Error(`${desc.debugName}: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
   }
 }
 
@@ -55,6 +55,75 @@ function checkOwnerOpts(desc) {
         (inv = klass.prototype.associations[desc.inverse]) && inv.owner) {
     throw new Error(`${this}.${desc.name}: both sides of the association are marked as owner`);
   }
+}
+
+// Internal: The overridden `_splice` method used on `hasMany` arrays. This method syncs changes to
+// the array to the inverse side of the association and maintains a list of changes made.
+function hasManySplice(i, n, added) {
+  var owner = this.__owner__, desc = this.__desc__, inverse = desc.inverse, name = desc.name,
+      removed, changes, i;
+
+  added.forEach((o) => checkAssociatedType(desc, o));
+
+  removed = BasisArray.prototype._splice.call(this, i, n, added);
+
+  if (inverse && !this.__handlingInverse__) {
+    removed.forEach(function(model) { model._inverseRemoved(inverse, owner); }, this);
+    added.forEach(function(model) { model._inverseAdded(inverse, owner); }, this);
+  }
+
+  if (desc.owner) {
+    changes = owner.changes[name] = owner.changes[name] || {added: [], removed: []};
+
+    added.forEach((m) => {
+      if ((i = changes.removed.indexOf(m)) !== -1) { changes.removed.splice(i, 1); }
+      else if (changes.added.indexOf(m) === -1) { changes.added.push(m); }
+    });
+
+    removed.forEach((m) => {
+      if ((i = changes.added.indexOf(m)) !== -1) { changes.added.splice(i, 1); }
+      else if (changes.removed.indexOf(m) === -1) { changes.removed.push(m); }
+    });
+
+    if (!changes.added.length && !changes.removed.length) { owner._clearChange(name); }
+    else { owner._setChange(name, changes); }
+  }
+
+  return removed;
+}
+
+// Internal: Called when a model is added to the inverse side of a `hasMany` association in order to
+// sync the change to the `hasMany` side.
+function hasManyInverseAdd(model) {
+  this.__handlingInverse__ = true;
+  this.push(model);
+  this.__handlingInverse__ = false;
+}
+
+// Internal: Called when a model is removed from the inverse side of a `hasMany` association in
+// order to sync the change to the `hasMany` side.
+function hasManyInverseRemove(model) {
+  var i = this.indexOf(model);
+
+  if (i >= 0) {
+    this.__handlingInverse__ = true;
+    this.splice(i, 1);
+    this.__handlingInverse__ = false;
+  }
+}
+
+// Internal: Builds an array that manages a `hasMany` association. A hasMany array is a
+// `Basis.Array` that overrides the `_splice` method in order to handle syncing the inverse side
+// of the association.
+function hasManyArray(owner, desc) {
+  var a = BasisArray.of();
+  a.proxy(owner, desc.name);
+  a.__owner__      = owner;
+  a.__desc__       = desc;
+  a._splice        = hasManySplice;
+  a._inverseAdd    = hasManyInverseAdd;
+  a._inverseRemove = hasManyInverseRemove;
+  return a;
 }
 
 // Internal: Sets the given object on a `hasOne` property.
@@ -72,9 +141,7 @@ function hasOneSet(desc, v, sync) {
       inv   = desc.inverse,
       klass = resolve(desc.klass);
 
-  if (v && !(v instanceof klass)) {
-    throw new Error(`${this.constructor}#${desc.name}: expected an object of type \`${klass}\` but received \`${v}\` instead`);
-  }
+  checkAssociatedType(desc, v);
 
   this[k] = v;
 
@@ -228,7 +295,7 @@ var Model = BasisObject.extend(function() {
     }
 
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
-      type: 'hasOne', name, klass
+      type: 'hasOne', name, klass, debugName: `${this}#${name}`
     });
 
     checkOwnerOpts.call(this, desc);
@@ -281,7 +348,7 @@ var Model = BasisObject.extend(function() {
     }
 
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
-      type: 'hasMany', name, klass, singular: pluralize(name, 1)
+      type: 'hasMany', name, klass, singular: pluralize(name, 1), debugName: `${this}#${name}`
     });
 
     checkOwnerOpts.call(this, desc);
@@ -301,7 +368,7 @@ var Model = BasisObject.extend(function() {
       get: function() {
         if (this[k]) { return this[k]; }
         desc.klass = resolve(desc.klass);
-        return this[k] = new HasManyArray(this, desc);
+        return this[k] = hasManyArray(this, desc);
       },
       set: function(a) { this[k].replace(a); }
     });
