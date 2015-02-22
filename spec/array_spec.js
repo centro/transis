@@ -62,6 +62,31 @@ describe('Array', function() {
     });
   });
 
+  describe('first prop', function() {
+    it('returns the first element of the array', function() {
+      expect(A('a', 'b', 'c').first).toBe('a');
+      expect(A().first).toBeUndefined();
+    });
+
+    it('notifies observers when a splice affects the first element', function() {
+      var a = A(1,2,3,4), spy = jasmine.createSpy();
+
+      a.on('first', spy);
+      a.unshift();
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('first');
+    });
+
+    it('does not notify observers when a splice does not affect the first element', function() {
+      var a = A(1,2,3,4), spy = jasmine.createSpy();
+
+      a.on('first', spy);
+      a.pop();
+      BasisObject.flush();
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('@ prop', function() {
     beforeEach(function() {
       this.a = A(1,2,3);

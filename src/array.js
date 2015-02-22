@@ -58,6 +58,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   this.displayName = 'Basis.Array';
 
   this.prop('size', {get: function() { return this.length; }});
+  this.prop('first', {get: function() { return this[0]; }});
   this.prop('@', {get: function() { return this; }});
 
   // Public: Element reference and assignment method. When given one argument, returns the item at
@@ -102,6 +103,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
     var removed = splice.apply(this, [i, n].concat(added));
 
     if (n !== added.length) { this.didChange('size'); }
+    if (i === 0) { this.didChange('first'); }
     this.didChange('@');
 
     if (this.__proxy__) {
