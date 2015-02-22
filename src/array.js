@@ -31,7 +31,7 @@ Object.assign(BasisArray.prototype, BasisObject.prototype);
   BasisArray.prototype[x] = Array.prototype[x];
 });
 
-var {concat, slice, splice} = BasisArray.prototype;
+var {concat, slice, splice, map, filter} = BasisArray.prototype;
 
 // Public: Returns a new `Basis.Array` containing the given arguments as contents. This is the main
 // `Basis.Array` constructor, never use the `Basis.Array` constructor function directly.
@@ -122,7 +122,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
       this.__proxy__.to.didChange(this.__proxy__.name);
     }
 
-    return removed;
+    return removed instanceof BasisArray ? removed : BasisArray.from(removed);
   };
   
   // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
@@ -194,6 +194,34 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   // Returns a new `Basis.Array`.
   this.prototype.slice = function() {
     var a = slice.apply(this, arguments);
+    return a instanceof BasisArray ? a : BasisArray.from(a);
+  };
+
+  // Public: Creates a new array with the results of calling the given function on every element in
+  // the array.
+  //
+  // callback - Function that produces a new element of the array. It takes three arguments:
+  //   current - The current element being processed.
+  //   index   - The index of the current element.
+  //   array   - The array map was called on.
+  // ctx      - Value to use as this when invoking callback.
+  //
+  // Returns a new `Basis.Array`.
+  this.prototype.map = function() {
+    var a = map.apply(this, arguments);
+    return a instanceof BasisArray ? a : BasisArray.from(a);
+  };
+
+  // Public: Creates a new array with all elements that pass the test implemented by the provided
+  // function.
+  //
+  // callback - Function to test each element of the array. Return true to keep the element and
+  //            false to discard.
+  // ctx      - Value to use as this when invoking callback.
+  //
+  // Returns a new `Basis.Array`.
+  this.prototype.filter = function() {
+    var a = filter.apply(this, arguments);
     return a instanceof BasisArray ? a : BasisArray.from(a);
   };
 
