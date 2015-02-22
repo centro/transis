@@ -295,7 +295,7 @@ var Model = BasisObject.extend(function() {
     }
 
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
-      type: 'hasOne', name, klass, debugName: `${this}#${name}`
+      type: 'hasOne', name, klass, debugName: `${this.toString()}#${name}`
     });
 
     checkOwnerOpts.call(this, desc);
@@ -348,7 +348,7 @@ var Model = BasisObject.extend(function() {
     }
 
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
-      type: 'hasMany', name, klass, singular: pluralize(name, 1), debugName: `${this}#${name}`
+      type: 'hasMany', name, klass, singular: pluralize(name, 1), debugName: `${this.toString()}#${name}`
     });
 
     checkOwnerOpts.call(this, desc);
