@@ -13,7 +13,7 @@
   "author": "Corey Burrows <corey.burrows@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "6to5": "2.13.5",
+    "babel": "4.4.5",
     "browserify": "7.0.2",
     "es5-shim": "^4.1.0",
     "es6-shim": "^0.22.2",

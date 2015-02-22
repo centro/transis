@@ -13,11 +13,11 @@ build/basis.js: $(ES5_SOURCES)
 
 build/%.js: src/%.js
 	@mkdir -p build
-	./node_modules/.bin/6to5 $< -o $@
+	./node_modules/.bin/babel $< -o $@
 
 build/spec/%.js: spec/%.js
 	@mkdir -p build/spec
-	./node_modules/.bin/6to5 $< -o $@
+	./node_modules/.bin/babel $< -o $@
 
 SPEC ?=
 spec_node: basis $(ES5_SPECS)
