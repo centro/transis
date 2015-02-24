@@ -1025,8 +1025,25 @@ var Model = BasisObject.extend(function() {
     return !this.hasErrors;
   };
 
+  // Public: Returns a string representation of the model.
   this.prototype.toString = function() {
-    return `#<${this.constructor} (${this.stateString()}):${this.id}>`;
+    var attrs = this.attrs();
+
+    for (let name in this.associations) {
+      if (this.associations[name].type === 'hasOne') {
+        if (this[name] && this[name].id) {
+          attrs[name] = this[name].id;
+        }
+      }
+      else if (this.associations[name].type === 'hasMany') {
+        let ids = this[name].map(function(x) { return x.id; }).compact();
+        if (ids.length) {
+          attrs[name] = ids;
+        }
+      }
+    }
+
+    return `#<${this.constructor} (${this.stateString()}):${this.objectId} ${JSON.stringify(attrs)}>`;
   };
 
   // Internal: Load error message(s) received from the mapper. When passed an object, the keys of

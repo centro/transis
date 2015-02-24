@@ -374,4 +374,14 @@ describe('Basis.Object', function() {
       expect(this.t.y).toBe(9);
     });
   });
+
+  describe('#toString', function() {
+    it('returns a string containing the constructor name and object id', function() {
+      var X = BasisObject.extend(), x = new X, o = new BasisObject;
+      X.displayName = 'X';
+
+      expect(o.toString()).toBe(`#<Basis.Object:${o.objectId}>`);
+      expect(x.toString()).toBe(`#<X:${x.objectId}>`);
+    });
+  });
 });

@@ -23,6 +23,8 @@ var BasisArray = (function() {
   }
 }());
 
+var {concat, slice, splice, map, filter} = BasisArray.prototype;
+
 Object.assign(BasisArray, BasisObject);
 Object.assign(BasisArray.prototype, BasisObject.prototype);
 
@@ -30,8 +32,6 @@ Object.assign(BasisArray.prototype, BasisObject.prototype);
 ['findIndex', 'find'].forEach(function(x) {
   BasisArray.prototype[x] = Array.prototype[x];
 });
-
-var {concat, slice, splice, map, filter} = BasisArray.prototype;
 
 // Public: Returns a new `Basis.Array` containing the given arguments as contents. This is the main
 // `Basis.Array` constructor, never use the `Basis.Array` constructor function directly.
@@ -329,6 +329,11 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
     }
 
     return this;
+  };
+
+  // Public: Returns a string representation of the array.
+  this.prototype.toString = function() {
+    return `[${this.map(function(x) { return String(x); }).join(', ')}]`;
   };
 }).call(BasisArray);
 

@@ -227,6 +227,11 @@ BasisObject.prototype.didChange = function(name) {
   return this;
 };
 
+// Public: Returns a string representation of the object.
+BasisObject.prototype.toString = function() {
+  return `#<${this.constructor}:${this.objectId}>`;
+};
+
 // Public: Indicates whether the receiver is equal to the given object. The default implementation
 // simply does an identity comparison using the `===` operator. You'll likely want to override
 // this method in your sub-types in order to perform a more meaningful comparison.
