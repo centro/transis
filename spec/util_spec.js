@@ -356,3 +356,33 @@ describe('eq', function() {
     });
   });
 });
+
+describe('camelize', function() {
+  it('camelizes the given string', function() {
+    expect(util.camelize('foo_bar')).toBe('fooBar');
+    expect(util.camelize('foo_bar_baz')).toBe('fooBarBaz');
+    expect(util.camelize('foo_Bar_Baz')).toBe('fooBarBaz');
+    expect(util.camelize('foobar')).toBe('foobar');
+    expect(util.camelize('Foobar')).toBe('Foobar');
+    expect(util.camelize('Foo_bar')).toBe('FooBar');
+  });
+});
+
+describe('underscore', function() {
+  it('underscores the given string', function() {
+    expect(util.underscore('FooBar')).toBe('foo_bar');
+    expect(util.underscore('fooBar')).toBe('foo_bar');
+    expect(util.underscore('fooBarBaz')).toBe('foo_bar_baz');
+    expect(util.underscore('fooBar_Baz')).toBe('foo_bar_baz');
+    expect(util.underscore('Foo')).toBe('foo');
+  });
+});
+
+describe('capitalize', function() {
+  it('capitalizes the given string', function() {
+    expect(util.capitalize('foo')).toBe('Foo');
+    expect(util.capitalize('fooBar')).toBe('FooBar');
+    expect(util.capitalize('FOO')).toBe('FOO');
+    expect(util.capitalize('Foo')).toBe('Foo');
+  });
+});
