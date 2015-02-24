@@ -10,4 +10,5 @@ export default Object.assign({
   Array: BasisArray,
   A: BasisArray.of,
   Model,
-}, util, parsers, pluralize);
+  pluralize
+}, util, parsers);
