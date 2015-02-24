@@ -564,7 +564,7 @@ var Model = BasisObject.extend(function() {
           (e) => {
             this.isBusy = false;
             this.error = e;
-            throw e;
+            return Promise.reject(e);
           }
         );
       }
@@ -614,10 +614,10 @@ var Model = BasisObject.extend(function() {
           model.isBusy = false;
           try { this.load(result); }
           catch (e) { console.error(e); throw e; }
-        }, (error) => {
+        }, (errors) => {
           model.isBusy = false;
-          model._loadErrors(error);
-          throw error;
+          model._loadErrors(errors);
+          return Promise.reject(errors);
         });
     }
 
@@ -831,9 +831,10 @@ var Model = BasisObject.extend(function() {
         this.isBusy = false;
         try { this.load(attrs); }
         catch (e) { console.error(e); throw e; }
-      }, (error) => {
+      }, (errors) => {
         this.isBusy = false;
-        this._loadErrors(error);
+        this._loadErrors(errors);
+        return Promise.reject(errors);
       });
 
     return this;
@@ -861,9 +862,10 @@ var Model = BasisObject.extend(function() {
       this.__promise__ = this.constructor._callMapper('delete', [this, opts])
         .then(() => {
           mapperDeleteSuccess.call(this);
-        }, (error) => {
+        }, (errors) => {
           this.isBusy = false;
-          this._loadErrors(error);
+          this._loadErrors(errors);
+          return Promise.reject(errors);
         });
     }
 
