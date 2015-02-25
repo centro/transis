@@ -18,6 +18,7 @@ function flush() {
       let deps      = object.__deps__;
       let changes   = Object.keys(object.__changedProps__);
       let processed = {};
+      let star      = false;
 
       delete changedObjects[id];
       delete object.__changedProps__;
@@ -35,9 +36,11 @@ function flush() {
         }
 
         object._notify(prop);
+
+        if (prop.indexOf('.') === -1) { star = true; }
       }
 
-      object._notify('*');
+      if (star) { object._notify('*'); }
     }
   }
 
@@ -287,7 +290,7 @@ BasisObject.prototype._setProp = function(name, value) {
   if (descriptor.set) { descriptor.set.call(this, value); }
   else { this[key] = value; }
 
-  this.didChange(name, {old});
+  this.didChange(name);
 
   return old;
 };

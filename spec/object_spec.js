@@ -210,7 +210,7 @@ describe('Basis.Object', function() {
         expect(spy.calls.count()).toBe(1);
       });
 
-      it('notifies `*` observers once be flush cycle', function() {
+      it('notifies `*` observers once per flush cycle', function() {
         var u = new User({first: 'Joe', last: 'Blow'}), spy = jasmine.createSpy();
 
         u.on('*', spy);
@@ -372,6 +372,24 @@ describe('Basis.Object', function() {
       expect('x' in new Test).toBe(false);
       expect('y' in new Test).toBe(false);
       expect(this.t.y).toBe(9);
+    });
+  });
+
+  describe("'*' observers", function() {
+    it('gets fired when a local property changes', function() {
+      var o = new BasisObject, spy = jasmine.createSpy();
+      o.on('*', spy);
+      o.didChange('foo');
+      BasisObject.flush();
+      expect(spy).toHaveBeenCalledWith('*');
+    });
+
+    it('does not get fired when only a remote property changes', function() {
+      var o = new BasisObject, spy = jasmine.createSpy();
+      o.on('*', spy);
+      o.didChange('foo.bar');
+      BasisObject.flush();
+      expect(spy).not.toHaveBeenCalled();
     });
   });
 
