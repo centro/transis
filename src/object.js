@@ -7,42 +7,62 @@ function BasisObject() {
 
 BasisObject.displayName = 'Basis.Object';
 
+// Internal: Processes a property change by traversing the property dependency graph and forwarding
+// changes to proxy objects.
+function didChange(object, name) {
+  (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
+  changedObjects[object.objectId] = object;
+  uncache.call(object, name);
+
+  if (object.__deps__) {
+    let deps = object.__deps__[name];
+
+    if (deps) {
+      for (let i = 0, n = deps.length; i < n; i++) {
+        didChange(object, deps[i]);
+      }
+    }
+  }
+
+  if (object.__proxies__ && name.indexOf('.') === -1) {
+    for (let k in object.__proxies__) {
+      didChange(object.__proxies__[k].object, `${object.__proxies__[k].name}.${name}`);
+    }
+  }
+}
+
 // Internal: Flushes the current change queue. This notifies observers of the changed props as well
 // as observers of any props that depend on the changed props. Observers are only invoked once per
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  while (Object.keys(changedObjects).length) {
-    for (let id in changedObjects) {
-      let object    = changedObjects[id];
-      let deps      = object.__deps__;
-      let changes   = Object.keys(object.__changedProps__);
-      let processed = {};
-      let star      = false;
+  var ids = Object.keys(changedObjects);
 
-      delete changedObjects[id];
-      delete object.__changedProps__;
+  for (let j = 0, m = ids.length; j < m; j++) {
+    let object  = changedObjects[ids[j]];
+    let changes = Object.keys(object.__changedProps__);
 
-      while (changes.length) {
-        let prop = changes.shift();
-
-        if (processed[prop]) { continue; }
-        processed[prop] = true;
-
-        if (deps && deps[prop]) {
-          for (let i = 0, n = deps[prop].length; i < n; i++) {
-            changes.push(deps[prop][i]);
-          }
-        }
-
-        object._notify(prop);
-
-        if (prop.indexOf('.') === -1) { star = true; }
-      }
-
-      if (star) { object._notify('*'); }
+    for (let i = 0, n = changes.length; i < n; i++) {
+      didChange(object, changes[i]);
     }
   }
+
+  for (let id in changedObjects) {
+    let object  = changedObjects[id];
+    let changes = Object.keys(object.__changedProps__);
+    let star    = false;
+
+    object.__changedProps__ = {};
+
+    for (let i = 0, n = changes.length; i < n; i++) {
+      if (changes[i].indexOf('.') === -1) { star = true; }
+      object._notify(changes[i]);
+    }
+
+    if (star) { object._notify('*'); }
+  }
+
+  changedObjects = {};
 
   flushTimer = null;
 }
@@ -298,17 +318,9 @@ BasisObject.prototype._setProp = function(name, value) {
 // Internal: Notifies observers of a prop change and proxies the prop change to registered proxy
 // objects.
 BasisObject.prototype._notify = function(prop) {
-  uncache.call(this, prop);
-
   if (this.__observers__ && this.__observers__[prop]) {
     for (let i = 0, n = this.__observers__[prop].length; i < n; i++) {
       this.__observers__[prop][i](prop);
-    }
-  }
-
-  if (this.__proxies__ && prop !== '*' && prop.indexOf('.') === -1) {
-    for (let k in this.__proxies__) {
-      this.__proxies__[k].object.didChange(`${this.__proxies__[k].name}.${prop}`);
     }
   }
 
