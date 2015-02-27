@@ -2169,6 +2169,7 @@ describe('Model', function () {
     var ValidatedFoo = Model.extend('ValidatedFoo', function() {
       this.attr('name', 'string');
       this.attr('num', 'number');
+      this.attr('notValidated', 'number');
 
       this.validate('name', 'nameIsLowerCase');
       this.validate('name', function() {
@@ -2368,6 +2369,14 @@ describe('Model', function () {
         expect(m.errors.name).toEqual(['must be lower case']);
       });
 
+      it('clears existing validation errors for the given property name even when there are no registered validators', function() {
+        var m = new ValidatedFoo;
+
+        m.addError('notValidated', 'foobar');
+        m.validateAttr('notValidated');
+        expect(m.errors.notValidated).toBeUndefined();
+      });
+
       it('does not clear existing validation errors on other properties', function() {
         var m = new ValidatedFoo({name: 'Foo'});
         m.addError('num', 'xyz');
@@ -2417,6 +2426,14 @@ describe('Model', function () {
       it('returns false when a validation error is found on an owned associated model', function() {
         var m = new ValidatedFoo({name: 'foo', num: 10, bars: [new ValidatedBar({x: 2}), new ValidatedBar({x: 3})]});
         expect(m.validate()).toBe(false);
+      });
+
+      it('clears errors for non-validated properties', function() {
+        var m = new ValidatedFoo;
+
+        m.addError('notValidated', 'foobar');
+        m.validate();
+        expect(m.errors.notValidated).toBeUndefined();
       });
     });
   });

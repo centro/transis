@@ -984,9 +984,9 @@ var Model = BasisObject.extend(function() {
   //
   // Returns `true` if no validation errors are found on the given attribute and `false` otherwise.
   this.prototype.validateAttr = function(name) {
-    if (!this.validators[name]) { return true; }
-
     this._clearErrors(name);
+
+    if (!this.validators[name]) { return true; }
 
     for (let i = 0, n = this.validators[name].length; i < n; i++) {
       let validator = this.validators[name][i];
@@ -1004,6 +1004,8 @@ var Model = BasisObject.extend(function() {
   // Returns `true` if no validation errors are found and `false` otherwise.
   this.prototype.validate = function() {
     var associations = this.associations;
+
+    this._clearErrors();
 
     for (let name in this.validators) { this.validateAttr(name); }
 
