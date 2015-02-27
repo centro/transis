@@ -934,13 +934,11 @@ var Model = BasisObject.extend(function() {
 
     for (let prop in this.changes) {
       if (associations[prop] && associations[prop].type === 'hasMany') {
-        this.changes[prop].removed.forEach((m) => {
-          this[prop].push(m);
-        });
+        let removed = this.changes[prop].removed.slice();
+        let added   = this.changes[prop].added.slice();
 
-        this.changes[prop].added.forEach((m) => {
-          this[prop].splice(this[prop].indexOf(m), 1);
-        });
+        removed.reverse().forEach((m) => { this[prop].push(m); });
+        added.forEach((m) => { this[prop].splice(this[prop].indexOf(m), 1); });
       }
       else {
         this[prop] = this.changes[prop];

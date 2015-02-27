@@ -1981,10 +1981,17 @@ describe('Model', function () {
       });
 
       it('restores owned hasMany associations to their original value', function() {
-        var orig = this.invoice.lineItems.slice(), added = new LineItem, removed;
+        var orig   = this.invoice.lineItems.slice(),
+            added1 = new LineItem,
+            added2 = new LineItem,
+            removed;
 
         removed = this.invoice.lineItems.pop();
-        this.invoice.lineItems.push(added);
+        this.invoice.lineItems.push(added1, added2);
+        this.invoice.undoChanges();
+        expect(this.invoice.lineItems).toEqual(orig);
+        this.invoice.lineItems.pop();
+        this.invoice.lineItems.pop();
         this.invoice.undoChanges();
         expect(this.invoice.lineItems).toEqual(orig);
       });
