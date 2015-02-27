@@ -739,7 +739,7 @@ var Model = BasisObject.extend(function() {
           if (this[name] && this[name].hasChanges) { return true; }
         }
         else if (this.associations[name].type === 'hasMany') {
-          return this[name].some((m) => m.hasChanges);
+          if (this[name].some((m) => m.hasChanges)) { return true; }
         }
       }
 
@@ -774,7 +774,7 @@ var Model = BasisObject.extend(function() {
           if (this[name] && this[name].hasErrors) { return true; }
         }
         else if (this.associations[name].type === 'hasMany') {
-          return this[name].some((m) => m.hasErrors);
+          if (this[name].some((m) => m.hasErrors)) { return true; }
         }
       }
 
