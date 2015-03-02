@@ -70,7 +70,7 @@ var LineItemView = React.createClass({
     return (
       <tr className="form-inline">
         <td style={{textAlign: 'center'}}>
-          <button className="btn btn-danger">
+          <button className="btn btn-danger btn-sm">
             <span className="glyphicon glyphicon-remove" aria-hidden="true" onClick={this.onDelete}>
             </span>
           </button>
@@ -147,12 +147,8 @@ var InvoiceTotalsView = React.createClass({
   render: function() {
     return (
       <tr style={{fontWeight: 600}}>
-        <td style={{textAlign: 'center'}}>
-          <button className="btn btn-primary" onClick={this.props.onAddLineItem}>
-            <span className="glyphicon glyphicon-plus" aria-hidden="true"></span>
-          </button>
-        </td>
         <td></td>
+        <td>Totals:</td>
         <td style={{textAlign: 'right'}}>{this.props.invoice.quantity}</td>
         <td style={{textAlign: 'right'}}>{formatCost(this.props.invoice.avgRate)}</td>
         <td style={{textAlign: 'right'}}>{formatCost(this.props.invoice.cost)}</td>
@@ -165,7 +161,7 @@ var InvoiceView = React.createClass({
   mixins: [Basis.ReactMixin],
 
   displayProps: {
-    invoice: ['name', 'lineItems']
+    invoice: ['name', 'lineItems', 'hasChanges']
   },
 
   propTypes: {
@@ -178,13 +174,31 @@ var InvoiceView = React.createClass({
     }, this);
   },
 
+  renderUndoButton: function() {
+    return (
+      <button
+        className="btn btn-primary btn-sm pull-right"
+        disabled={!this.props.invoice.hasChanges}
+        onClick={this.undoChanges}>
+        <span className="glyphicon glyphicon-repeat" aria-hidden="true"></span> Undo
+      </button>
+    );
+  },
+
   render: function() {
     return (
       <table className="table table-bordered table-striped">
-        <caption>{this.props.invoice.name}</caption>
+        <caption>
+          {this.props.invoice.name}
+          {this.renderUndoButton()}
+        </caption>
         <thead>
           <tr>
-            <td></td>
+            <td style={{textAlign: 'center'}}>
+              <button className="btn btn-primary btn-sm" onClick={this.addLineItem}>
+                <span className="glyphicon glyphicon-plus" aria-hidden="true"></span>
+              </button>
+            </td>
             <td>Name</td>
             <td style={{textAlign: 'right'}}>Quantity</td>
             <td style={{textAlign: 'right'}}>Rate</td>
@@ -208,6 +222,10 @@ var InvoiceView = React.createClass({
   deleteLineItem: function(lineItem) {
     var i = this.props.invoice.lineItems.indexOf(lineItem);
     this.props.invoice.lineItems.splice(i, 1);
+  },
+
+  undoChanges: function() {
+    this.props.invoice.undoChanges();
   }
 });
 
