@@ -1,14 +1,3 @@
-var PersonMapper = {
-  get: function(id) {
-  },
-
-  create: function(person) {
-  },
-
-  update: function(person) {
-  }
-};
-
 var Person = Basis.Model.extend('Person', function() {
   this.attr('firstName', 'string');
   this.attr('lastName', 'string');
@@ -104,4 +93,3 @@ var App = React.createClass({
 
 var person = new Person();
 React.render(<App person={person} />, document.querySelector('#app'));
-
