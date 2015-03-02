@@ -70,8 +70,8 @@ var LineItemView = React.createClass({
     return (
       <tr className="form-inline">
         <td style={{textAlign: 'center'}}>
-          <button className="btn btn-danger btn-sm">
-            <span className="glyphicon glyphicon-remove" aria-hidden="true" onClick={this.onDelete}>
+          <button className="btn btn-danger btn-sm" onClick={this.onDelete}>
+            <span className="glyphicon glyphicon-remove" aria-hidden="true">
             </span>
           </button>
         </td>
