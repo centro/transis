@@ -1,1 +1,1 @@
-../build/basis.js
+../dist/basis.js

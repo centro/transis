@@ -2,7 +2,7 @@ module.exports = function(config) {
   config.set({
 
     // base path that will be used to resolve all patterns (eg. files, exclude)
-    basePath: '..',
+    basePath: '.',
 
 
     // frameworks to use
@@ -14,9 +14,9 @@ module.exports = function(config) {
     files: [
       'node_modules/es5-shim/es5-shim.js',
       'node_modules/es6-shim/es6-shim.js',
-      'build/basis.js',
-      'build/spec/helpers.js',
-      'build/spec/*_spec.js'
+      'dist/basis.js',
+      'dist/spec/helpers.js',
+      'dist/spec/*_spec.js'
     ],
 
 
@@ -28,7 +28,7 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'build/spec/*.js': [ 'browserify' ]
+      'dist/spec/*.js': [ 'browserify' ]
     },
 
 
