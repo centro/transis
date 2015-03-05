@@ -1121,7 +1121,8 @@ var Model = BasisObject.extend(function() {
   this.prototype._setProp = function(name, value) {
     var oldValue = Model.__super__._setProp.call(this, name, value);
 
-    if (this.associations && this.associations[name] && !this.associations[name].owner) { return; }
+    if (!this.__props__[name].attr && !this.associations[name]) { return; }
+    if (this.associations[name] && !this.associations[name].owner) { return; }
 
     if (!(name in this.changes)) {
       if (!util.eq(this[name], oldValue)) {

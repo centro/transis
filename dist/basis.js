@@ -2172,7 +2172,10 @@ this["Basis"] =
 	  this.prototype._setProp = function (name, value) {
 	    var oldValue = Model.__super__._setProp.call(this, name, value);
 
-	    if (this.associations && this.associations[name] && !this.associations[name].owner) {
+	    if (!this.__props__[name].attr && !this.associations[name]) {
+	      return;
+	    }
+	    if (this.associations[name] && !this.associations[name].owner) {
 	      return;
 	    }
 

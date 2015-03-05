@@ -1836,6 +1836,18 @@ describe('Model', function () {
       expect(this.invoice.changes).toEqual({name: 'A'});
     });
 
+    it('does not keep track of regular prop changes', function() {
+      var X = Model.extend('X', function() {
+        this.prop('foo');
+      });
+
+      var x = new X;
+
+      expect(x.changes).toEqual({});
+      x.foo = 9;
+      expect(x.changes).toEqual({});
+    });
+
     it('notifies `changes` observers when an attribute changes', function() {
       var spy = jasmine.createSpy();
 
