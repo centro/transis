@@ -82,6 +82,7 @@ this["Basis"] =
 
 	var objectId = 0,
 	    changedObjects = {},
+	    delayCallbacks = [],
 	    flushTimer;
 
 	function BasisObject() {
@@ -120,7 +121,8 @@ this["Basis"] =
 	// flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 	// are cleared where appropriate.
 	function flush() {
-	  var ids = Object.keys(changedObjects);
+	  var ids = Object.keys(changedObjects),
+	      f;
 
 	  for (var j = 0, m = ids.length; j < m; j++) {
 	    var object = changedObjects[ids[j]];
@@ -153,6 +155,10 @@ this["Basis"] =
 	  changedObjects = {};
 
 	  flushTimer = null;
+
+	  while (f = delayCallbacks.shift()) {
+	    f();
+	  }
 	}
 
 	// Internal: Caches the given name/value pair on the receiver.
@@ -231,6 +237,16 @@ this["Basis"] =
 	BasisObject.flush = function () {
 	  clearTimeout(flushTimer);
 	  flush();
+	  return this;
+	};
+
+	// Public: Register a callback to be invoked immediately after the next flush cycle completes.
+	//
+	// f - A function.
+	//
+	// Returns the receiver;
+	BasisObject.delay = function (f) {
+	  delayCallbacks.push(f);
 	  return this;
 	};
 

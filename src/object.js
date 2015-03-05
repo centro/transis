@@ -1,4 +1,4 @@
-var objectId = 0, changedObjects = {}, flushTimer;
+var objectId = 0, changedObjects = {}, delayCallbacks = [], flushTimer;
 
 function BasisObject() {
   Object.defineProperty(this, 'objectId', {value: ++objectId});
@@ -36,7 +36,7 @@ function didChange(object, name) {
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  var ids = Object.keys(changedObjects);
+  var ids = Object.keys(changedObjects), f;
 
   for (let j = 0, m = ids.length; j < m; j++) {
     let object  = changedObjects[ids[j]];
@@ -65,6 +65,8 @@ function flush() {
   changedObjects = {};
 
   flushTimer = null;
+
+  while (f = delayCallbacks.shift()) { f(); }
 }
 
 // Internal: Caches the given name/value pair on the receiver.
@@ -126,6 +128,16 @@ function defineProp(object, name, opts = {}) {
 BasisObject.flush = function() {
   clearTimeout(flushTimer);
   flush();
+  return this;
+};
+
+// Public: Register a callback to be invoked immediately after the next flush cycle completes.
+//
+// f - A function.
+//
+// Returns the receiver;
+BasisObject.delay = function(f) {
+  delayCallbacks.push(f);
   return this;
 };
 

@@ -351,6 +351,27 @@ describe("Basis.Object", function () {
     });
   });
 
+  describe(".delay", function () {
+    beforeEach(function () {
+      this.spy = jasmine.createSpy();
+      BasisObject.delay(this.spy);
+    });
+
+    it("invokes the given function after the next flush", function () {
+      expect(this.spy).not.toHaveBeenCalled();
+      BasisObject.flush();
+      expect(this.spy).toHaveBeenCalled();
+    });
+
+    it("does not invoke the given function on subsequent flushes", function () {
+      expect(this.spy.calls.count()).toBe(0);
+      BasisObject.flush();
+      expect(this.spy.calls.count()).toBe(1);
+      BasisObject.flush();
+      expect(this.spy.calls.count()).toBe(1);
+    });
+  });
+
   describe("constructor", function () {
     it("sets the given props on the new instance", function () {
       var t = new Test({ str: "abc", num: 9 });
