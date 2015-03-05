@@ -220,6 +220,34 @@ describe('Basis.Object', function() {
         expect(spy).toHaveBeenCalledWith('*');
         expect(spy.calls.count()).toBe(1);
       });
+
+      describe('with a prop name that contains a period', function() {
+        var Foo = BasisObject.extend(function() {
+          this.prop('x', {on: ['foo.bar'], get: function() { return 9; }});
+        });
+
+        it('notifies observers when either the full prop name changes or the first segment changes', function() {
+          var f = new Foo, spy = jasmine.createSpy();
+
+          f.on('x', spy);
+
+          f.didChange('foo.bar');
+          BasisObject.flush();
+          expect(spy.calls.count()).toBe(1);
+
+          f.didChange('foo');
+          BasisObject.flush();
+          expect(spy.calls.count()).toBe(2);
+        });
+
+        it('throws an exception when the prop name has more than one period', function() {
+          expect(function() {
+            BasisObject.extend(function() {
+              this.prop('x', {on: ['foo.bar.baz'], get: function() {}});
+            });
+          }).toThrow(new Error('Basis.Object.defineProp: dependent property paths of more than two segments are not allowed: `foo.bar.baz`'));
+        });
+      });
     });
 
     describe('with cache option', function() {

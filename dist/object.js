@@ -124,6 +124,15 @@ function defineProp(object, name) {
 
   descriptor.on.forEach(function (prop) {
     (object.__deps__[prop] = object.__deps__[prop] || []).push(name);
+
+    if (prop.indexOf(".") !== -1) {
+      var segments = prop.split("."),
+          first = segments[0];
+      if (segments.length > 2) {
+        throw new Error("Basis.Object.defineProp: dependent property paths of more than two segments are not allowed: `" + prop + "`");
+      }
+      (object.__deps__[first] = object.__deps__[first] || []).push(name);
+    }
   });
 
   Object.defineProperty(object, name, {
