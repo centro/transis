@@ -1,3 +1,5 @@
+var webpackConfig = require('./webpack.config');
+
 module.exports = function(config) {
   config.set({
 
@@ -7,14 +9,13 @@ module.exports = function(config) {
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['browserify', 'jasmine'],
+    frameworks: ['jasmine'],
 
 
     // list of files / patterns to load in the browser
     files: [
       'node_modules/es5-shim/es5-shim.js',
       'node_modules/es6-shim/es6-shim.js',
-      'dist/basis.js',
       'dist/spec/helpers.js',
       'dist/spec/*_spec.js'
     ],
@@ -28,7 +29,7 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'dist/spec/*.js': [ 'browserify' ]
+      'dist/spec/*.js': [ 'webpack' ]
     },
 
 
@@ -62,6 +63,18 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: true
+    singleRun: true,
+
+    webpack: {
+      // webpack configuration
+      module: {
+        loaders: webpackConfig.module.loaders
+      }
+    },
+
+    webpackMiddleware: {
+      // webpack-dev-middleware configuration
+      noInfo: true
+    }
   });
 };
