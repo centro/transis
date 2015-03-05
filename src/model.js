@@ -135,11 +135,7 @@ function hasManyArray(owner, desc) {
 // Returns nothing.
 // Throws `Error` if the given object isn't of the type specified in the association descriptor.
 function hasOneSet(desc, v, sync) {
-  var name  = desc.name,
-      k     = `__${name}`,
-      prev  = this[k],
-      inv   = desc.inverse,
-      klass = resolve(desc.klass);
+  var name  = desc.name, k = `__${name}`, prev = this[k], inv = desc.inverse;
 
   checkAssociatedType(desc, v);
 
@@ -176,10 +172,6 @@ function mapperDeleteSuccess() {
     }
   }
 }
-
-// Internal: Capitalizes the given word.
-function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
 
 var Model = BasisObject.extend(function() {
   this.displayName = 'Basis.Model';
@@ -341,7 +333,7 @@ var Model = BasisObject.extend(function() {
   //
   // Returns the receiver.
   this.hasMany = function(name, klass, opts = {}) {
-    var cap = capitalize(name), k = `__${name}`, desc;
+    var k = `__${name}`, desc;
 
     if (!this.prototype.hasOwnProperty('associations')) {
       this.prototype.associations = Object.create(this.prototype.associations);

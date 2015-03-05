@@ -54,8 +54,7 @@ exports.capitalize = capitalize;
 
 var BasisObject = _interopRequire(require("./object"));
 
-var toString = Object.prototype.toString,
-    slice = Array.prototype.slice;
+var toString = Object.prototype.toString;
 
 var seenObjects = [];
 

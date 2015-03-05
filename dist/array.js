@@ -8,26 +8,7 @@ var BasisObject = _interopRequire(require("./object"));
 
 var util = _interopRequireWildcard(require("./util"));
 
-var iframe;
-
-var BasisArray = (function () {
-  // http://danielmendel.github.io/blog/2013/02/20/subclassing-javascript-arrays/
-
-  if (typeof exports !== "undefined") {
-    // node.js
-    return require("vm").runInNewContext("Array");
-  } else {
-    // browser
-    iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    document.body.appendChild(iframe);
-    frames[frames.length - 1].document.write("<script>parent._Array = Array;</script>");
-    var _Array = window._Array;
-    delete window._Array;
-    document.body.removeChild(iframe);
-    return _Array;
-  }
-})();
+var BasisArray = require("vm").runInNewContext("Array");
 
 var _BasisArray$prototype = BasisArray.prototype;
 var concat = _BasisArray$prototype.concat;
@@ -167,10 +148,7 @@ BasisArray.from = function (a) {
   // Throws `Error` when given an index that is out of range.
   this.prototype.splice = function (i, n) {
     var added = slice.call(arguments, 2),
-        index = i < 0 ? this.length + i : i,
-        removed,
-        j,
-        m;
+        index = i < 0 ? this.length + i : i;
 
     if (index < 0) {
       throw new Error("Basis.Array#splice: index " + i + " is too small for " + this);

@@ -1,3 +1,4 @@
+this["Basis"] =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -497,26 +498,7 @@
 
 	var util = _interopRequireWildcard(__webpack_require__(5));
 
-	var iframe;
-
-	var BasisArray = (function () {
-	  // http://danielmendel.github.io/blog/2013/02/20/subclassing-javascript-arrays/
-
-	  if (true) {
-	    // node.js
-	    return __webpack_require__(11).runInNewContext("Array");
-	  } else {
-	    // browser
-	    iframe = document.createElement("iframe");
-	    iframe.style.display = "none";
-	    document.body.appendChild(iframe);
-	    frames[frames.length - 1].document.write("<script>parent._Array = Array;</script>");
-	    var _Array = window._Array;
-	    delete window._Array;
-	    document.body.removeChild(iframe);
-	    return _Array;
-	  }
-	})();
+	var BasisArray = __webpack_require__(11).runInNewContext("Array");
 
 	var _BasisArray$prototype = BasisArray.prototype;
 	var concat = _BasisArray$prototype.concat;
@@ -656,10 +638,7 @@
 	  // Throws `Error` when given an index that is out of range.
 	  this.prototype.splice = function (i, n) {
 	    var added = slice.call(arguments, 2),
-	        index = i < 0 ? this.length + i : i,
-	        removed,
-	        j,
-	        m;
+	        index = i < 0 ? this.length + i : i;
 
 	    if (index < 0) {
 	      throw new Error("Basis.Array#splice: index " + i + " is too small for " + this);
@@ -1047,8 +1026,7 @@
 	  var name = desc.name,
 	      k = "__" + name,
 	      prev = this[k],
-	      inv = desc.inverse,
-	      klass = resolve(desc.klass);
+	      inv = desc.inverse;
 
 	  checkAssociatedType(desc, v);
 
@@ -1099,11 +1077,6 @@
 
 	    if (_ret === "continue") continue;
 	  }
-	}
-
-	// Internal: Capitalizes the given word.
-	function capitalize(s) {
-	  return s.charAt(0).toUpperCase() + s.slice(1);
 	}
 
 	var Model = BasisObject.extend(function () {
@@ -1282,8 +1255,7 @@
 	  this.hasMany = function (name, klass) {
 	    var opts = arguments[2] === undefined ? {} : arguments[2];
 
-	    var cap = capitalize(name),
-	        k = "__" + name,
+	    var k = "__" + name,
 	        desc;
 
 	    if (!this.prototype.hasOwnProperty("associations")) {
@@ -2373,8 +2345,7 @@
 
 	var BasisObject = _interopRequire(__webpack_require__(1));
 
-	var toString = Object.prototype.toString,
-	    slice = Array.prototype.slice;
+	var toString = Object.prototype.toString;
 
 	var seenObjects = [];
 

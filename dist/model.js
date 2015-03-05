@@ -171,8 +171,7 @@ function hasOneSet(desc, v, sync) {
   var name = desc.name,
       k = "__" + name,
       prev = this[k],
-      inv = desc.inverse,
-      klass = resolve(desc.klass);
+      inv = desc.inverse;
 
   checkAssociatedType(desc, v);
 
@@ -223,11 +222,6 @@ function mapperDeleteSuccess() {
 
     if (_ret === "continue") continue;
   }
-}
-
-// Internal: Capitalizes the given word.
-function capitalize(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 var Model = BasisObject.extend(function () {
@@ -406,8 +400,7 @@ var Model = BasisObject.extend(function () {
   this.hasMany = function (name, klass) {
     var opts = arguments[2] === undefined ? {} : arguments[2];
 
-    var cap = capitalize(name),
-        k = "__" + name,
+    var k = "__" + name,
         desc;
 
     if (!this.prototype.hasOwnProperty("associations")) {
