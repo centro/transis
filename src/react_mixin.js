@@ -2,7 +2,11 @@ export default {
   componentWillMount: function() {
     if (!this.displayProps) { return; }
 
-    this._forceUpdate = function() { this.forceUpdate(); }.bind(this);
+    this._forceUpdate = function() {
+      if (this.isMounted()) {
+        this.forceUpdate();
+      }
+    }.bind(this);
 
     for (let k in this.displayProps) {
       this.displayProps[k].forEach(function(prop) {

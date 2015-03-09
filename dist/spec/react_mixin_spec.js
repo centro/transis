@@ -23,7 +23,8 @@ describe("ReactMixin", function () {
       },
       displayProps: {
         model: ["foo", "bar"] },
-      forceUpdate: jasmine.createSpy("forceUpdate")
+      forceUpdate: jasmine.createSpy("forceUpdate"),
+      isMounted: jasmine.createSpy("forceUpdate").and.returnValue(true)
     }, ReactMixin);
   });
 

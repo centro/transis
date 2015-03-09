@@ -2255,7 +2255,9 @@ this["Basis"] =
 	    }
 
 	    this._forceUpdate = (function () {
-	      this.forceUpdate();
+	      if (this.isMounted()) {
+	        this.forceUpdate();
+	      }
 	    }).bind(this);
 
 	    for (var k in this.displayProps) {
