@@ -570,31 +570,31 @@ var Model = BasisObject.extend(function () {
   //   via `Basis.Model.loadAll` and the materialized models are replaced into the array. When the
   //   promise is rejected, the error message returned by the mapper is made available on the `error`
   //   property.
-  //  
+  //
   //   If the this method is called while the array is currently busy, then the call to the mapper
   //   is queued until the current query completes.
-  //  
+  //
   //   opts - An object to pass along to the mapper (default: `{}`).
-  //  
+  //
   //   Returns the receiver.
-  //  
+  //
   //   then: Registers fulfillment and rejection handlers on the latest promise object returned by
   //   the modelClass's mapper. If the `query` method has yet to be called, then the `onFulfilled`
   //   handler is invoked immediately.
-  //  
+  //
   //   When resolved, the `onFulfilled` handler is called with no arguments. When rejected, the
   //   `onFulfilled` handler is called with the error message from the mapper.
-  //  
+  //
   //   onFulfilled - A function to be invoked when the latest promise from the mapper is resolved.
   //   onRejected  - A function to be invoked when the latest promise from the mapper is rejected.
-  //  
+  //
   //   Returns a new `Promise` that will be resolved with the return value of `onFulfilled`.
-  //  
+  //
   //   catch: Registers a rejection handler on the latest promise object returned by the
   //   modelClass's mapper.
-  //  
+  //
   //   onRejected - A function to be invoked when the latest promise from the mapper is rejected.
-  //  
+  //
   //   Returns a new `Promise` that is resolved to the return value of the callback if it is called.
   //
   // Returns a new `Basis.Array` decorated with the properties and methods described above.
@@ -1120,6 +1120,8 @@ var Model = BasisObject.extend(function () {
         });
       }
     }
+
+    this.validate();
   };
 
   // Public: Add a validation error for the given property name and type. Adding an error will cause

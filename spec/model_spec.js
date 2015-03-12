@@ -769,7 +769,7 @@ describe('Model', function () {
               id: 156, title: 'the title', body: 'the body',
               tags: [48, {id: 49, name: 'foo'}, 50]
             });
-                            
+
         expect(p.tags.at(0).id).toBe(48);
         expect(p.tags.at(0).sourceState).toBe(Model.LOADED);
         expect(p.tags.at(0).posts).toEqual(A(p));
@@ -2038,6 +2038,12 @@ describe('Model', function () {
         expect(this.invoice.company.changes).toEqual({name: 'Acme, Inc.'});
         this.invoice.undoChanges();
         expect(this.invoice.company.changes).toEqual({name: 'Acme, Inc.'});
+      });
+
+      it('re-runs validations', function() {
+        this.invoice.addError('name', 'foo');
+        this.invoice.undoChanges();
+        expect(this.invoice.errors.name).toBeUndefined();
       });
     });
 

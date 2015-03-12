@@ -2171,6 +2171,12 @@ describe("Model", function () {
         this.invoice.undoChanges();
         expect(this.invoice.company.changes).toEqual({ name: "Acme, Inc." });
       });
+
+      it("re-runs validations", function () {
+        this.invoice.addError("name", "foo");
+        this.invoice.undoChanges();
+        expect(this.invoice.errors.name).toBeUndefined();
+      });
     });
 
     describe("#hasOwnChanges", function () {
