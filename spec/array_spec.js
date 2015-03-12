@@ -450,7 +450,7 @@ describe('Array', function() {
 
     it('executes the given function in the context of the second argument', function() {
       var spy = jasmine.createSpy(), o = {};
-      A(1,2,3).map(spy, o); 
+      A(1,2,3).map(spy, o);
       expect(spy.calls.mostRecent().object).toBe(o);
     });
   });
@@ -466,7 +466,7 @@ describe('Array', function() {
 
     it('executes the given function in the context of the second argument', function() {
       var spy = jasmine.createSpy(), o = {};
-      A(1,2,3).filter(spy, o); 
+      A(1,2,3).filter(spy, o);
       expect(spy.calls.mostRecent().object).toBe(o);
     });
   });
@@ -780,6 +780,34 @@ describe('Array', function() {
       A(new Test({x: 1})).proxy(to, 'foos');
       BasisObject.flush();
       expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('#forEachCons', function() {
+    it('yields each set of consecutive n elements to the given function', function() {
+      var a = A(1,2,3,4,5,6,7), cons;
+
+      cons = [];
+      a.forEachCons(2, function(x) { cons.push(x); });
+      expect(cons).toEqual([[1,2], [2,3], [3,4], [4,5], [5,6], [6,7]]);
+
+      cons = [];
+      a.forEachCons(3, function(x) { cons.push(x); });
+      expect(cons).toEqual([[1,2,3], [2,3,4], [3,4,5], [4,5,6], [5,6,7]]);
+    });
+  });
+
+  describe('#forEachSlice', function() {
+    it('yields each slice of n elements to the function', function() {
+      var a = A(1,2,3,4,5,6,7), slices;
+
+      slices = [];
+      a.forEachSlice(2, function(x) { slices.push(x); });
+      expect(slices).toEqual([[1,2], [3,4], [5,6], [7]]);
+
+      slices = [];
+      a.forEachSlice(3, function(x) { slices.push(x); });
+      expect(slices).toEqual([[1,2,3], [4,5,6], [7]]);
     });
   });
 });

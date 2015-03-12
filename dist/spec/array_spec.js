@@ -860,4 +860,42 @@ describe("Array", function () {
       expect(spy).not.toHaveBeenCalled();
     });
   });
+
+  describe("#forEachCons", function () {
+    it("yields each set of consecutive n elements to the given function", function () {
+      var a = A(1, 2, 3, 4, 5, 6, 7),
+          cons;
+
+      cons = [];
+      a.forEachCons(2, function (x) {
+        cons.push(x);
+      });
+      expect(cons).toEqual([[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7]]);
+
+      cons = [];
+      a.forEachCons(3, function (x) {
+        cons.push(x);
+      });
+      expect(cons).toEqual([[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6], [5, 6, 7]]);
+    });
+  });
+
+  describe("#forEachSlice", function () {
+    it("yields each slice of n elements to the function", function () {
+      var a = A(1, 2, 3, 4, 5, 6, 7),
+          slices;
+
+      slices = [];
+      a.forEachSlice(2, function (x) {
+        slices.push(x);
+      });
+      expect(slices).toEqual([[1, 2], [3, 4], [5, 6], [7]]);
+
+      slices = [];
+      a.forEachSlice(3, function (x) {
+        slices.push(x);
+      });
+      expect(slices).toEqual([[1, 2, 3], [4, 5, 6], [7]]);
+    });
+  });
 });

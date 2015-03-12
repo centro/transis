@@ -56,9 +56,9 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   // Returns `v` when given two arguments.
   this.prototype.at = function(i, v) {
     var length = this.length;
-  
+
     if (i < 0) { i = length + i; }
-  
+
     if (arguments.length === 1) {
       return (i >= 0 && i < length) ? this[i] : undefined;
     }
@@ -104,7 +104,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
 
     return removed instanceof BasisArray ? removed : BasisArray.from(removed);
   };
-  
+
   // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
   // made through this method.
   //
@@ -117,13 +117,13 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   // Throws `Error` when given an index that is out of range.
   this.prototype.splice = function(i, n) {
     var added = slice.call(arguments, 2), index = i < 0 ? this.length + i : i;
-  
+
     if (index < 0) {
       throw new Error(`Basis.Array#splice: index ${i} is too small for ${this}`);
     }
-  
+
     if (n === undefined) { n = this.length - index; }
-  
+
     return this._splice(index, n, added);
   };
 
@@ -137,7 +137,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
     this.splice.apply(this, [this.length, 0].concat(args));
     return this.length;
   };
-  
+
   // Public: Adds one or more elements to the beginning of the array and returns the new length.
   //
   // ...elements - One or more objects to add to the beginning of the array.
@@ -148,14 +148,14 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
     this.splice.apply(this, [0, 0].concat(args));
     return this.length;
   };
-  
+
   // Public: Removes the last element from the array and returns the element.
   //
   // Returns the last element in the array or `undefined` if the array length is 0.
   this.prototype.pop = function() {
     return this.length > 0 ? this.splice(-1, 1).at(0) : undefined;
   };
-  
+
   // Public: Removes the first element from the array and returns the element.
   //
   // Returns the first element in the array or `undefined` if the array length is 0.
@@ -240,10 +240,10 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   // Returns a new `Basis.Array` instance.
   this.prototype.flatten = function() {
     var a = BasisArray.of();
-  
+
     for (let i = 0, n = this.length; i < n; i++) {
       let el = this[i];
-  
+
       if (el instanceof BasisArray) {
         a = a.concat(el.flatten());
       }
@@ -254,7 +254,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
         a.push(el);
       }
     }
-  
+
     return a;
   };
 
@@ -269,11 +269,64 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   // Public: Returns a new array containing only the unique items in the receiver.
   this.prototype.uniq = function() {
     var map = new Map;
-  
+
     return this.reduce(function(acc, el) {
       if (!map.has(el)) { map.set(el, true); acc.push(el); }
       return acc;
     }, BasisArray.of());
+  };
+
+  // Public: Yields each set of consecutive `n` elements to the function as a native array.
+  //
+  // n - The number of consecutive elements to yield at a time.
+  // f - The function to yield each consecutive set of elements to.
+  //
+  // Examples
+  //
+  //   Basis.A(1,2,3,4,5,6,7).forEachCons(2, console.log);
+  //   // outputs:
+  //   // [ 1, 2 ]
+  //   // [ 2, 3 ]
+  //   // [ 3, 4 ]
+  //   // [ 4, 5 ]
+  //   // [ 5, 6 ]
+  //   // [ 6, 7 ]
+  //
+  // Returns nothing.
+  this.prototype.forEachCons = function(n, f) {
+    var a = [];
+
+    this.forEach(function(el) {
+      a.push(el);
+      if (a.length > n) { a.shift(); }
+      if (a.length === n) { f(a.slice(0)); }
+    });
+  };
+
+  // Public: Yields each slice of `n` elements to the function as a native array.
+  //
+  // n - The size of each slice to yield.
+  // f - The function to yield each slice to.
+  //
+  // Examples
+  //
+  //   Basis.A(1,2,3,4,5,6,7).forEachSlice(2, console.log);
+  //   // outputs:
+  //   // [ 1, 2 ]
+  //   // [ 3, 4 ]
+  //   // [ 5, 6 ]
+  //   // [ 7 ]
+  //
+  // Returns the receiver.
+  this.prototype.forEachSlice = function(n, f) {
+    var a = [];
+
+    this.forEach(function(el) {
+      a.push(el);
+      if (a.length === n) { f(a); a = []; }
+    });
+
+    if (a.length > 0) { f(a); }
   };
 
   // Public: Causes the array to begin proxying prop change notifications on itself as well as its

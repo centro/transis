@@ -827,6 +827,67 @@ this["Basis"] =
 	    }, BasisArray.of());
 	  };
 
+	  // Public: Yields each set of consecutive `n` elements to the function as a native array.
+	  //
+	  // n - The number of consecutive elements to yield at a time.
+	  // f - The function to yield each consecutive set of elements to.
+	  //
+	  // Examples
+	  //
+	  //   Basis.A(1,2,3,4,5,6,7).forEachCons(2, console.log);
+	  //   // outputs:
+	  //   // [ 1, 2 ]
+	  //   // [ 2, 3 ]
+	  //   // [ 3, 4 ]
+	  //   // [ 4, 5 ]
+	  //   // [ 5, 6 ]
+	  //   // [ 6, 7 ]
+	  //
+	  // Returns nothing.
+	  this.prototype.forEachCons = function (n, f) {
+	    var a = [];
+
+	    this.forEach(function (el) {
+	      a.push(el);
+	      if (a.length > n) {
+	        a.shift();
+	      }
+	      if (a.length === n) {
+	        f(a.slice(0));
+	      }
+	    });
+	  };
+
+	  // Public: Yields each slice of `n` elements to the function as a native array.
+	  //
+	  // n - The size of each slice to yield.
+	  // f - The function to yield each slice to.
+	  //
+	  // Examples
+	  //
+	  //   Basis.A(1,2,3,4,5,6,7).forEachSlice(2, console.log);
+	  //   // outputs:
+	  //   // [ 1, 2 ]
+	  //   // [ 3, 4 ]
+	  //   // [ 5, 6 ]
+	  //   // [ 7 ]
+	  //
+	  // Returns the receiver.
+	  this.prototype.forEachSlice = function (n, f) {
+	    var a = [];
+
+	    this.forEach(function (el) {
+	      a.push(el);
+	      if (a.length === n) {
+	        f(a);a = [];
+	      }
+	    });
+
+	    if (a.length > 0) {
+	      f(a);
+	    }
+	  };
+
 	  // Public: Causes the array to begin proxying prop change notifications on itself as well as its
 	  // elements to the given proxy object.
 	  //
