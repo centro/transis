@@ -8,7 +8,26 @@ var BasisObject = _interopRequire(require("./object"));
 
 var util = _interopRequireWildcard(require("./util"));
 
-var BasisArray = require("vm").runInNewContext("Array");
+var iframe;
+
+var BasisArray = (function () {
+  // http://danielmendel.github.io/blog/2013/02/20/subclassing-javascript-arrays/
+
+  if (typeof window !== "undefined") {
+    // browser
+    iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
+    frames[frames.length - 1].document.write("<script>parent._Array = Array;</script>");
+    var _Array = window._Array;
+    delete window._Array;
+    document.body.removeChild(iframe);
+    return _Array;
+  } else {
+    // node.js
+    return require("vm").runInNewContext("Array");
+  }
+})();
 
 var _BasisArray$prototype = BasisArray.prototype;
 var concat = _BasisArray$prototype.concat;

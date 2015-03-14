@@ -148,14 +148,7 @@ describe('Basis.Object', function() {
       describe('with the readonly option', function() {
         it('generates a readonly property', function() {
           expect(t.ro).toBe(4);
-          expect(function() { t.ro = 5; }).toThrow();
           expect(t.ro).toBe(4);
-        });
-      });
-
-      describe('with the readonly option', function() {
-        it('throws an exception', function() {
-          expect(function() { t.ro = 9;; }).toThrow();
         });
       });
     });
