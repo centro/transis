@@ -10,7 +10,7 @@ var BasisArray = _interopRequire(require("./array"));
 
 var Model = _interopRequire(require("./model"));
 
-var ReactMixin = _interopRequire(require("./react_mixin"));
+var react = _interopRequireWildcard(require("./react"));
 
 var util = _interopRequireWildcard(require("./util"));
 
@@ -23,6 +23,7 @@ module.exports = Object.assign({
   Array: BasisArray,
   A: BasisArray.of,
   Model: Model,
-  ReactMixin: ReactMixin,
-  pluralize: pluralize
+  pluralize: pluralize,
+  ReactPropsMixin: react.PropsMixin,
+  ReactStateMixin: react.StateMixin
 }, util, parsers);

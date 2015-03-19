@@ -57,7 +57,7 @@ this["Basis"] =
 
 	var Model = _interopRequire(__webpack_require__(3));
 
-	var ReactMixin = _interopRequire(__webpack_require__(4));
+	var react = _interopRequireWildcard(__webpack_require__(4));
 
 	var util = _interopRequireWildcard(__webpack_require__(5));
 
@@ -70,8 +70,9 @@ this["Basis"] =
 	  Array: BasisArray,
 	  A: BasisArray.of,
 	  Model: Model,
-	  ReactMixin: ReactMixin,
-	  pluralize: pluralize
+	  pluralize: pluralize,
+	  ReactPropsMixin: react.PropsMixin,
+	  ReactStateMixin: react.StateMixin
 	}, util, parsers);
 
 /***/ },
@@ -482,7 +483,9 @@ this["Basis"] =
 	BasisObject.prototype._notify = function (prop) {
 	  if (this.__observers__ && this.__observers__[prop]) {
 	    for (var i = 0, n = this.__observers__[prop].length; i < n; i++) {
-	      this.__observers__[prop][i](prop);
+	      if (this.__observers__[prop][i]) {
+	        this.__observers__[prop][i](prop);
+	      }
 	    }
 	  }
 
@@ -2328,74 +2331,150 @@ this["Basis"] =
 
 	"use strict";
 
-	module.exports = {
-	  componentWillMount: function componentWillMount() {
-	    var _this = this;
+	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-	    if (!this.displayProps) {
-	      return;
-	    }
+	var BasisArray = _interopRequire(__webpack_require__(2));
 
-	    this._forceUpdate = (function () {
-	      if (this.isMounted()) {
-	        this.forceUpdate();
-	      }
-	    }).bind(this);
+	var PropsMixin = exports.PropsMixin = function PropsMixin(props) {
+	  return {
+	    componentWillMount: function componentWillMount() {
+	      var _this = this;
 
-	    for (var k in this.displayProps) {
-	      (function (k) {
-	        _this.displayProps[k].forEach(function (prop) {
-	          if (this.props[k]) {
-	            this.props[k].on(prop, this._forceUpdate);
-	          }
-	        }, _this);
-	      })(k);
-	    }
-	  },
+	      this._basisFU = this._basisFU || function () {
+	        _this.isMounted() && _this.forceUpdate();
+	      };
 
-	  componentWillUnmount: function componentWillUnmount() {
-	    var _this = this;
-
-	    if (!this.displayProps) {
-	      return;
-	    }
-
-	    for (var k in this.displayProps) {
-	      (function (k) {
-	        _this.displayProps[k].forEach(function (prop) {
-	          if (this.props[k]) {
-	            this.props[k].off(prop, this._forceUpdate);
-	          }
-	        }, _this);
-	      })(k);
-	    }
-
-	    delete this._forceUpdate;
-	  },
-
-	  componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
-	    var _this = this;
-
-	    if (!this.displayProps) {
-	      return;
-	    }
-
-	    for (var k in this.displayProps) {
-	      (function (k) {
-	        _this.displayProps[k].forEach(function (prop) {
-	          if (nextProps[k] !== this.props[k]) {
+	      for (var k in props) {
+	        (function (k) {
+	          props[k].forEach(function (prop) {
 	            if (this.props[k]) {
-	              this.props[k].off(prop, this._forceUpdate);
+	              this.props[k].on(prop, this._basisFU);
 	            }
-	            if (nextProps[k]) {
-	              nextProps[k].on(prop, this._forceUpdate);
+	          }, _this);
+	        })(k);
+	      }
+	    },
+
+	    componentWillUnmount: function componentWillUnmount() {
+	      var _this = this;
+
+	      for (var k in props) {
+	        (function (k) {
+	          props[k].forEach(function (prop) {
+	            if (this.props[k]) {
+	              this.props[k].off(prop, this._basisFU);
 	            }
-	          }
-	        }, _this);
-	      })(k);
+	          }, _this);
+	        })(k);
+	      }
+	    },
+
+	    componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
+	      var _this = this;
+
+	      for (var k in props) {
+	        (function (k) {
+	          props[k].forEach(function (prop) {
+	            if (nextProps[k] !== this.props[k]) {
+	              if (this.props[k]) {
+	                this.props[k].off(prop, this._basisFU);
+	              }
+	              if (nextProps[k]) {
+	                nextProps[k].on(prop, this._basisFU);
+	              }
+	            }
+	          }, _this);
+	        })(k);
+	      }
 	    }
-	  }
+	  };
 	};
+
+	var StateMixin = exports.StateMixin = function StateMixin(object, props) {
+	  if (typeof props !== "object") {
+	    props = BasisArray.from(arguments).slice(1).reduce(function (acc, prop) {
+	      acc[prop] = [];
+	      return acc;
+	    }, {});
+	  }
+
+	  return {
+	    getInitialState: function getInitialState() {
+	      var state = {};
+	      for (var k in props) {
+	        state[k] = object[k];
+	      }
+	      return state;
+	    },
+
+	    componentWillMount: function componentWillMount() {
+	      var _this = this;
+
+	      this._basisFU = this._basisFU || function () {
+	        _this.isMounted() && _this.forceUpdate();
+	      };
+
+	      this._basisSyncState = function () {
+	        var state = {};
+
+	        for (var k in props) {
+	          (function (k) {
+	            if (_this.state[k] !== object[k]) {
+	              if (_this.state[k] && typeof _this.state[k].off === "function") {
+	                props[k].forEach(function (path) {
+	                  _this.state[k].off(path, _this._basisFU);
+	                });
+	              }
+
+	              if (object[k] && typeof object[k].on === "function") {
+	                props[k].forEach(function (path) {
+	                  object[k].on(path, _this._basisFU);
+	                });
+	              }
+
+	              state[k] = object[k];
+	            }
+	          })(k);
+	        }
+
+	        if (Object.keys(state).length) {
+	          _this.setState(state);
+	        }
+	      };
+
+	      for (var k in props) {
+	        (function (k) {
+	          if (object[k] && typeof object[k].on === "function") {
+	            props[k].forEach(function (path) {
+	              object[k].on(path, _this._basisFU);
+	            });
+	          }
+	        })(k);
+	      }
+
+	      object.on("*", this._basisSyncState);
+	    },
+
+	    componentWillUnmount: function componentWillUnmount() {
+	      var _this = this;
+
+	      for (var k in props) {
+	        (function (k) {
+	          if (_this.state[k] && typeof _this.state[k].off === "function") {
+	            props[k].forEach(function (path) {
+	              _this.state[k].off(path, _this._basisFU);
+	            });
+	          }
+	        })(k);
+	      }
+
+	      object.off("*", this._basisSyncState);
+	    }
+	  };
+	};
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
 
 /***/ },
 /* 5 */
