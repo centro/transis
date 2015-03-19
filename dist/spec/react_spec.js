@@ -120,15 +120,18 @@ describe("StateMixin", function () {
       Object.assign(this.component, StateMixin(this.appState, { a: [], b: ["foo", "bar"] }));
     });
 
+    describe("getInitialState", function () {
+      it("returns the props indicated from the given state object", function () {
+        expect(this.component.getInitialState()).toEqual({ a: 1, b: this.appState.b });
+      });
+    });
+
     describe("componentWillMount", function () {
       beforeEach(function () {
+        Object.assign(this.component.state, this.component.getInitialState());
         this.component.componentWillMount();
         this.component.setState.calls.reset();
         this.component.forceUpdate.calls.reset();
-      });
-
-      it("syncs the initial app state to the component's state", function () {
-        expect(this.component.state).toEqual({ a: 1, b: this.appState.b });
       });
 
       it("attaches observers to the given properties on the state object and syncs their values to the component's state", function () {
@@ -182,6 +185,7 @@ describe("StateMixin", function () {
 
     describe("componentWillUnmount", function () {
       beforeEach(function () {
+        Object.assign(this.component.state, this.component.getInitialState());
         this.component.componentWillMount();
         this.component.setState.calls.reset();
         this.component.forceUpdate.calls.reset();
@@ -210,13 +214,10 @@ describe("StateMixin", function () {
 
     describe("componentWillMount", function () {
       beforeEach(function () {
+        Object.assign(this.component.state, this.component.getInitialState());
         this.component.componentWillMount();
         this.component.setState.calls.reset();
         this.component.forceUpdate.calls.reset();
-      });
-
-      it("syncs the initial app state to the component's state", function () {
-        expect(this.component.state).toEqual({ a: 1, b: this.appState.b });
       });
 
       it("attaches observers to the given properties on the state object and syncs their values to the component's state", function () {

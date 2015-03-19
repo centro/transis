@@ -68,6 +68,14 @@ var StateMixin = exports.StateMixin = function StateMixin(object, props) {
   }
 
   return {
+    getInitialState: function getInitialState() {
+      var state = {};
+      for (var k in props) {
+        state[k] = object[k];
+      }
+      return state;
+    },
+
     componentWillMount: function componentWillMount() {
       var _this = this;
 
@@ -102,8 +110,6 @@ var StateMixin = exports.StateMixin = function StateMixin(object, props) {
           _this.setState(state);
         }
       };
-
-      this._basisSyncState();
 
       for (var k in props) {
         (function (k) {

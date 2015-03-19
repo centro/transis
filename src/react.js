@@ -42,6 +42,12 @@ export var StateMixin = function(object, props) {
   }
 
   return {
+    getInitialState: function() {
+      var state = {};
+      for (let k in props) { state[k] = object[k]; }
+      return state;
+    },
+
     componentWillMount: function() {
       this._basisFU = this._basisFU || () => { this.isMounted() && this.forceUpdate(); };
 
@@ -64,8 +70,6 @@ export var StateMixin = function(object, props) {
 
         if (Object.keys(state).length) { this.setState(state); }
       };
-
-      this._basisSyncState();
 
       for (let k in props) {
         if (object[k] && typeof object[k].on === 'function') {

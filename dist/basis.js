@@ -2397,6 +2397,14 @@ this["Basis"] =
 	  }
 
 	  return {
+	    getInitialState: function getInitialState() {
+	      var state = {};
+	      for (var k in props) {
+	        state[k] = object[k];
+	      }
+	      return state;
+	    },
+
 	    componentWillMount: function componentWillMount() {
 	      var _this = this;
 
@@ -2431,8 +2439,6 @@ this["Basis"] =
 	          _this.setState(state);
 	        }
 	      };
-
-	      this._basisSyncState();
 
 	      for (var k in props) {
 	        (function (k) {
