@@ -340,7 +340,7 @@ BasisObject.prototype._setProp = function(name, value) {
 BasisObject.prototype._notify = function(prop) {
   if (this.__observers__ && this.__observers__[prop]) {
     for (let i = 0, n = this.__observers__[prop].length; i < n; i++) {
-      this.__observers__[prop][i](prop);
+      if (this.__observers__[prop][i]) { this.__observers__[prop][i](prop); }
     }
   }
 

@@ -435,6 +435,25 @@ describe('Basis.Object', function() {
     });
   });
 
+  describe('observer notification', function() {
+    it('does not throw an error when one observer of a property removes another', function() {
+      var o = new BasisObject, spy = jasmine.createSpy(), cb;
+
+      cb = function() { o.off('*', spy); };
+
+      o.on('*', cb);
+      o.on('*', spy);
+
+      o.didChange('x');
+
+      expect(function() {
+        BasisObject.flush();
+      }).not.toThrow();
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('#toString', function() {
     it('returns a string containing the constructor name and object id', function() {
       var X = BasisObject.extend(), x = new X, o = new BasisObject;
