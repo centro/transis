@@ -337,6 +337,7 @@ describe("Array", function () {
 
     it("returns an instance of Basis.Array", function () {
       expect(A(0, 1, 2).splice(0) instanceof BasisArray).toBe(true);
+      expect(A(0, 1, 2).splice(0).objectId).toBeDefined();
     });
   });
 
@@ -435,6 +436,7 @@ describe("Array", function () {
 
     it("returns an instance of Basis.Array", function () {
       expect(A(1, 2, 3).concat(4, 5, 6) instanceof BasisArray).toBe(true);
+      expect(A(1, 2, 3).concat(4, 5, 6).objectId).toBeDefined();
     });
   });
 
@@ -451,6 +453,7 @@ describe("Array", function () {
 
     it("returns an instance of Basis.Array", function () {
       expect(A(1, 2, 3, 4, 5).slice() instanceof BasisArray).toBe(true);
+      expect(A(1, 2, 3, 4, 5).slice().objectId).toBeDefined();
     });
   });
 
@@ -465,6 +468,9 @@ describe("Array", function () {
       expect(A(1, 2, 3).map(function (x) {
         return x * 2;
       }) instanceof BasisArray).toBe(true);
+      expect(A(1, 2, 3).map(function (x) {
+        return x * 2;
+      }).objectId).toBeDefined();
     });
 
     it("executes the given function in the context of the second argument", function () {
@@ -486,6 +492,9 @@ describe("Array", function () {
       expect(A(1, 2, 3, 4, 5).filter(function (x) {
         return x % 2 === 0;
       }) instanceof BasisArray).toBe(true);
+      expect(A(1, 2, 3, 4, 5).filter(function (x) {
+        return x % 2 === 0;
+      }).objectId).toBeDefined();
     });
 
     it("executes the given function in the context of the second argument", function () {

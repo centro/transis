@@ -152,7 +152,7 @@ BasisArray.from = function (a) {
       this.__proxy__.to.didChange(this.__proxy__.name);
     }
 
-    return removed instanceof BasisArray ? removed : BasisArray.from(removed);
+    return BasisArray.from(removed);
   };
 
   // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
@@ -226,8 +226,7 @@ BasisArray.from = function (a) {
   //
   // Returns a new `Basis.Array`.
   this.prototype.slice = function () {
-    var a = slice.apply(this, arguments);
-    return a instanceof BasisArray ? a : BasisArray.from(a);
+    return BasisArray.from(slice.apply(this, arguments));
   };
 
   // Public: Creates a new array with the results of calling the given function on every element in
@@ -241,8 +240,7 @@ BasisArray.from = function (a) {
   //
   // Returns a new `Basis.Array`.
   this.prototype.map = function () {
-    var a = map.apply(this, arguments);
-    return a instanceof BasisArray ? a : BasisArray.from(a);
+    return BasisArray.from(map.apply(this, arguments));
   };
 
   // Public: Creates a new array with all elements that pass the test implemented by the provided
@@ -254,8 +252,7 @@ BasisArray.from = function (a) {
   //
   // Returns a new `Basis.Array`.
   this.prototype.filter = function () {
-    var a = filter.apply(this, arguments);
-    return a instanceof BasisArray ? a : BasisArray.from(a);
+    return BasisArray.from(filter.apply(this, arguments));
   };
 
   // Public: Returns a new `Basis.Array` comprised of the receiver joined with the array(s) or
@@ -265,8 +262,7 @@ BasisArray.from = function (a) {
   //
   // Returns a new `Basis.Array`.
   this.prototype.concat = function () {
-    var a = concat.apply(this, arguments);
-    return a instanceof BasisArray ? a : BasisArray.from(a);
+    return BasisArray.from(concat.apply(this, arguments));
   };
 
   // Public: Replaces the contents of the receiver with the contents of the given array.
