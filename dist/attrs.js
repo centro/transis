@@ -2,6 +2,10 @@
 
 var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
 
+var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
 var parsers = _interopRequireWildcard(require("./parsers"));
 
 var IdentityAttr = exports.IdentityAttr = {
@@ -13,14 +17,38 @@ var IdentityAttr = exports.IdentityAttr = {
   }
 };
 
-var StringAttr = exports.StringAttr = {
-  coerce: function coerce(v) {
-    return v != null ? String(v) : v;
-  },
-  serialize: function serialize(s) {
-    return s;
+var StringAttr = exports.StringAttr = (function () {
+  function StringAttr() {
+    var opts = arguments[0] === undefined ? {} : arguments[0];
+
+    _classCallCheck(this, StringAttr);
+
+    this.opts = Object.assign({ trim: true }, opts);
   }
-};
+
+  _prototypeProperties(StringAttr, null, {
+    coerce: {
+      value: function coerce(v) {
+        v = v != null ? String(v) : v;
+        if (typeof v === "string" && this.opts.trim) {
+          v = v.trim();
+        }
+        return v;
+      },
+      writable: true,
+      configurable: true
+    },
+    serialize: {
+      value: function serialize(s) {
+        return s;
+      },
+      writable: true,
+      configurable: true
+    }
+  });
+
+  return StringAttr;
+})();
 
 var NumberAttr = exports.NumberAttr = {
   coerce: function coerce(v) {

@@ -20,24 +20,46 @@ describe('IdentityAttr#serialize', function() {
 });
 
 describe('StringAttr#coerce', function() {
+  beforeEach(function() { this.stringAttr = new attrs.StringAttr; });
+
   it('converts the given value to a string for non-null non-undefined values', function() {
-    expect(attrs.StringAttr.coerce('abc')).toBe('abc');
-    expect(attrs.StringAttr.coerce(9)).toBe('9');
-    expect(attrs.StringAttr.coerce(/xy/)).toBe('/xy/');
-    expect(attrs.StringAttr.coerce({})).toBe('[object Object]');
+    expect(this.stringAttr.coerce('abc')).toBe('abc');
+    expect(this.stringAttr.coerce(9)).toBe('9');
+    expect(this.stringAttr.coerce(/xy/)).toBe('/xy/');
+    expect(this.stringAttr.coerce({})).toBe('[object Object]');
+  });
+
+  it('trims string values', function() {
+    expect(this.stringAttr.coerce(' abc')).toBe('abc');
+    expect(this.stringAttr.coerce('abc ')).toBe('abc');
+    expect(this.stringAttr.coerce(' abc ')).toBe('abc');
+    expect(this.stringAttr.coerce(' a b c   ')).toBe('a b c');
   });
 
   it('does not convert null and undefined values', function() {
-    expect(attrs.StringAttr.coerce(null)).toBeNull();
-    expect(attrs.StringAttr.coerce(undefined)).toBeUndefined();
+    expect(this.stringAttr.coerce(null)).toBeNull();
+    expect(this.stringAttr.coerce(undefined)).toBeUndefined();
+  });
+
+  describe('with the trim option set to false', function() {
+    beforeEach(function() { this.stringAttr = new attrs.StringAttr({trim: false}); });
+
+    it('does not trim string values', function() {
+      expect(this.stringAttr.coerce(' abc')).toBe(' abc');
+      expect(this.stringAttr.coerce('abc ')).toBe('abc ');
+      expect(this.stringAttr.coerce(' abc ')).toBe(' abc ');
+      expect(this.stringAttr.coerce(' a b c   ')).toBe(' a b c   ');
+    });
   });
 });
 
 describe('StringAttr#serialize', function() {
+  beforeEach(function() { this.stringAttr = new attrs.StringAttr; });
+
   it('returns the given value', function() {
-    expect(attrs.StringAttr.serialize('abc')).toBe('abc');
-    expect(attrs.StringAttr.serialize(null)).toBeNull();
-    expect(attrs.StringAttr.serialize(undefined)).toBeUndefined();
+    expect(this.stringAttr.serialize('abc')).toBe('abc');
+    expect(this.stringAttr.serialize(null)).toBeNull();
+    expect(this.stringAttr.serialize(undefined)).toBeUndefined();
   });
 });
 

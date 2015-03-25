@@ -5,10 +5,17 @@ export var IdentityAttr = {
   serialize(v) { return v; }
 };
 
-export var StringAttr = {
-  coerce(v) { return v != null ? String(v) : v; },
+export class StringAttr {
+  constructor(opts = {}) { this.opts = Object.assign({trim: true}, opts); }
+
+  coerce(v) {
+    v = v != null ? String(v) : v;
+    if (typeof v === 'string' && this.opts.trim) { v = v.trim(); }
+    return v;
+  }
+
   serialize(s) { return s; }
-};
+}
 
 export var NumberAttr = {
   coerce(v) {
