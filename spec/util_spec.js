@@ -366,6 +366,15 @@ describe('camelize', function() {
     expect(util.camelize('Foobar')).toBe('Foobar');
     expect(util.camelize('Foo_bar')).toBe('FooBar');
   });
+
+  it('handles null and undefined values', function() {
+    expect(util.camelize(null)).toBeNull();
+    expect(util.camelize(undefined)).toBeUndefined();
+  });
+
+  it('handles empty strings', function() {
+    expect(util.camelize('')).toBe('');
+  });
 });
 
 describe('underscore', function() {
@@ -376,6 +385,15 @@ describe('underscore', function() {
     expect(util.underscore('fooBar_Baz')).toBe('foo_bar_baz');
     expect(util.underscore('Foo')).toBe('foo');
   });
+
+  it('handles null and undefined values', function() {
+    expect(util.underscore(null)).toBeNull();
+    expect(util.underscore(undefined)).toBeUndefined();
+  });
+
+  it('handles empty strings', function() {
+    expect(util.underscore('')).toBe('');
+  });
 });
 
 describe('capitalize', function() {
@@ -384,5 +402,14 @@ describe('capitalize', function() {
     expect(util.capitalize('fooBar')).toBe('FooBar');
     expect(util.capitalize('FOO')).toBe('FOO');
     expect(util.capitalize('Foo')).toBe('Foo');
+  });
+
+  it('handles null and undefined values', function() {
+    expect(util.capitalize(null)).toBeNull();
+    expect(util.capitalize(undefined)).toBeUndefined();
+  });
+
+  it('handles empty strings', function() {
+    expect(util.capitalize('')).toBe('');
   });
 });

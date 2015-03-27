@@ -192,15 +192,17 @@ export function eq(a, b) {
 
 // Public: Converts the given string to CamelCase.
 export function camelize(s) {
-  return s.replace(/(?:[-_])(\w)/g, function(_, c) { return c ? c.toUpperCase() : ''; });
+  return typeof s === 'string' ?
+    s.replace(/(?:[-_])(\w)/g, function(_, c) { return c ? c.toUpperCase() : ''; }) : s;
 }
 
 // Public: Converts the given string to under_score_case.
 export function underscore(s) {
-  return s.replace(/([a-z\d])([A-Z]+)/g, '$1_$2').replace(/[-\s]+/g, '_').toLowerCase();
+  return typeof s === 'string' ?
+    s.replace(/([a-z\d])([A-Z]+)/g, '$1_$2').replace(/[-\s]+/g, '_').toLowerCase() : s;
 }
 
 // Public: Capitalizes the first letter of the given string.
 export function capitalize(s) {
-  return s[0].toUpperCase() + s.slice(1);
+  return typeof s === 'string' && s.length ? s[0].toUpperCase() + s.slice(1) : s;
 }

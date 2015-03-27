@@ -230,13 +230,13 @@ function unmark(o1, o2) {
       return false;
   }
 }function camelize(s) {
-  return s.replace(/(?:[-_])(\w)/g, function (_, c) {
+  return typeof s === "string" ? s.replace(/(?:[-_])(\w)/g, function (_, c) {
     return c ? c.toUpperCase() : "";
-  });
+  }) : s;
 }function underscore(s) {
-  return s.replace(/([a-z\d])([A-Z]+)/g, "$1_$2").replace(/[-\s]+/g, "_").toLowerCase();
+  return typeof s === "string" ? s.replace(/([a-z\d])([A-Z]+)/g, "$1_$2").replace(/[-\s]+/g, "_").toLowerCase() : s;
 }function capitalize(s) {
-  return s[0].toUpperCase() + s.slice(1);
+  return typeof s === "string" && s.length ? s[0].toUpperCase() + s.slice(1) : s;
 }
 Object.defineProperty(exports, "__esModule", {
   value: true
