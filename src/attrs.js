@@ -21,6 +21,7 @@ export var NumberAttr = {
   coerce(v) {
     if (typeof v === 'number') { return v; }
     else if (typeof v === 'string') { return parsers.parseNumber(v); }
+    else if (v === undefined) { return undefined; }
     else { return null; }
   },
 
@@ -28,7 +29,7 @@ export var NumberAttr = {
 };
 
 export var BooleanAttr = {
-  coerce(v) { return !!v; },
+  coerce(v) { return v === undefined ? v : !!v; },
   serialize(b) { return b; }
 };
 

@@ -75,9 +75,15 @@ describe('NumberAttr#coerce', function() {
     expect(attrs.NumberAttr.coerce('xyz')).toBeNull();
   });
 
-  it('returns null when given something other than a number or string', function() {
+  it('returns null when given null', function() {
     expect(attrs.NumberAttr.coerce(null)).toBeNull();
-    expect(attrs.NumberAttr.coerce(undefined)).toBeNull();
+  });
+
+  it('returns undefined when given undefined', function() {
+    expect(attrs.NumberAttr.coerce(undefined)).toBeUndefined();
+  });
+
+  it('returns null when given something other than a number or string', function() {
     expect(attrs.NumberAttr.coerce({})).toBeNull();
   });
 });
@@ -100,7 +106,10 @@ describe('BooleanAttr#coerce', function() {
     expect(attrs.BooleanAttr.coerce(0)).toBe(false);
     expect(attrs.BooleanAttr.coerce('')).toBe(false);
     expect(attrs.BooleanAttr.coerce(null)).toBe(false);
-    expect(attrs.BooleanAttr.coerce(undefined)).toBe(false);
+  });
+
+  it('does not convert undefined', function() {
+    expect(attrs.BooleanAttr.coerce(undefined)).toBeUndefined();
   });
 });
 

@@ -56,6 +56,8 @@ var NumberAttr = exports.NumberAttr = {
       return v;
     } else if (typeof v === "string") {
       return parsers.parseNumber(v);
+    } else if (v === undefined) {
+      return undefined;
     } else {
       return null;
     }
@@ -68,7 +70,7 @@ var NumberAttr = exports.NumberAttr = {
 
 var BooleanAttr = exports.BooleanAttr = {
   coerce: function coerce(v) {
-    return !!v;
+    return v === undefined ? v : !!v;
   },
   serialize: function serialize(b) {
     return b;
