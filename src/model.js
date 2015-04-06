@@ -75,14 +75,14 @@ function hasManySplice(i, n, added) {
   if (desc.owner) {
     changes = owner.changes[name] = owner.changes[name] || {added: [], removed: []};
 
-    added.forEach((m) => {
-      if ((i = changes.removed.indexOf(m)) !== -1) { changes.removed.splice(i, 1); }
-      else if (changes.added.indexOf(m) === -1) { changes.added.push(m); }
-    });
-
     removed.forEach((m) => {
       if ((i = changes.added.indexOf(m)) !== -1) { changes.added.splice(i, 1); }
       else if (changes.removed.indexOf(m) === -1) { changes.removed.push(m); }
+    });
+
+    added.forEach((m) => {
+      if ((i = changes.removed.indexOf(m)) !== -1) { changes.removed.splice(i, 1); }
+      else if (changes.added.indexOf(m) === -1) { changes.added.push(m); }
     });
 
     if (!changes.added.length && !changes.removed.length) { owner._clearChange(name); }

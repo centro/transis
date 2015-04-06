@@ -2067,11 +2067,16 @@ describe("Model", function () {
     it("keeps track of changes to owned hasMany associations when they are set", function () {
       var li1 = new LineItem(),
           li2 = new LineItem(),
+          li3 = new LineItem(),
           old = this.invoice.lineItems.slice();
 
       expect(this.invoice.changes.lineItems).toBeUndefined();
       this.invoice.lineItems = [li1, li2];
       expect(this.invoice.changes.lineItems).toEqual({ added: [li1, li2], removed: old });
+      this.invoice.lineItems = [li1, li2, li3];
+      expect(this.invoice.changes.lineItems).toEqual({ added: [li1, li2, li3], removed: old });
+      this.invoice.lineItems = [li1];
+      expect(this.invoice.changes.lineItems).toEqual({ added: [li1], removed: old });
     });
 
     it("handles when a model is added and then removed from an owned hasMany association", function () {
