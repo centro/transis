@@ -283,6 +283,13 @@ var Model = BasisObject.extend(function () {
     return this;
   };
 
+  this.registerAttr("identity", attrs.IdentityAttr);
+  this.registerAttr("string", attrs.StringAttr);
+  this.registerAttr("number", attrs.NumberAttr);
+  this.registerAttr("boolean", attrs.BooleanAttr);
+  this.registerAttr("date", attrs.DateAttr);
+  this.registerAttr("datetime", attrs.DateTimeAttr);
+
   // Public: Defines an attribute on the model class. Attributes are typed properties that can
   // parse/coerce raw values (say from a JSON object) into objects of the property type. Calling
   // this method will define a property on the class's `prototype` so that it is available to all
@@ -878,18 +885,19 @@ var Model = BasisObject.extend(function () {
   });
 
   // Public: Returns a boolean indicating whether the model has any validation errors on its own
-  // properties.
+  // properties. Marking the model for destruction by setting the `_destroy` attribute will cause
+  // this property to return `false` regardless of whether there are validation errors.
   this.prop("hasOwnErrors", {
-    on: ["errors"],
+    on: ["errors", "_destroy"],
     get: function get() {
-      return Object.keys(this.errors).length > 0;
+      return !this._destroy && Object.keys(this.errors).length > 0;
     }
   });
 
   // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
   // its owned associated models have validation errors.
   this.prop("hasErrors", {
-    on: ["errors"],
+    on: ["hasOwnErrors"],
     get: function get() {
       if (this.hasOwnErrors) {
         return true;
@@ -917,7 +925,12 @@ var Model = BasisObject.extend(function () {
     }
   });
 
-  // Public: Returns an object containing the raw values of all the receiver's attributes.
+  // Public: Used to mark a model for future destruction by the server. Owned associated models that
+  // are marked for destruction will not be validated or affect the `hasErrors` property.
+  this.attr("_destroy", "boolean");
+
+  // Public: Returns an object containing the raw values of all the receiver's attributes. Special
+  // care is taken with the `_destroy` attribute, its only included if its been set.
   this.prototype.attrs = function () {
     var attrs = {};
 
@@ -929,6 +942,9 @@ var Model = BasisObject.extend(function () {
 
     if (typeof this.id !== "undefined") {
       attrs.id = this.id;
+    }
+    if (attrs._destroy === undefined) {
+      delete attrs._destroy;
     }
 
     return attrs;
@@ -1190,10 +1206,10 @@ var Model = BasisObject.extend(function () {
       }
 
       if (desc.type === "hasOne") {
-        this[_name2] && this[_name2].validate();
+        this[_name2] && !this[_name2]._destroy && this[_name2].validate();
       } else if (desc.type === "hasMany") {
         this[_name2].forEach(function (m) {
-          return m.validate();
+          return !m._destroy && m.validate();
         });
       }
     }
@@ -1349,13 +1365,6 @@ Model.NEW = NEW;
 Model.EMPTY = EMPTY;
 Model.LOADED = LOADED;
 Model.DELETED = DELETED;
-
-Model.registerAttr("identity", attrs.IdentityAttr);
-Model.registerAttr("string", attrs.StringAttr);
-Model.registerAttr("number", attrs.NumberAttr);
-Model.registerAttr("boolean", attrs.BooleanAttr);
-Model.registerAttr("date", attrs.DateAttr);
-Model.registerAttr("datetime", attrs.DateTimeAttr);
 
 Object.assign(Model, Validations["static"]);
 Object.assign(Model.prototype, Validations.instance);

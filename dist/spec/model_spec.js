@@ -1321,9 +1321,9 @@ describe("Model", function () {
       expect(m.attrs()).toEqual({ id: 12, str: "abc", num: 1, strWithDefault: "ggg", date: "2013-10-26" });
     });
 
-    it("returns an empty object with the model has no attributes defined", function () {
-      var X = Model.extend("NoAttributesModel");
-      expect(new X().attrs()).toEqual({});
+    it("includes the _destroy attribute when set", function () {
+      var m = new BasicModel({ str: "abc", num: 1, date: new Date(2013, 9, 26), _destroy: true });
+      expect(m.attrs()).toEqual({ str: "abc", num: 1, strWithDefault: "zzz", date: "2013-10-26", _destroy: true });
     });
   });
 
@@ -2424,6 +2424,21 @@ describe("Model", function () {
         expect(this.invoice.hasOwnErrors).toBe(false);
       });
 
+      it("returns false when the _destroy attr is set", function () {
+        this.invoice.addError("name", "foo");
+        expect(this.invoice.hasOwnErrors).toBe(true);
+        this.invoice._destroy = true;
+        expect(this.invoice.hasOwnErrors).toBe(false);
+      });
+
+      it("returns true when there are validation errors and _destroy is unset", function () {
+        this.invoice.addError("name", "foo");
+        this.invoice._destroy = true;
+        expect(this.invoice.hasOwnErrors).toBe(false);
+        this.invoice._destroy = false;
+        expect(this.invoice.hasOwnErrors).toBe(true);
+      });
+
       describe("observers", function () {
         beforeEach(function () {
           this.spy = jasmine.createSpy();
@@ -2434,6 +2449,15 @@ describe("Model", function () {
           this.invoice.addError("name", "x");
           BasisObject.flush();
           expect(this.spy).toHaveBeenCalled();
+        });
+
+        it("are fired when _destroy is changed", function () {
+          this.invoice.addError("name", "x");
+          BasisObject.flush();
+          expect(this.spy.calls.count()).toBe(1);
+          this.invoice._destroy = true;
+          BasisObject.flush();
+          expect(this.spy.calls.count()).toBe(2);
         });
 
         it("are not fired when an owned associated model has a validation error added", function () {
@@ -2562,6 +2586,16 @@ describe("Model", function () {
         expect(m.bars.at(0).errors).toEqual({});
         m.validate();
         expect(m.bars.at(0).errors).toEqual({ x: ["must be even"] });
+      });
+
+      it("does not run validate on owned associated models that are marked for destruction", function () {
+        var m = new ValidatedFoo({
+          name: "foo", num: 10, bars: [new ValidatedBar({ _destroy: true })]
+        });
+
+        spyOn(m.bars.first, "validate");
+        m.validate();
+        expect(m.bars.first.validate).not.toHaveBeenCalled();
       });
 
       it("returns true when no validation errors are found", function () {
