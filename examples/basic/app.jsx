@@ -11,11 +11,7 @@ var Person = Basis.Model.extend('Person', function() {
 });
 
 var PersonView = React.createClass({
-  mixins: [Basis.ReactMixin],
-
-  displayProps: {
-    person: ['fullName']
-  },
+  mixins: [Basis.ReactPropsMixin({person: ['fullName']})],
 
   propTypes: {
     person: React.PropTypes.instanceOf(Person)
@@ -33,11 +29,7 @@ var PersonView = React.createClass({
 });
 
 var PersonEditView = React.createClass({
-  mixins: [Basis.ReactMixin],
-
-  displayProps: {
-    person: ['firstName', 'lastName']
-  },
+  mixins: [Basis.ReactPropsMixin({person: ['firstName', 'lastName']})],
 
   propTypes: {
     person: React.PropTypes.instanceOf(Person)

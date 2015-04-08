@@ -52,11 +52,7 @@ var LineItem = Basis.Model.extend('LineItem', function() {
 });
 
 var LineItemView = React.createClass({
-  mixins: [Basis.ReactMixin],
-
-  displayProps: {
-    lineItem: ['*']
-  },
+  mixins: [Basis.ReactPropsMixin({lineItem: ['*']})],
 
   propTypes: {
     lineItem: React.PropTypes.instanceOf(LineItem)
@@ -134,11 +130,7 @@ var LineItemView = React.createClass({
 });
 
 var InvoiceTotalsView = React.createClass({
-  mixins: [Basis.ReactMixin],
-
-  displayProps: {
-    invoice: ['quantity', 'avgRate', 'cost']
-  },
+  mixins: [Basis.ReactPropsMixin({invoice: ['quantity', 'avgRate', 'cost']})],
 
   propTypes: {
     invoice: React.PropTypes.instanceOf(Invoice)
@@ -158,11 +150,7 @@ var InvoiceTotalsView = React.createClass({
 });
 
 var InvoiceView = React.createClass({
-  mixins: [Basis.ReactMixin],
-
-  displayProps: {
-    invoice: ['name', 'lineItems', 'hasChanges']
-  },
+  mixins: [Basis.ReactPropsMixin({invoice: ['name', 'lineItems', 'hasChanges']})],
 
   propTypes: {
     invoice: React.PropTypes.instanceOf(Invoice)
