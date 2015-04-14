@@ -94,7 +94,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   // other - A `Basis.Array` or native array to compare to the receiver.
   //
   // Returns `true` if the arrays are equal and `false` otherwise.
-  this.prototype.eq = function(other) { return util.eq(this, other); };
+  this.prototype.eq = function(other) { return util.arrayEq(this, other); };
 
   // Internal: Performs the actual splice. This method is called by `Array#splice` and is always
   // passed the number of elements to remove and an array of items to add whereas the `splice`
