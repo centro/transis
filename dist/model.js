@@ -60,16 +60,6 @@ function checkAssociatedType(desc, o) {
   }
 }
 
-// Internal: Checks that the given association descriptor does not have both sides of the
-// association marked as the owner.
-function checkOwnerOpts(desc) {
-  var klass, inv;
-
-  if (desc.owner && desc.inverse && (klass = resolve(desc.klass, false)) && klass.prototype.associations && (inv = klass.prototype.associations[desc.inverse]) && inv.owner) {
-    throw new Error("" + this + "." + desc.name + ": both sides of the association are marked as owner");
-  }
-}
-
 // Internal: The overridden `_splice` method used on `hasMany` arrays. This method syncs changes to
 // the array to the inverse side of the association and maintains a list of changes made.
 function hasManySplice(i, n, added) {
@@ -360,8 +350,6 @@ var Model = BasisObject.extend(function () {
       type: "hasOne", name: name, klass: klass, debugName: "" + this.toString() + "#" + name
     });
 
-    checkOwnerOpts.call(this, desc);
-
     if (desc.owner) {
       if (!this.prototype.hasOwnProperty("__deps__")) {
         this.prototype.__deps__ = Object.create(this.prototype.__deps__);
@@ -417,8 +405,6 @@ var Model = BasisObject.extend(function () {
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
       type: "hasMany", name: name, klass: klass, singular: pluralize(name, 1), debugName: "" + this.toString() + "#" + name
     });
-
-    checkOwnerOpts.call(this, desc);
 
     if (desc.owner) {
       if (!this.prototype.hasOwnProperty("__deps__")) {
@@ -854,25 +840,29 @@ var Model = BasisObject.extend(function () {
         return true;
       }
 
-      for (var _name in this.associations) {
-        if (!this.associations[_name].owner) {
-          continue;
-        }
+      var r = false;
 
-        if (this.associations[_name].type === "hasOne") {
-          if (this[_name] && this[_name].hasChanges) {
-            return true;
+      util.detectRecursion(this, (function () {
+        for (var _name in this.associations) {
+          if (!this.associations[_name].owner) {
+            continue;
           }
-        } else if (this.associations[_name].type === "hasMany") {
-          if (this[_name].some(function (m) {
-            return m.hasChanges;
-          })) {
-            return true;
+
+          if (this.associations[_name].type === "hasOne") {
+            if (this[_name] && this[_name].hasChanges) {
+              r = true;
+            }
+          } else if (this.associations[_name].type === "hasMany") {
+            if (this[_name].some(function (m) {
+              return m.hasChanges;
+            })) {
+              r = true;
+            }
           }
         }
-      }
+      }).bind(this));
 
-      return false;
+      return r;
     }
   });
 
@@ -903,25 +893,29 @@ var Model = BasisObject.extend(function () {
         return true;
       }
 
-      for (var _name in this.associations) {
-        if (!this.associations[_name].owner) {
-          continue;
-        }
+      var r = false;
 
-        if (this.associations[_name].type === "hasOne") {
-          if (this[_name] && this[_name].hasErrors) {
-            return true;
+      util.detectRecursion(this, (function () {
+        for (var _name in this.associations) {
+          if (!this.associations[_name].owner) {
+            continue;
           }
-        } else if (this.associations[_name].type === "hasMany") {
-          if (this[_name].some(function (m) {
-            return m.hasErrors;
-          })) {
-            return true;
+
+          if (this.associations[_name].type === "hasOne") {
+            if (this[_name] && this[_name].hasErrors) {
+              r = true;
+            }
+          } else if (this.associations[_name].type === "hasMany") {
+            if (this[_name].some(function (m) {
+              return m.hasErrors;
+            })) {
+              r = true;
+            }
           }
         }
-      }
+      }).bind(this));
 
-      return false;
+      return r;
     }
   });
 

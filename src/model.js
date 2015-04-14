@@ -45,18 +45,6 @@ function checkAssociatedType(desc, o) {
   }
 }
 
-// Internal: Checks that the given association descriptor does not have both sides of the
-// association marked as the owner.
-function checkOwnerOpts(desc) {
-  var klass, inv;
-
-  if (desc.owner && desc.inverse &&
-      (klass = resolve(desc.klass, false)) && klass.prototype.associations &&
-        (inv = klass.prototype.associations[desc.inverse]) && inv.owner) {
-    throw new Error(`${this}.${desc.name}: both sides of the association are marked as owner`);
-  }
-}
-
 // Internal: The overridden `_splice` method used on `hasMany` arrays. This method syncs changes to
 // the array to the inverse side of the association and maintains a list of changes made.
 function hasManySplice(i, n, added) {
@@ -297,8 +285,6 @@ var Model = BasisObject.extend(function() {
       type: 'hasOne', name, klass, debugName: `${this.toString()}#${name}`
     });
 
-    checkOwnerOpts.call(this, desc);
-
     if (desc.owner) {
       if (!this.prototype.hasOwnProperty('__deps__')) {
         this.prototype.__deps__ = Object.create(this.prototype.__deps__);
@@ -349,8 +335,6 @@ var Model = BasisObject.extend(function() {
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
       type: 'hasMany', name, klass, singular: pluralize(name, 1), debugName: `${this.toString()}#${name}`
     });
-
-    checkOwnerOpts.call(this, desc);
 
     if (desc.owner) {
       if (!this.prototype.hasOwnProperty('__deps__')) {
@@ -731,18 +715,22 @@ var Model = BasisObject.extend(function() {
     get: function() {
       if (this.hasOwnChanges) { return true; }
 
-      for (let name in this.associations) {
-        if (!this.associations[name].owner) { continue; }
+      var r = false;
 
-        if (this.associations[name].type === 'hasOne') {
-          if (this[name] && this[name].hasChanges) { return true; }
-        }
-        else if (this.associations[name].type === 'hasMany') {
-          if (this[name].some((m) => m.hasChanges)) { return true; }
-        }
-      }
+      util.detectRecursion(this, function() {
+        for (let name in this.associations) {
+          if (!this.associations[name].owner) { continue; }
 
-      return false;
+          if (this.associations[name].type === 'hasOne') {
+            if (this[name] && this[name].hasChanges) { r = true; }
+          }
+          else if (this.associations[name].type === 'hasMany') {
+            if (this[name].some((m) => m.hasChanges)) { r = true; }
+          }
+        }
+      }.bind(this));
+
+      return r;
     }
   });
 
@@ -767,18 +755,22 @@ var Model = BasisObject.extend(function() {
     get: function() {
       if (this.hasOwnErrors) { return true; }
 
-      for (let name in this.associations) {
-        if (!this.associations[name].owner) { continue; }
+      var r = false;
 
-        if (this.associations[name].type === 'hasOne') {
-          if (this[name] && this[name].hasErrors) { return true; }
-        }
-        else if (this.associations[name].type === 'hasMany') {
-          if (this[name].some((m) => m.hasErrors)) { return true; }
-        }
-      }
+      util.detectRecursion(this, function() {
+        for (let name in this.associations) {
+          if (!this.associations[name].owner) { continue; }
 
-      return false;
+          if (this.associations[name].type === 'hasOne') {
+            if (this[name] && this[name].hasErrors) { r = true; }
+          }
+          else if (this.associations[name].type === 'hasMany') {
+            if (this[name].some((m) => m.hasErrors)) { r = true; }
+          }
+        }
+      }.bind(this));
+
+      return r;
     }
   });
 

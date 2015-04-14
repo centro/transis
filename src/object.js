@@ -1,3 +1,5 @@
+import * as util from "./util";
+
 var objectId = 0, changedObjects = {}, delayCallbacks = [], flushTimer;
 
 function BasisObject() {
@@ -26,7 +28,9 @@ function didChange(object, name) {
 
   if (object.__proxies__ && name.indexOf('.') === -1) {
     for (let k in object.__proxies__) {
-      didChange(object.__proxies__[k].object, `${object.__proxies__[k].name}.${name}`);
+      util.detectRecursion(object, function() {
+        didChange(object.__proxies__[k].object, `${object.__proxies__[k].name}.${name}`);
+      });
     }
   }
 }

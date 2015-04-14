@@ -1,5 +1,9 @@
 "use strict";
 
+var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+
+var util = _interopRequireWildcard(require("./util"));
+
 var objectId = 0,
     changedObjects = {},
     delayCallbacks = [],
@@ -31,7 +35,11 @@ function didChange(object, name) {
 
   if (object.__proxies__ && name.indexOf(".") === -1) {
     for (var k in object.__proxies__) {
-      didChange(object.__proxies__[k].object, "" + object.__proxies__[k].name + "." + name);
+      (function (k) {
+        util.detectRecursion(object, function () {
+          didChange(object.__proxies__[k].object, "" + object.__proxies__[k].name + "." + name);
+        });
+      })(k);
     }
   }
 }

@@ -119,7 +119,7 @@ BasisArray.from = function (a) {
   //
   // Returns `true` if the arrays are equal and `false` otherwise.
   this.prototype.eq = function (other) {
-    return util.eq(this, other);
+    return util.arrayEq(this, other);
   };
 
   // Internal: Performs the actual splice. This method is called by `Array#splice` and is always

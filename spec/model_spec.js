@@ -64,6 +64,17 @@ describe('Model', function () {
     this.attr('rate', 'number');
   });
 
+  var CircularA = Model.extend('CircularA', function() {
+    this.attr('name', 'string');
+    this.hasMany('bs', 'CircularB', {inverse: 'as', owner: true});
+  });
+
+  var CircularB = Model.extend('CircularB', function() {
+    this.attr('name', 'string');
+    this.hasMany('as', 'CircularA', {inverse: 'bs', owner: true});
+  });
+
+
   beforeEach(function() {
     BasicModel.mapper = TestMapper;
   });
@@ -278,20 +289,6 @@ describe('Model', function () {
         expect(b.foos).toEqual(A());
       });
     });
-
-    describe('with the owner option and an inverse that also has the owner option', function() {
-      Model.extend('Foo', function() {
-        this.hasOne('bar', 'Bar', {inverse: 'foo', owner: true});
-      });
-
-      it('should throw an exception', function() {
-        expect(function() {
-          Model.extend('Bar', function() {
-            this.hasOne('foo', 'Foo', {inverse: 'bar', owner: true});
-          });
-        }).toThrow(new Error('Bar.foo: both sides of the association are marked as owner'));
-      });
-    });
   });
 
   describe('.hasMany', function() {
@@ -491,20 +488,6 @@ describe('Model', function () {
         expect(f.bars).toEqual(A());
         expect(b1.foos).toEqual(A());
         expect(b2.foos).toEqual(A());
-      });
-    });
-
-    describe('with the owner option and an inverse that also has the owner option', function() {
-      Model.extend('Foo', function() {
-        this.hasOne('bar', 'Bar', {inverse: 'foos', owner: true});
-      });
-
-      it('should throw an exception', function() {
-        expect(function() {
-          Model.extend('Bar', function() {
-            this.hasMany('foos', 'Foo', {inverse: 'bar', owner: true});
-          });
-        }).toThrow(new Error('Bar.foos: both sides of the association are marked as owner'));
       });
     });
   });
@@ -2149,6 +2132,27 @@ describe('Model', function () {
         expect(this.invoice.hasChanges).toBe(false);
       });
 
+      describe('with with circular owner associations', function() {
+        beforeEach(function() {
+          this.a = CircularA.load({id: 1, name: 'a1', bs: [{id: 2, name: 'b1'}]});
+          this.b = this.a.bs.first;
+
+          // FIXME
+          this.b._clearChanges();
+        });
+
+        it('returns false when neither side has changes', function() {
+          expect(this.a.hasChanges).toBe(false);
+          expect(this.b.hasChanges).toBe(false);
+        });
+
+        it('returns true for both sides when either has an error', function() {
+          this.a.name = 'a2';
+          expect(this.a.hasChanges).toBe(true);
+          expect(this.b.hasChanges).toBe(true);
+        });
+      });
+
       describe('observers', function() {
         beforeEach(function() {
           this.spy = jasmine.createSpy();
@@ -2373,6 +2377,24 @@ describe('Model', function () {
         expect(this.invoice.hasErrors).toBe(false);
         this.invoice.company.addError('name', 'abc');
         expect(this.invoice.hasErrors).toBe(false);
+      });
+
+      describe('with with circular owner associations', function() {
+        beforeEach(function() {
+          this.a = CircularA.load({id: 1, name: 'a1', bs: [{id: 2, name: 'b1'}]});
+          this.b = this.a.bs.first;
+        });
+
+        it('returns false when neither side has errors', function() {
+          expect(this.a.hasErrors).toBe(false);
+          expect(this.b.hasErrors).toBe(false);
+        });
+
+        it('returns true for both sides when either has an error', function() {
+          this.a.addError('name', 'foo');
+          expect(this.a.hasErrors).toBe(true);
+          expect(this.b.hasErrors).toBe(true);
+        });
       });
 
       describe('observers', function() {

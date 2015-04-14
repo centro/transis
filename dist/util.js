@@ -1,7 +1,5 @@
 "use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
 // Internal: Used to detect cases of recursion on the same pair of objects. Returns `true` if the
 // given objects have already been seen. Otherwise the given function is called and `false` is
 // returned.
@@ -43,6 +41,22 @@ exports.type = type;
 // Returns `true` if the objects are equal and `false` otherwise.
 exports.eq = eq;
 
+// Public: Performs a a deep array equality test.
+//
+// a - An Array object.
+// b - An Array object.
+//
+// Returns `true` if the objects are equal and `false` otherwise.
+exports.arrayEq = arrayEq;
+
+// Public: Performs a a deep object equality test.
+//
+// a - Any object.
+// b - Any object.
+//
+// Returns `true` if the objects are equal and `false` otherwise.
+exports.objectEq = objectEq;
+
 // Public: Converts the given string to CamelCase.
 exports.camelize = camelize;
 
@@ -51,9 +65,6 @@ exports.underscore = underscore;
 
 // Public: Capitalizes the first letter of the given string.
 exports.capitalize = capitalize;
-
-var BasisObject = _interopRequire(require("./object"));
-
 var toString = Object.prototype.toString;
 
 var seenObjects = [];
@@ -155,7 +166,7 @@ function unmark(o1, o2) {
 
   return "unknown";
 };function eq(a, b) {
-  var atype, btype, akeys, bkeys, r;
+  var atype, btype;
 
   // identical objects are equal
   if (a === b) {
@@ -163,7 +174,7 @@ function unmark(o1, o2) {
   }
 
   // if the first argument is a Basis.Object, delegate to its `eq` method
-  if (a instanceof BasisObject) {
+  if (a && a.objectId && typeof a.eq === "function") {
     return a.eq(b);
   }
 
@@ -184,51 +195,58 @@ function unmark(o1, o2) {
     case "regexp":
       return a.source === b.source && a.global === b.global && a.multiline === b.multiline && a.ignoreCase === b.ignoreCase;
     case "array":
-      if (a.length !== b.length) {
-        return false;
-      }
-
-      r = true;
-
-      detectRecursion(a, b, function () {
-        var i, len;
-
-        for (i = 0, len = a.length; i < len; i++) {
-          if (!eq(a[i], b[i])) {
-            r = false;break;
-          }
-        }
-      });
-
-      return r;
+      return arrayEq(a, b);
     case "object":
-      akeys = Object.keys(a);
-      bkeys = Object.keys(b);
-
-      if (akeys.length !== bkeys.length) {
-        return false;
-      }
-
-      r = true;
-
-      detectRecursion(a, b, function () {
-        var i, len, key;
-
-        for (i = 0, len = akeys.length; i < len; i++) {
-          key = akeys[i];
-          if (!b.hasOwnProperty(key)) {
-            r = false;break;
-          }
-          if (!eq(a[key], b[key])) {
-            r = false;break;
-          }
-        }
-      });
-
-      return r;
+      return objectEq(a, b);
     default:
       return false;
   }
+}function arrayEq(a, b) {
+  var r;
+
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  r = true;
+
+  detectRecursion(a, b, function () {
+    var i, len;
+
+    for (i = 0, len = a.length; i < len; i++) {
+      if (!eq(a[i], b[i])) {
+        r = false;break;
+      }
+    }
+  });
+
+  return r;
+}function objectEq(a, b) {
+  var akeys = Object.keys(a),
+      bkeys = Object.keys(b),
+      r;
+
+  if (akeys.length !== bkeys.length) {
+    return false;
+  }
+
+  r = true;
+
+  detectRecursion(a, b, function () {
+    var i, len, key;
+
+    for (i = 0, len = akeys.length; i < len; i++) {
+      key = akeys[i];
+      if (!b.hasOwnProperty(key)) {
+        r = false;break;
+      }
+      if (!eq(a[key], b[key])) {
+        r = false;break;
+      }
+    }
+  });
+
+  return r;
 }function camelize(s) {
   return typeof s === "string" ? s.replace(/(?:[-_])(\w)/g, function (_, c) {
     return c ? c.toUpperCase() : "";
