@@ -26,7 +26,7 @@ function resolve(name, raise = true) {
   var klass = (typeof name === 'function') ? name : subclasses[name];
 
   if (!klass && raise) {
-    throw new Error(`${Basis.Model}.resolve: could not resolve subclass: \`${name}\``);
+    throw new Error(`Basis.Model.resolve: could not resolve subclass: \`${name}\``);
   }
 
   return klass;
