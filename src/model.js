@@ -6,7 +6,7 @@ import Validations from "./validations";
 import * as attrs from "./attrs";
 import * as util from "./util";
 
-var registeredAttrs = {}, subclasses = {};
+var registeredAttrs = {}, subclasses = {}, loads = [];
 
 const NEW     = 'new';
 const EMPTY   = 'empty';
@@ -60,7 +60,7 @@ function hasManySplice(i, n, added) {
     added.forEach(function(model) { model._inverseAdded(inverse, owner); }, this);
   }
 
-  if (desc.owner) {
+  if (desc.owner && !loads.length) {
     changes = owner.changes[name] = owner.changes[name] || {added: [], removed: []};
 
     removed.forEach((m) => {
@@ -389,6 +389,8 @@ var Model = BasisObject.extend(function() {
       throw new Error(`${this}.load: an \`id\` attribute is required`);
     }
 
+    loads.push(true);
+
     attrs = Object.assign({}, attrs);
     model = IdMap.get(this, id) || new this;
     delete attrs.id;
@@ -448,6 +450,8 @@ var Model = BasisObject.extend(function() {
     model.sourceState = LOADED;
     model._clearChanges();
     model._clearErrors();
+
+    loads.pop();
 
     return model;
   };
@@ -1144,6 +1148,7 @@ var Model = BasisObject.extend(function() {
 
   // Internal: Sets the old value for the changed property of the given name.
   this.prototype._setChange = function(name, oldValue) {
+    if (loads.length) { return; }
     this.changes[name] = oldValue;
     this.didChange('changes');
   };

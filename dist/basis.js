@@ -986,7 +986,8 @@ this["Basis"] =
 	var util = _interopRequireWildcard(__webpack_require__(5));
 
 	var registeredAttrs = {},
-	    subclasses = {};
+	    subclasses = {},
+	    loads = [];
 
 	var NEW = "new";
 	var EMPTY = "empty";
@@ -1053,7 +1054,7 @@ this["Basis"] =
 	    }, this);
 	  }
 
-	  if (desc.owner) {
+	  if (desc.owner && !loads.length) {
 	    changes = owner.changes[name] = owner.changes[name] || { added: [], removed: [] };
 
 	    removed.forEach(function (m) {
@@ -1431,6 +1432,8 @@ this["Basis"] =
 	      throw new Error("" + this + ".load: an `id` attribute is required");
 	    }
 
+	    loads.push(true);
+
 	    attrs = Object.assign({}, attrs);
 	    model = IdMap.get(this, id) || new this();
 	    delete attrs.id;
@@ -1495,6 +1498,8 @@ this["Basis"] =
 	    model.sourceState = LOADED;
 	    model._clearChanges();
 	    model._clearErrors();
+
+	    loads.pop();
 
 	    return model;
 	  };
@@ -2305,6 +2310,9 @@ this["Basis"] =
 
 	  // Internal: Sets the old value for the changed property of the given name.
 	  this.prototype._setChange = function (name, oldValue) {
+	    if (loads.length) {
+	      return;
+	    }
 	    this.changes[name] = oldValue;
 	    this.didChange("changes");
 	  };

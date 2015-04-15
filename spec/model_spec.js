@@ -765,6 +765,28 @@ describe('Model', function () {
         expect(p.tags.map((t) => t.id)).toEqual([48, 49, 50]);
       });
     });
+
+    it('returns an instance with no changes', function() {
+      var t = Tag.load({id: 49, name: 'foobar'});
+      expect(t.hasChanges).toBe(false);
+    });
+
+    it('does not mark changes for associated models', function() {
+      var p  = Post.load({
+        id: 157, title: 'the title', body: 'the body',
+        tags: [{id: 50, name: 'foo'}, 50]
+      });
+
+      expect(p.hasChanges).toBe(false);
+      expect(p.tags.first.hasChanges).toBe(false);
+    });
+
+    it('does not mark changes on many-to-many associations', function() {
+      var a = CircularA.load({id: 99, bs: [{id: 100}]});
+
+      expect(a.hasChanges).toBe(false);
+      expect(a.bs.first.hasChanges).toBe(false);
+    });
   });
 
   describe('.loadAll', function() {
