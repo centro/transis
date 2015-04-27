@@ -81,6 +81,10 @@ this["Basis"] =
 
 	"use strict";
 
+	var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+
+	var util = _interopRequireWildcard(__webpack_require__(5));
+
 	var objectId = 0,
 	    changedObjects = {},
 	    delayCallbacks = [],
@@ -112,7 +116,11 @@ this["Basis"] =
 
 	  if (object.__proxies__ && name.indexOf(".") === -1) {
 	    for (var k in object.__proxies__) {
-	      didChange(object.__proxies__[k].object, "" + object.__proxies__[k].name + "." + name);
+	      (function (k) {
+	        util.detectRecursion(object, function () {
+	          didChange(object.__proxies__[k].object, "" + object.__proxies__[k].name + "." + name);
+	        });
+	      })(k);
 	    }
 	  }
 	}
@@ -637,7 +645,7 @@ this["Basis"] =
 	  //
 	  // Returns `true` if the arrays are equal and `false` otherwise.
 	  this.prototype.eq = function (other) {
-	    return util.eq(this, other);
+	    return util.arrayEq(this, other);
 	  };
 
 	  // Internal: Performs the actual splice. This method is called by `Array#splice` and is always
@@ -1019,16 +1027,6 @@ this["Basis"] =
 	  }
 	}
 
-	// Internal: Checks that the given association descriptor does not have both sides of the
-	// association marked as the owner.
-	function checkOwnerOpts(desc) {
-	  var klass, inv;
-
-	  if (desc.owner && desc.inverse && (klass = resolve(desc.klass, false)) && klass.prototype.associations && (inv = klass.prototype.associations[desc.inverse]) && inv.owner) {
-	    throw new Error("" + this + "." + desc.name + ": both sides of the association are marked as owner");
-	  }
-	}
-
 	// Internal: The overridden `_splice` method used on `hasMany` arrays. This method syncs changes to
 	// the array to the inverse side of the association and maintains a list of changes made.
 	function hasManySplice(i, n, added) {
@@ -1319,8 +1317,6 @@ this["Basis"] =
 	      type: "hasOne", name: name, klass: klass, debugName: "" + this.toString() + "#" + name
 	    });
 
-	    checkOwnerOpts.call(this, desc);
-
 	    if (desc.owner) {
 	      if (!this.prototype.hasOwnProperty("__deps__")) {
 	        this.prototype.__deps__ = Object.create(this.prototype.__deps__);
@@ -1376,8 +1372,6 @@ this["Basis"] =
 	    this.prototype.associations[name] = desc = Object.assign({}, opts, {
 	      type: "hasMany", name: name, klass: klass, singular: pluralize(name, 1), debugName: "" + this.toString() + "#" + name
 	    });
-
-	    checkOwnerOpts.call(this, desc);
 
 	    if (desc.owner) {
 	      if (!this.prototype.hasOwnProperty("__deps__")) {
@@ -1813,25 +1807,29 @@ this["Basis"] =
 	        return true;
 	      }
 
-	      for (var _name in this.associations) {
-	        if (!this.associations[_name].owner) {
-	          continue;
-	        }
+	      var r = false;
 
-	        if (this.associations[_name].type === "hasOne") {
-	          if (this[_name] && this[_name].hasChanges) {
-	            return true;
+	      util.detectRecursion(this, (function () {
+	        for (var _name in this.associations) {
+	          if (!this.associations[_name].owner) {
+	            continue;
 	          }
-	        } else if (this.associations[_name].type === "hasMany") {
-	          if (this[_name].some(function (m) {
-	            return m.hasChanges;
-	          })) {
-	            return true;
+
+	          if (this.associations[_name].type === "hasOne") {
+	            if (this[_name] && this[_name].hasChanges) {
+	              r = true;
+	            }
+	          } else if (this.associations[_name].type === "hasMany") {
+	            if (this[_name].some(function (m) {
+	              return m.hasChanges;
+	            })) {
+	              r = true;
+	            }
 	          }
 	        }
-	      }
+	      }).bind(this));
 
-	      return false;
+	      return r;
 	    }
 	  });
 
@@ -1862,25 +1860,29 @@ this["Basis"] =
 	        return true;
 	      }
 
-	      for (var _name in this.associations) {
-	        if (!this.associations[_name].owner) {
-	          continue;
-	        }
+	      var r = false;
 
-	        if (this.associations[_name].type === "hasOne") {
-	          if (this[_name] && this[_name].hasErrors) {
-	            return true;
+	      util.detectRecursion(this, (function () {
+	        for (var _name in this.associations) {
+	          if (!this.associations[_name].owner) {
+	            continue;
 	          }
-	        } else if (this.associations[_name].type === "hasMany") {
-	          if (this[_name].some(function (m) {
-	            return m.hasErrors;
-	          })) {
-	            return true;
+
+	          if (this.associations[_name].type === "hasOne") {
+	            if (this[_name] && this[_name].hasErrors) {
+	              r = true;
+	            }
+	          } else if (this.associations[_name].type === "hasMany") {
+	            if (this[_name].some(function (m) {
+	              return m.hasErrors;
+	            })) {
+	              r = true;
+	            }
 	          }
 	        }
-	      }
+	      }).bind(this));
 
-	      return false;
+	      return r;
 	    }
 	  });
 
@@ -2487,8 +2489,6 @@ this["Basis"] =
 
 	"use strict";
 
-	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
 	// Internal: Used to detect cases of recursion on the same pair of objects. Returns `true` if the
 	// given objects have already been seen. Otherwise the given function is called and `false` is
 	// returned.
@@ -2530,6 +2530,22 @@ this["Basis"] =
 	// Returns `true` if the objects are equal and `false` otherwise.
 	exports.eq = eq;
 
+	// Public: Performs a a deep array equality test.
+	//
+	// a - An Array object.
+	// b - An Array object.
+	//
+	// Returns `true` if the objects are equal and `false` otherwise.
+	exports.arrayEq = arrayEq;
+
+	// Public: Performs a a deep object equality test.
+	//
+	// a - Any object.
+	// b - Any object.
+	//
+	// Returns `true` if the objects are equal and `false` otherwise.
+	exports.objectEq = objectEq;
+
 	// Public: Converts the given string to CamelCase.
 	exports.camelize = camelize;
 
@@ -2538,9 +2554,6 @@ this["Basis"] =
 
 	// Public: Capitalizes the first letter of the given string.
 	exports.capitalize = capitalize;
-
-	var BasisObject = _interopRequire(__webpack_require__(1));
-
 	var toString = Object.prototype.toString;
 
 	var seenObjects = [];
@@ -2649,7 +2662,7 @@ this["Basis"] =
 
 	;
 	function eq(a, b) {
-	  var atype, btype, akeys, bkeys, r;
+	  var atype, btype;
 
 	  // identical objects are equal
 	  if (a === b) {
@@ -2657,7 +2670,7 @@ this["Basis"] =
 	  }
 
 	  // if the first argument is a Basis.Object, delegate to its `eq` method
-	  if (a instanceof BasisObject) {
+	  if (a && a.objectId && typeof a.eq === "function") {
 	    return a.eq(b);
 	  }
 
@@ -2678,51 +2691,62 @@ this["Basis"] =
 	    case "regexp":
 	      return a.source === b.source && a.global === b.global && a.multiline === b.multiline && a.ignoreCase === b.ignoreCase;
 	    case "array":
-	      if (a.length !== b.length) {
-	        return false;
-	      }
-
-	      r = true;
-
-	      detectRecursion(a, b, function () {
-	        var i, len;
-
-	        for (i = 0, len = a.length; i < len; i++) {
-	          if (!eq(a[i], b[i])) {
-	            r = false;break;
-	          }
-	        }
-	      });
-
-	      return r;
+	      return arrayEq(a, b);
 	    case "object":
-	      akeys = Object.keys(a);
-	      bkeys = Object.keys(b);
-
-	      if (akeys.length !== bkeys.length) {
-	        return false;
-	      }
-
-	      r = true;
-
-	      detectRecursion(a, b, function () {
-	        var i, len, key;
-
-	        for (i = 0, len = akeys.length; i < len; i++) {
-	          key = akeys[i];
-	          if (!b.hasOwnProperty(key)) {
-	            r = false;break;
-	          }
-	          if (!eq(a[key], b[key])) {
-	            r = false;break;
-	          }
-	        }
-	      });
-
-	      return r;
+	      return objectEq(a, b);
 	    default:
 	      return false;
 	  }
+	}
+
+	function arrayEq(a, b) {
+	  var r;
+
+	  if (a.length !== b.length) {
+	    return false;
+	  }
+
+	  r = true;
+
+	  detectRecursion(a, b, function () {
+	    var i, len;
+
+	    for (i = 0, len = a.length; i < len; i++) {
+	      if (!eq(a[i], b[i])) {
+	        r = false;break;
+	      }
+	    }
+	  });
+
+	  return r;
+	}
+
+	function objectEq(a, b) {
+	  var akeys = Object.keys(a),
+	      bkeys = Object.keys(b),
+	      r;
+
+	  if (akeys.length !== bkeys.length) {
+	    return false;
+	  }
+
+	  r = true;
+
+	  detectRecursion(a, b, function () {
+	    var i, len, key;
+
+	    for (i = 0, len = akeys.length; i < len; i++) {
+	      key = akeys[i];
+	      if (!b.hasOwnProperty(key)) {
+	        r = false;break;
+	      }
+	      if (!eq(a[key], b[key])) {
+	        r = false;break;
+	      }
+	    }
+	  });
+
+	  return r;
 	}
 
 	function camelize(s) {

@@ -1,5 +1,3 @@
-import BasisObject from "./object";
-
 var toString = Object.prototype.toString;
 
 var seenObjects = [];
@@ -127,13 +125,13 @@ export function type(o) {
 //
 // Returns `true` if the objects are equal and `false` otherwise.
 export function eq(a, b) {
-  var atype, btype, akeys, bkeys, r;
+  var atype, btype;
 
   // identical objects are equal
   if (a === b) { return true; }
 
   // if the first argument is a Basis.Object, delegate to its `eq` method
-  if (a instanceof BasisObject) { return a.eq(b); }
+  if (a && a.objectId && typeof a.eq === 'function') { return a.eq(b); }
 
   atype = type(a);
   btype = type(b);
@@ -153,41 +151,62 @@ export function eq(a, b) {
            a.multiline  === b.multiline &&
            a.ignoreCase === b.ignoreCase;
   case 'array':
-    if (a.length !== b.length) { return false; }
-
-    r = true;
-
-    detectRecursion(a, b, function() {
-      var i, len;
-
-      for (i = 0, len = a.length; i < len; i++) {
-        if (!eq(a[i], b[i])) { r = false; break; }
-      }
-    });
-
-    return r;
+    return arrayEq(a, b);
   case 'object':
-    akeys = Object.keys(a);
-    bkeys = Object.keys(b);
-
-    if (akeys.length !== bkeys.length) { return false; }
-
-    r = true;
-
-    detectRecursion(a, b, function() {
-      var i, len, key;
-
-      for (i = 0, len = akeys.length; i < len; i++) {
-        key = akeys[i];
-        if (!b.hasOwnProperty(key)) { r = false; break; }
-        if (!eq(a[key], b[key])) { r = false; break; }
-      }
-    });
-
-    return r;
+    return objectEq(a, b);
   default:
     return false;
   }
+}
+
+// Public: Performs a a deep array equality test.
+//
+// a - An Array object.
+// b - An Array object.
+//
+// Returns `true` if the objects are equal and `false` otherwise.
+export function arrayEq(a, b) {
+  var r;
+
+  if (a.length !== b.length) { return false; }
+
+  r = true;
+
+  detectRecursion(a, b, function() {
+    var i, len;
+
+    for (i = 0, len = a.length; i < len; i++) {
+      if (!eq(a[i], b[i])) { r = false; break; }
+    }
+  });
+
+  return r;
+}
+
+// Public: Performs a a deep object equality test.
+//
+// a - Any object.
+// b - Any object.
+//
+// Returns `true` if the objects are equal and `false` otherwise.
+export function objectEq(a, b) {
+  var akeys = Object.keys(a), bkeys = Object.keys(b), r;
+
+  if (akeys.length !== bkeys.length) { return false; }
+
+  r = true;
+
+  detectRecursion(a, b, function() {
+    var i, len, key;
+
+    for (i = 0, len = akeys.length; i < len; i++) {
+      key = akeys[i];
+      if (!b.hasOwnProperty(key)) { r = false; break; }
+      if (!eq(a[key], b[key])) { r = false; break; }
+    }
+  });
+
+  return r;
 }
 
 // Public: Converts the given string to CamelCase.
