@@ -642,6 +642,11 @@ var Model = BasisObject.extend(function() {
       throw new Error(`${this}._callMapper: mapper's \`${method}\` method did not return a Promise`);
     }
 
+    promise.catch((error) => {
+      console.warn(`${this}#_callMapper(${method}): promise rejection:`, error);
+      return Promise.reject(error);
+    });
+
     return promise;
   };
 

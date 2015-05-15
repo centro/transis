@@ -12,6 +12,7 @@ var BasisObject = _interopRequire(require("../object"));
 
 beforeEach(function () {
   spyOn(console, "error");
+  spyOn(console, "warn");
   jasmine.addCustomEqualityTester(function (a, b) {
     return util.eq(a, b);
   });

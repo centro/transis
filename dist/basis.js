@@ -1703,6 +1703,8 @@ this["Basis"] =
 	  // Throws `Error` when the mapper does not implement the given method.
 	  // Throws `Error` when the mapper does not return a Thennable object.
 	  this._callMapper = function (method, args) {
+	    var _this = this;
+
 	    var promise;
 
 	    if (!this.mapper) {
@@ -1718,6 +1720,11 @@ this["Basis"] =
 	    if (!promise || typeof promise.then !== "function") {
 	      throw new Error("" + this + "._callMapper: mapper's `" + method + "` method did not return a Promise");
 	    }
+
+	    promise["catch"](function (error) {
+	      console.warn("" + _this + "#_callMapper(" + method + "): promise rejection:", error);
+	      return Promise.reject(error);
+	    });
 
 	    return promise;
 	  };
