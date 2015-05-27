@@ -432,7 +432,11 @@ var Model = BasisObject.extend(function() {
       let klass = resolve(associations[name].klass);
       let data = associated[name];
 
-      if (!data) { continue; }
+      // clear association
+      if (!data) {
+        model[name] = null;
+        continue;
+      }
 
       if (associations[name].type === 'hasOne') {
         let other = typeof data === 'object' ? klass.load(data) : klass.local(data);
