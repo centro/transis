@@ -641,16 +641,26 @@ describe("Model", function () {
     });
 
     describe("given attributes containing a nested hasOne association", function () {
-      it("loads the nested model and hooks up the association", function () {
-        var p = Post.load({
+      beforeEach(function () {
+        this.p = Post.load({
           id: 184, title: "the title", body: "the body",
           author: { id: 9, first: "Homer", last: "Simpson" }
         });
+      });
 
-        expect(p.author).toBe(Author.get(9));
-        expect(p.author.id).toBe(9);
-        expect(p.author.first).toBe("Homer");
-        expect(p.author.last).toBe("Simpson");
+      it("loads the nested model and hooks up the association", function () {
+        expect(this.p.author).toBe(Author.get(9));
+        expect(this.p.author.id).toBe(9);
+        expect(this.p.author.first).toBe("Homer");
+        expect(this.p.author.last).toBe("Simpson");
+      });
+
+      it("clears the existing association when given a null value", function () {
+        Post.load({
+          id: 184, title: "the title", body: "the body",
+          author: null
+        });
+        expect(this.p.author).toBe(null);
       });
     });
 

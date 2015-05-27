@@ -507,7 +507,9 @@ var Model = BasisObject.extend(function () {
         var klass = resolve(associations[name].klass);
         var data = associated[name];
 
+        // clear association
         if (!data) {
+          model[name] = null;
           return "continue";
         }
 
