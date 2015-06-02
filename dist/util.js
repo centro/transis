@@ -11,6 +11,7 @@ exports.objectEq = objectEq;
 exports.camelize = camelize;
 exports.underscore = underscore;
 exports.capitalize = capitalize;
+exports.get = get;
 var toString = Object.prototype.toString;
 
 var seenObjects = [];
@@ -279,4 +280,42 @@ function underscore(s) {
 
 function capitalize(s) {
   return typeof s === 'string' && s.length ? s[0].toUpperCase() + s.slice(1) : s;
+}
+
+// Public: Resolves a path into a value. The path must be relative to the given object.
+//
+// o    - The object to resolve the path from.
+// path - A string containing the dot separated path to resolve.
+//
+// Returns the resolved value or `undefined` if some segment of the path does not exist.
+
+function get(_x, _x2) {
+  var _again = true;
+
+  _function: while (_again) {
+    var o = _x,
+        path = _x2;
+    head = tail = undefined;
+    _again = false;
+
+    var head, tail;
+
+    path = typeof path === 'string' ? path.split('.') : path;
+    head = path[0];
+    tail = path.slice(1);
+    o = o[head];
+
+    if (!tail.length) {
+      return o;
+    } else {
+      if (o) {
+        _x = o;
+        _x2 = tail;
+        _again = true;
+        continue _function;
+      } else {
+        return undefined;
+      }
+    }
+  }
 }

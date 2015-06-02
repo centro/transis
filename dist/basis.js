@@ -432,6 +432,10 @@ this["Basis"] =
 	  return this === other;
 	};
 
+	BasisObject.prototype.get = function (path) {
+	  return util.get(this, path);
+	};
+
 	// Internal: Returns the current value of the given property or the default value if it is not
 	// defined.
 	//
@@ -2577,6 +2581,14 @@ this["Basis"] =
 
 	// Public: Capitalizes the first letter of the given string.
 	exports.capitalize = capitalize;
+
+	// Public: Resolves a path into a value. The path must be relative to the given object.
+	//
+	// o    - The object to resolve the path from.
+	// path - A string containing the dot separated path to resolve.
+	//
+	// Returns the resolved value or `undefined` if some segment of the path does not exist.
+	exports.get = get;
 	var toString = Object.prototype.toString;
 
 	var seenObjects = [];
@@ -2784,6 +2796,37 @@ this["Basis"] =
 
 	function capitalize(s) {
 	  return typeof s === "string" && s.length ? s[0].toUpperCase() + s.slice(1) : s;
+	}
+
+	function get(_x, _x2) {
+	  var _again = true;
+
+	  _function: while (_again) {
+	    _again = false;
+	    var o = _x,
+	        path = _x2;
+	    head = tail = undefined;
+
+	    var head, tail;
+
+	    path = typeof path === "string" ? path.split(".") : path;
+	    head = path[0];
+	    tail = path.slice(1);
+	    o = o[head];
+
+	    if (!tail.length) {
+	      return o;
+	    } else {
+	      if (o) {
+	        _x = o;
+	        _x2 = tail;
+	        _again = true;
+	        continue _function;
+	      } else {
+	        return undefined;
+	      }
+	    }
+	  }
 	}
 
 	Object.defineProperty(exports, "__esModule", {

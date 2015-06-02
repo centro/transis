@@ -413,3 +413,18 @@ describe('capitalize', function() {
     expect(util.capitalize('')).toBe('');
   });
 });
+
+describe('get', function() {
+  it('returns the value at each path relative to the given object', function() {
+    var x = {foo: 1, bar: {baz: 2}};
+
+    expect(util.get(x, 'foo')).toBe(1);
+    expect(util.get(x, 'bar')).toBe(x.bar);
+    expect(util.get(x, 'bar.baz')).toBe(2);
+  });
+
+  it('returns undefined when a segment of the path does not exist', function() {
+    var a = {b: {}};
+    expect(util.get(a, 'b.c.d.e')).toBeUndefined();
+  });
+});

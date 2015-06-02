@@ -225,3 +225,21 @@ export function underscore(s) {
 export function capitalize(s) {
   return typeof s === 'string' && s.length ? s[0].toUpperCase() + s.slice(1) : s;
 }
+
+// Public: Resolves a path into a value. The path must be relative to the given object.
+//
+// o    - The object to resolve the path from.
+// path - A string containing the dot separated path to resolve.
+//
+// Returns the resolved value or `undefined` if some segment of the path does not exist.
+export function get(o, path) {
+  var head, tail;
+
+  path = typeof path === 'string' ? path.split('.') : path;
+  head = path[0];
+  tail = path.slice(1);
+  o    = o[head];
+
+  if (!tail.length) { return o; }
+  else { return o ? get(o, tail) : undefined; }
+}
