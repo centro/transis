@@ -1,69 +1,15 @@
-"use strict";
+'use strict';
 
-// Internal: Used to detect cases of recursion on the same pair of objects. Returns `true` if the
-// given objects have already been seen. Otherwise the given function is called and `false` is
-// returned.
-//
-// This function is used internally when traversing objects and arrays to avoid getting stuck in
-// infinite loops when circular objects are encountered. It should be wrapped around all recursive
-// function calls where a circular object may be encountered. See `Basis.eq` for an example.
-//
-// o1 - The first object to check for recursion.
-// o2 - The paired object to check for recursion (default: `undefined`).
-// f  - A function that make the recursive funciton call.
-//
-// Returns `true` if recursion on the given objects has been detected. If the given pair of objects
-//   has yet to be seen, calls `f` and returns `false`.
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
 exports.detectRecursion = detectRecursion;
-
-// Public: Returns a string indicating the type of the given object. This can be considered an
-// enhanced version of the javascript `typeof` operator.
-//
-// Examples
-//
-//   Basis.type([])       // => 'array'
-//   Basis.type({})       // => 'object'
-//   Basis.type(9)        // => 'number'
-//   Basis.type(/fo*/)    // => 'regexp'
-//   Basis.type(new Date) // => 'date'
-//
-// o - The object to get the type of.
-//
-// Returns a string indicating the object's type.
 exports.type = type;
-
-// Public: Performs an object equality test. If the first argument is a `Basis.Object` then it is
-// sent the `eq` method, otherwise custom equality code is run based on the object type.
-//
-// a - Any object.
-// b - Any object.
-//
-// Returns `true` if the objects are equal and `false` otherwise.
 exports.eq = eq;
-
-// Public: Performs a a deep array equality test.
-//
-// a - An Array object.
-// b - An Array object.
-//
-// Returns `true` if the objects are equal and `false` otherwise.
 exports.arrayEq = arrayEq;
-
-// Public: Performs a a deep object equality test.
-//
-// a - Any object.
-// b - Any object.
-//
-// Returns `true` if the objects are equal and `false` otherwise.
 exports.objectEq = objectEq;
-
-// Public: Converts the given string to CamelCase.
 exports.camelize = camelize;
-
-// Public: Converts the given string to under_score_case.
 exports.underscore = underscore;
-
-// Public: Capitalizes the first letter of the given string.
 exports.capitalize = capitalize;
 var toString = Object.prototype.toString;
 
@@ -114,7 +60,24 @@ function unmark(o1, o2) {
       return;
     }
   }
-}function detectRecursion(o1, o2, f) {
+}
+
+// Internal: Used to detect cases of recursion on the same pair of objects. Returns `true` if the
+// given objects have already been seen. Otherwise the given function is called and `false` is
+// returned.
+//
+// This function is used internally when traversing objects and arrays to avoid getting stuck in
+// infinite loops when circular objects are encountered. It should be wrapped around all recursive
+// function calls where a circular object may be encountered. See `Basis.eq` for an example.
+//
+// o1 - The first object to check for recursion.
+// o2 - The paired object to check for recursion (default: `undefined`).
+// f  - A function that make the recursive funciton call.
+//
+// Returns `true` if recursion on the given objects has been detected. If the given pair of objects
+//   has yet to be seen, calls `f` and returns `false`.
+
+function detectRecursion(o1, o2, f) {
   if (arguments.length === 2) {
     f = o2;o2 = undefined;
   }
@@ -130,42 +93,73 @@ function unmark(o1, o2) {
     }
     return false;
   }
-};function type(o) {
+}
+
+;
+
+// Public: Returns a string indicating the type of the given object. This can be considered an
+// enhanced version of the javascript `typeof` operator.
+//
+// Examples
+//
+//   Basis.type([])       // => 'array'
+//   Basis.type({})       // => 'object'
+//   Basis.type(9)        // => 'number'
+//   Basis.type(/fo*/)    // => 'regexp'
+//   Basis.type(new Date) // => 'date'
+//
+// o - The object to get the type of.
+//
+// Returns a string indicating the object's type.
+
+function type(o) {
   if (o === null) {
-    return "null";
+    return 'null';
   }
   if (o === undefined) {
-    return "undefined";
+    return 'undefined';
   }
 
   switch (toString.call(o)) {
-    case "[object Array]":
-      return "array";
-    case "[object Arguments]":
-      return "arguments";
-    case "[object Function]":
-      return "function";
-    case "[object String]":
-      return "string";
-    case "[object Number]":
-      return "number";
-    case "[object Boolean]":
-      return "boolean";
-    case "[object Date]":
-      return "date";
-    case "[object RegExp]":
-      return "regexp";
-    case "[object Object]":
-      if (o.hasOwnProperty("callee")) {
-        return "arguments";
+    case '[object Array]':
+      return 'array';
+    case '[object Arguments]':
+      return 'arguments';
+    case '[object Function]':
+      return 'function';
+    case '[object String]':
+      return 'string';
+    case '[object Number]':
+      return 'number';
+    case '[object Boolean]':
+      return 'boolean';
+    case '[object Date]':
+      return 'date';
+    case '[object RegExp]':
+      return 'regexp';
+    case '[object Object]':
+      if (o.hasOwnProperty('callee')) {
+        return 'arguments';
       } // ie fallback
       else {
-        return "object";
+        return 'object';
       }
   }
 
-  return "unknown";
-};function eq(a, b) {
+  return 'unknown';
+}
+
+;
+
+// Public: Performs an object equality test. If the first argument is a `Basis.Object` then it is
+// sent the `eq` method, otherwise custom equality code is run based on the object type.
+//
+// a - Any object.
+// b - Any object.
+//
+// Returns `true` if the objects are equal and `false` otherwise.
+
+function eq(a, b) {
   var atype, btype;
 
   // identical objects are equal
@@ -174,7 +168,7 @@ function unmark(o1, o2) {
   }
 
   // if the first argument is a Basis.Object, delegate to its `eq` method
-  if (a && a.objectId && typeof a.eq === "function") {
+  if (a && a.objectId && typeof a.eq === 'function') {
     return a.eq(b);
   }
 
@@ -187,21 +181,30 @@ function unmark(o1, o2) {
   }
 
   switch (atype) {
-    case "boolean":
-    case "string":
-    case "date":
-    case "number":
+    case 'boolean':
+    case 'string':
+    case 'date':
+    case 'number':
       return a.valueOf() === b.valueOf();
-    case "regexp":
+    case 'regexp':
       return a.source === b.source && a.global === b.global && a.multiline === b.multiline && a.ignoreCase === b.ignoreCase;
-    case "array":
+    case 'array':
       return arrayEq(a, b);
-    case "object":
+    case 'object':
       return objectEq(a, b);
     default:
       return false;
   }
-}function arrayEq(a, b) {
+}
+
+// Public: Performs a a deep array equality test.
+//
+// a - An Array object.
+// b - An Array object.
+//
+// Returns `true` if the objects are equal and `false` otherwise.
+
+function arrayEq(a, b) {
   var r;
 
   if (a.length !== b.length) {
@@ -221,7 +224,16 @@ function unmark(o1, o2) {
   });
 
   return r;
-}function objectEq(a, b) {
+}
+
+// Public: Performs a a deep object equality test.
+//
+// a - Any object.
+// b - Any object.
+//
+// Returns `true` if the objects are equal and `false` otherwise.
+
+function objectEq(a, b) {
   var akeys = Object.keys(a),
       bkeys = Object.keys(b),
       r;
@@ -247,15 +259,24 @@ function unmark(o1, o2) {
   });
 
   return r;
-}function camelize(s) {
-  return typeof s === "string" ? s.replace(/(?:[-_])(\w)/g, function (_, c) {
-    return c ? c.toUpperCase() : "";
-  }) : s;
-}function underscore(s) {
-  return typeof s === "string" ? s.replace(/([a-z\d])([A-Z]+)/g, "$1_$2").replace(/[-\s]+/g, "_").toLowerCase() : s;
-}function capitalize(s) {
-  return typeof s === "string" && s.length ? s[0].toUpperCase() + s.slice(1) : s;
 }
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+
+// Public: Converts the given string to CamelCase.
+
+function camelize(s) {
+  return typeof s === 'string' ? s.replace(/(?:[-_])(\w)/g, function (_, c) {
+    return c ? c.toUpperCase() : '';
+  }) : s;
+}
+
+// Public: Converts the given string to under_score_case.
+
+function underscore(s) {
+  return typeof s === 'string' ? s.replace(/([a-z\d])([A-Z]+)/g, '$1_$2').replace(/[-\s]+/g, '_').toLowerCase() : s;
+}
+
+// Public: Capitalizes the first letter of the given string.
+
+function capitalize(s) {
+  return typeof s === 'string' && s.length ? s[0].toUpperCase() + s.slice(1) : s;
+}

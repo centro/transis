@@ -1,29 +1,48 @@
 "use strict";
 
-var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
 
-var BasisObject = _interopRequire(require("./object"));
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var BasisArray = _interopRequire(require("./array"));
+var _object = require("./object");
 
-var Model = _interopRequire(require("./model"));
+var _object2 = _interopRequireDefault(_object);
 
-var react = _interopRequireWildcard(require("./react"));
+var _array = require("./array");
 
-var util = _interopRequireWildcard(require("./util"));
+var _array2 = _interopRequireDefault(_array);
 
-var parsers = _interopRequireWildcard(require("./parsers"));
+var _model = require("./model");
 
-var pluralize = _interopRequire(require("pluralize"));
+var _model2 = _interopRequireDefault(_model);
 
-module.exports = Object.assign({
-  Object: BasisObject,
-  Array: BasisArray,
-  A: BasisArray.of,
-  Model: Model,
-  pluralize: pluralize,
+var _react = require("./react");
+
+var react = _interopRequireWildcard(_react);
+
+var _util = require("./util");
+
+var util = _interopRequireWildcard(_util);
+
+var _parsers = require("./parsers");
+
+var parsers = _interopRequireWildcard(_parsers);
+
+var _pluralize = require("pluralize");
+
+var _pluralize2 = _interopRequireDefault(_pluralize);
+
+exports["default"] = Object.assign({
+  Object: _object2["default"],
+  Array: _array2["default"],
+  A: _array2["default"].of,
+  Model: _model2["default"],
+  pluralize: _pluralize2["default"],
   ReactPropsMixin: react.PropsMixin,
   ReactStateMixin: react.StateMixin
 }, util, parsers);
+module.exports = exports["default"];

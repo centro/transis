@@ -1,22 +1,40 @@
 "use strict";
 
-var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
 
-var pluralize = _interopRequire(require("pluralize"));
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var IdMap = _interopRequire(require("./id_map"));
+var _pluralize = require("pluralize");
 
-var BasisObject = _interopRequire(require("./object"));
+var _pluralize2 = _interopRequireDefault(_pluralize);
 
-var BasisArray = _interopRequire(require("./array"));
+var _id_map = require("./id_map");
 
-var Validations = _interopRequire(require("./validations"));
+var _id_map2 = _interopRequireDefault(_id_map);
 
-var attrs = _interopRequireWildcard(require("./attrs"));
+var _object = require("./object");
 
-var util = _interopRequireWildcard(require("./util"));
+var _object2 = _interopRequireDefault(_object);
+
+var _array = require("./array");
+
+var _array2 = _interopRequireDefault(_array);
+
+var _validations = require("./validations");
+
+var _validations2 = _interopRequireDefault(_validations);
+
+var _attrs = require("./attrs");
+
+var attrs = _interopRequireWildcard(_attrs);
+
+var _util = require("./util");
+
+var util = _interopRequireWildcard(_util);
 
 var registeredAttrs = {},
     subclasses = {},
@@ -76,7 +94,7 @@ function hasManySplice(i, n, added) {
     return checkAssociatedType(desc, o);
   });
 
-  removed = BasisArray.prototype._splice.call(this, i, n, added);
+  removed = _array2["default"].prototype._splice.call(this, i, n, added);
 
   if (inverse && !this.__handlingInverse__) {
     removed.forEach(function (model) {
@@ -140,7 +158,7 @@ function hasManyInverseRemove(model) {
 // `Basis.Array` that overrides the `_splice` method in order to handle syncing the inverse side
 // of the association.
 function hasManyArray(owner, desc) {
-  var a = BasisArray.of();
+  var a = _array2["default"].of();
   a.proxy(owner, desc.name);
   a.__owner__ = owner;
   a.__desc__ = desc;
@@ -188,34 +206,36 @@ function hasOneSet(desc, v, sync) {
 function mapperDeleteSuccess() {
   var _this = this;
 
-  IdMap["delete"](this);
+  _id_map2["default"]["delete"](this);
   this.isBusy = false;
   this.sourceState = DELETED;
   this._clearErrors();
 
-  for (var name in this.associations) {
-    var _ret = (function (name) {
-      var desc = _this.associations[name];
-      if (!desc.inverse) {
-        return "continue";
+  var _loop = function (_name) {
+    var desc = _this.associations[_name];
+    if (!desc.inverse) {
+      return "continue";
+    }
+    if (desc.type === "hasOne") {
+      var m = undefined;
+      if (m = _this[_name]) {
+        m._inverseRemoved(desc.inverse, _this);
       }
-      if (desc.type === "hasOne") {
-        var m = undefined;
-        if (m = _this[name]) {
-          m._inverseRemoved(desc.inverse, _this);
-        }
-      } else if (desc.type === "hasMany") {
-        _this[name].slice(0).forEach(function (m) {
-          m._inverseRemoved(desc.inverse, _this);
-        });
-      }
-    })(name);
+    } else if (desc.type === "hasMany") {
+      _this[_name].slice(0).forEach(function (m) {
+        m._inverseRemoved(desc.inverse, _this);
+      });
+    }
+  };
+
+  for (var _name in this.associations) {
+    var _ret = _loop(_name);
 
     if (_ret === "continue") continue;
   }
 }
 
-var Model = BasisObject.extend(function () {
+var Model = _object2["default"].extend(function () {
   this.displayName = "Basis.Model";
 
   // Public: Creates a subclass of `Basis.Model`. This method overrides the `Basis.Object.extend`
@@ -225,7 +245,7 @@ var Model = BasisObject.extend(function () {
       throw new Error("" + this + ".extend: a name is required");
     }
 
-    var subclass = BasisObject.extend.call(this);
+    var subclass = _object2["default"].extend.call(this);
     subclass.displayName = name;
     subclasses[name] = subclass;
 
@@ -404,7 +424,7 @@ var Model = BasisObject.extend(function () {
     }
 
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
-      type: "hasMany", name: name, klass: klass, singular: pluralize(name, 1), debugName: "" + this.toString() + "#" + name
+      type: "hasMany", name: name, klass: klass, singular: (0, _pluralize2["default"])(name, 1), debugName: "" + this.toString() + "#" + name
     });
 
     if (desc.owner) {
@@ -468,27 +488,27 @@ var Model = BasisObject.extend(function () {
     loads.push(true);
 
     attrs = Object.assign({}, attrs);
-    model = IdMap.get(this, id) || new this();
+    model = _id_map2["default"].get(this, id) || new this();
     delete attrs.id;
 
     // extract associated attributes
-    for (var _name in associations) {
-      var desc = associations[_name];
+    for (var _name2 in associations) {
+      var desc = associations[_name2];
 
-      if (_name in attrs) {
-        associated[_name] = attrs[_name];
-        delete attrs[_name];
-      } else if (desc.type === "hasOne" && "" + _name + "Id" in attrs) {
-        associated[_name] = attrs["" + _name + "Id"];
-        delete attrs["" + _name + "Id"];
-      } else if (desc.type === "hasOne" && "" + _name + "_id" in attrs) {
-        associated[_name] = attrs["" + _name + "_id"];
-        delete attrs["" + _name + "_id"];
+      if (_name2 in attrs) {
+        associated[_name2] = attrs[_name2];
+        delete attrs[_name2];
+      } else if (desc.type === "hasOne" && "" + _name2 + "Id" in attrs) {
+        associated[_name2] = attrs["" + _name2 + "Id"];
+        delete attrs["" + _name2 + "Id"];
+      } else if (desc.type === "hasOne" && "" + _name2 + "_id" in attrs) {
+        associated[_name2] = attrs["" + _name2 + "_id"];
+        delete attrs["" + _name2 + "_id"];
       } else if (desc.type === "hasMany" && "" + desc.singular + "Ids" in attrs) {
-        associated[_name] = attrs["" + desc.singular + "Ids"];
+        associated[_name2] = attrs["" + desc.singular + "Ids"];
         delete attrs["" + desc.singular + "Ids"];
       } else if (desc.type === "hasMany" && "" + desc.singular + "_ids" in attrs) {
-        associated[_name] = attrs["" + desc.singular + "_ids"];
+        associated[_name2] = attrs["" + desc.singular + "_ids"];
         delete attrs["" + desc.singular + "_ids"];
       }
     }
@@ -501,33 +521,35 @@ var Model = BasisObject.extend(function () {
       model.id = id;
     }
 
+    var _loop2 = function (_name3) {
+      var klass = resolve(associations[_name3].klass);
+      var data = associated[_name3];
+
+      // clear association
+      if (!data) {
+        model[_name3] = null;
+        return "continue";
+      }
+
+      if (associations[_name3].type === "hasOne") {
+        var other = typeof data === "object" ? klass.load(data) : klass.local(data);
+        model[_name3] = other;
+      } else if (associations[_name3].type === "hasMany") {
+        (function () {
+          var others = [];
+          data.forEach(function (o) {
+            others.push(typeof o === "object" ? klass.load(o) : klass.local(o));
+          });
+          model[_name3] = others;
+        })();
+      }
+    };
+
     // load and set each association
-    for (var name in associated) {
-      var _ret = (function (name) {
-        var klass = resolve(associations[name].klass);
-        var data = associated[name];
+    for (var _name3 in associated) {
+      var _ret2 = _loop2(_name3);
 
-        // clear association
-        if (!data) {
-          model[name] = null;
-          return "continue";
-        }
-
-        if (associations[name].type === "hasOne") {
-          var other = typeof data === "object" ? klass.load(data) : klass.local(data);
-          model[name] = other;
-        } else if (associations[name].type === "hasMany") {
-          (function () {
-            var others = [];
-            data.forEach(function (o) {
-              others.push(typeof o === "object" ? klass.load(o) : klass.local(o));
-            });
-            model[name] = others;
-          })();
-        }
-      })(name);
-
-      if (_ret === "continue") continue;
+      if (_ret2 === "continue") continue;
     }
 
     model.sourceState = LOADED;
@@ -545,10 +567,10 @@ var Model = BasisObject.extend(function () {
   //
   // Returns an array of loaded model instances.
   this.loadAll = function (objects) {
-    var _this = this;
+    var _this2 = this;
 
     return objects.map(function (object) {
-      return _this.load(object);
+      return _this2.load(object);
     });
   };
 
@@ -601,7 +623,7 @@ var Model = BasisObject.extend(function () {
   this.buildQuery = function () {
     var modelClass = this,
         promise = Promise.resolve(),
-        a = BasisArray.of(),
+        a = _array2["default"].of(),
         queued;
 
     a.props({
@@ -614,14 +636,14 @@ var Model = BasisObject.extend(function () {
     });
 
     a.query = function () {
-      var _this = this;
+      var _this3 = this;
 
       var opts = arguments[0] === undefined ? {} : arguments[0];
 
       if (this.isBusy) {
         if (!queued) {
           promise = promise.then(function () {
-            _this.query(queued);
+            _this3.query(queued);
             queued = undefined;
             return promise;
           });
@@ -633,19 +655,19 @@ var Model = BasisObject.extend(function () {
         promise = modelClass._callMapper("query", [opts]).then(function (result) {
           try {
             if (Array.isArray(result)) {
-              _this.replace(modelClass.loadAll(result));
+              _this3.replace(modelClass.loadAll(result));
             } else if (result.results) {
-              _this.replace(modelClass.loadAll(result.results));
-              _this.meta = result.meta;
+              _this3.replace(modelClass.loadAll(result.results));
+              _this3.meta = result.meta;
             }
           } catch (e) {
             console.error(e);throw e;
           }
-          _this.isBusy = false;
-          _this.error = undefined;
+          _this3.isBusy = false;
+          _this3.error = undefined;
         }, function (e) {
-          _this.isBusy = false;
-          _this.error = e;
+          _this3.isBusy = false;
+          _this3.error = e;
           return Promise.reject(e);
         });
       }
@@ -680,7 +702,7 @@ var Model = BasisObject.extend(function () {
   //
   // Returns an instance of the receiver.
   this.local = function (id) {
-    return IdMap.get(this, id) || this.empty(id);
+    return _id_map2["default"].get(this, id) || this.empty(id);
   };
 
   // Public: Gets a model instance, either from the identity map or from the mapper. If the model
@@ -694,7 +716,7 @@ var Model = BasisObject.extend(function () {
   //
   // Returns an instance of the receiver.
   this.get = function (id) {
-    var _this = this;
+    var _this4 = this;
 
     var opts = arguments[1] === undefined ? {} : arguments[1];
 
@@ -707,7 +729,7 @@ var Model = BasisObject.extend(function () {
       model.__promise__ = this._callMapper("get", [id, getOpts]).then(function (result) {
         model.isBusy = false;
         try {
-          _this.load(result);
+          _this4.load(result);
         } catch (e) {
           console.error(e);throw e;
         }
@@ -724,7 +746,7 @@ var Model = BasisObject.extend(function () {
   // Public: Clears all models from the id map. This will subsequently cause the model layer to go
   // to the mapper for any model that had previously been loaded.
   this.clearIdMap = function () {
-    IdMap.clear();return this;
+    _id_map2["default"].clear();return this;
   };
 
   // Internal: Invokes the given method on the receiver's mapper, ensuring that it returns a
@@ -738,7 +760,7 @@ var Model = BasisObject.extend(function () {
   // Throws `Error` when the mapper does not implement the given method.
   // Throws `Error` when the mapper does not return a Thennable object.
   this._callMapper = function (method, args) {
-    var _this = this;
+    var _this5 = this;
 
     var promise;
 
@@ -757,7 +779,7 @@ var Model = BasisObject.extend(function () {
     }
 
     promise["catch"](function (error) {
-      console.warn("" + _this + "#_callMapper(" + method + "): promise rejection:", error);
+      console.warn("" + _this5 + "#_callMapper(" + method + "): promise rejection:", error);
       return Promise.reject(error);
     });
 
@@ -791,7 +813,7 @@ var Model = BasisObject.extend(function () {
 
       this.__id = id;
 
-      IdMap.insert(this);
+      _id_map2["default"].insert(this);
     }
   });
 
@@ -857,17 +879,17 @@ var Model = BasisObject.extend(function () {
       var r = false;
 
       util.detectRecursion(this, (function () {
-        for (var _name in this.associations) {
-          if (!this.associations[_name].owner) {
+        for (var _name4 in this.associations) {
+          if (!this.associations[_name4].owner) {
             continue;
           }
 
-          if (this.associations[_name].type === "hasOne") {
-            if (this[_name] && this[_name].hasChanges) {
+          if (this.associations[_name4].type === "hasOne") {
+            if (this[_name4] && this[_name4].hasChanges) {
               r = true;
             }
-          } else if (this.associations[_name].type === "hasMany") {
-            if (this[_name].some(function (m) {
+          } else if (this.associations[_name4].type === "hasMany") {
+            if (this[_name4].some(function (m) {
               return m.hasChanges;
             })) {
               r = true;
@@ -910,17 +932,17 @@ var Model = BasisObject.extend(function () {
       var r = false;
 
       util.detectRecursion(this, (function () {
-        for (var _name in this.associations) {
-          if (!this.associations[_name].owner) {
+        for (var _name5 in this.associations) {
+          if (!this.associations[_name5].owner) {
             continue;
           }
 
-          if (this.associations[_name].type === "hasOne") {
-            if (this[_name] && this[_name].hasErrors) {
+          if (this.associations[_name5].type === "hasOne") {
+            if (this[_name5] && this[_name5].hasErrors) {
               r = true;
             }
-          } else if (this.associations[_name].type === "hasMany") {
-            if (this[_name].some(function (m) {
+          } else if (this.associations[_name5].type === "hasMany") {
+            if (this[_name5].some(function (m) {
               return m.hasErrors;
             })) {
               r = true;
@@ -983,7 +1005,7 @@ var Model = BasisObject.extend(function () {
   // Returns the receiver.
   // Throws `Error` if the receiver is not NEW or LOADED or is currently busy.
   this.prototype.save = function () {
-    var _this = this;
+    var _this6 = this;
 
     var opts = arguments[0] === undefined ? {} : arguments[0];
 
@@ -994,15 +1016,15 @@ var Model = BasisObject.extend(function () {
     this.isBusy = true;
 
     this.__promise__ = this.constructor._callMapper(this.isNew ? "create" : "update", [this, opts]).then(function (attrs) {
-      _this.isBusy = false;
+      _this6.isBusy = false;
       try {
-        _this.load(attrs);
+        _this6.load(attrs);
       } catch (e) {
         console.error(e);throw e;
       }
     }, function (errors) {
-      _this.isBusy = false;
-      _this._loadErrors(errors);
+      _this6.isBusy = false;
+      _this6._loadErrors(errors);
       return Promise.reject(errors);
     });
 
@@ -1016,7 +1038,7 @@ var Model = BasisObject.extend(function () {
   // Returns the receiver.
   // Throws `Error` if the model is currently busy.
   this.prototype["delete"] = function () {
-    var _this = this;
+    var _this7 = this;
 
     var opts = arguments[0] === undefined ? {} : arguments[0];
 
@@ -1034,10 +1056,10 @@ var Model = BasisObject.extend(function () {
       this.isBusy = true;
 
       this.__promise__ = this.constructor._callMapper("delete", [this, opts]).then(function () {
-        mapperDeleteSuccess.call(_this);
+        mapperDeleteSuccess.call(_this7);
       }, function (errors) {
-        _this.isBusy = false;
-        _this._loadErrors(errors);
+        _this7.isBusy = false;
+        _this7._loadErrors(errors);
         return Promise.reject(errors);
       });
     }
@@ -1107,39 +1129,41 @@ var Model = BasisObject.extend(function () {
   // Public: Undoes all property and owned assocation changes made to this model since it was last
   // loaded.
   this.prototype.undoChanges = function () {
-    var _this = this;
+    var _this8 = this;
 
     var associations = this.associations;
 
-    for (var prop in this.changes) {
-      (function (prop) {
-        if (associations[prop] && associations[prop].type === "hasMany") {
-          var removed = _this.changes[prop].removed.slice();
-          var added = _this.changes[prop].added.slice();
+    var _loop3 = function (prop) {
+      if (associations[prop] && associations[prop].type === "hasMany") {
+        var removed = _this8.changes[prop].removed.slice();
+        var added = _this8.changes[prop].added.slice();
 
-          removed.reverse().forEach(function (m) {
-            _this[prop].push(m);
-          });
-          added.forEach(function (m) {
-            _this[prop].splice(_this[prop].indexOf(m), 1);
-          });
-        } else {
-          _this[prop] = _this.changes[prop];
-        }
-      })(prop);
+        removed.reverse().forEach(function (m) {
+          _this8[prop].push(m);
+        });
+        added.forEach(function (m) {
+          _this8[prop].splice(_this8[prop].indexOf(m), 1);
+        });
+      } else {
+        _this8[prop] = _this8.changes[prop];
+      }
+    };
+
+    for (var prop in this.changes) {
+      _loop3(prop);
     }
 
-    for (var _name in associations) {
-      var desc = associations[_name];
+    for (var _name6 in associations) {
+      var desc = associations[_name6];
 
       if (!desc.owner) {
         continue;
       }
 
       if (desc.type === "hasOne") {
-        this[_name] && this[_name].undoChanges();
+        this[_name6] && this[_name6].undoChanges();
       } else if (desc.type === "hasMany") {
-        this[_name].forEach(function (m) {
+        this[_name6].forEach(function (m) {
           return m.undoChanges();
         });
       }
@@ -1202,21 +1226,21 @@ var Model = BasisObject.extend(function () {
 
     this._clearErrors();
 
-    for (var _name in this.validators) {
-      this.validateAttr(_name);
+    for (var _name7 in this.validators) {
+      this.validateAttr(_name7);
     }
 
-    for (var _name2 in associations) {
-      var desc = associations[_name2];
+    for (var _name8 in associations) {
+      var desc = associations[_name8];
 
       if (!desc.owner) {
         continue;
       }
 
       if (desc.type === "hasOne") {
-        this[_name2] && !this[_name2]._destroy && this[_name2].validate();
+        this[_name8] && !this[_name8]._destroy && this[_name8].validate();
       } else if (desc.type === "hasMany") {
-        this[_name2].forEach(function (m) {
+        this[_name8].forEach(function (m) {
           return !m._destroy && m.validate();
         });
       }
@@ -1229,17 +1253,17 @@ var Model = BasisObject.extend(function () {
   this.prototype.toString = function () {
     var attrs = this.attrs();
 
-    for (var _name in this.associations) {
-      if (this.associations[_name].type === "hasOne") {
-        if (this[_name] && this[_name].id) {
-          attrs[_name] = this[_name].id;
+    for (var _name9 in this.associations) {
+      if (this.associations[_name9].type === "hasOne") {
+        if (this[_name9] && this[_name9].id) {
+          attrs[_name9] = this[_name9].id;
         }
-      } else if (this.associations[_name].type === "hasMany") {
-        var ids = this[_name].map(function (x) {
+      } else if (this.associations[_name9].type === "hasMany") {
+        var ids = this[_name9].map(function (x) {
           return x.id;
         }).compact();
         if (ids.length) {
-          attrs[_name] = ids;
+          attrs[_name9] = ids;
         }
       }
     }
@@ -1255,19 +1279,21 @@ var Model = BasisObject.extend(function () {
   //
   // Returns the receiver.
   this.prototype._loadErrors = function (errors) {
-    var _this = this;
+    var _this9 = this;
 
     if (typeof errors === "object") {
+      var _loop4 = function (k) {
+        if (Array.isArray(errors[k])) {
+          errors[k].forEach(function (error) {
+            this.addError(k, error);
+          }, _this9);
+        } else {
+          _this9.addError(k, String(errors[k]));
+        }
+      };
+
       for (var k in errors) {
-        (function (k) {
-          if (Array.isArray(errors[k])) {
-            errors[k].forEach(function (error) {
-              this.addError(k, error);
-            }, _this);
-          } else {
-            _this.addError(k, String(errors[k]));
-          }
-        })(k);
+        _loop4(k);
       }
     } else {
       this.addError("base", String(errors));
@@ -1377,7 +1403,8 @@ Model.EMPTY = EMPTY;
 Model.LOADED = LOADED;
 Model.DELETED = DELETED;
 
-Object.assign(Model, Validations["static"]);
-Object.assign(Model.prototype, Validations.instance);
+Object.assign(Model, _validations2["default"]["static"]);
+Object.assign(Model.prototype, _validations2["default"].instance);
 
-module.exports = Model;
+exports["default"] = Model;
+module.exports = exports["default"];

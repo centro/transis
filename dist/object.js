@@ -1,8 +1,14 @@
-"use strict";
+'use strict';
 
-var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
 
-var util = _interopRequireWildcard(require("./util"));
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+var _util = require('./util');
+
+var util = _interopRequireWildcard(_util);
 
 var objectId = 0,
     changedObjects = {},
@@ -10,11 +16,11 @@ var objectId = 0,
     flushTimer;
 
 function BasisObject() {
-  Object.defineProperty(this, "objectId", { value: ++objectId });
+  Object.defineProperty(this, 'objectId', { value: ++objectId });
   this.init.apply(this, arguments);
 };
 
-BasisObject.displayName = "Basis.Object";
+BasisObject.displayName = 'Basis.Object';
 
 // Internal: Processes a property change by traversing the property dependency graph and forwarding
 // changes to proxy objects.
@@ -33,13 +39,15 @@ function didChange(object, name) {
     }
   }
 
-  if (object.__proxies__ && name.indexOf(".") === -1) {
+  if (object.__proxies__ && name.indexOf('.') === -1) {
+    var _loop = function (k) {
+      util.detectRecursion(object, function () {
+        didChange(object.__proxies__[k].object, '' + object.__proxies__[k].name + '.' + name);
+      });
+    };
+
     for (var k in object.__proxies__) {
-      (function (k) {
-        util.detectRecursion(object, function () {
-          didChange(object.__proxies__[k].object, "" + object.__proxies__[k].name + "." + name);
-        });
-      })(k);
+      _loop(k);
     }
   }
 }
@@ -69,14 +77,14 @@ function flush() {
     object.__changedProps__ = {};
 
     for (var i = 0, n = changes.length; i < n; i++) {
-      if (changes[i].indexOf(".") === -1) {
+      if (changes[i].indexOf('.') === -1) {
         star = true;
       }
       object._notify(changes[i]);
     }
 
     if (star) {
-      object._notify("*");
+      object._notify('*');
     }
   }
 
@@ -121,29 +129,29 @@ function defineProp(object, name) {
     name: name,
     get: null,
     set: null,
-    "default": undefined,
+    'default': undefined,
     on: [],
     cache: false
   }, opts, { readonly: opts.get && !opts.set });
 
-  if (!object.hasOwnProperty("__props__")) {
+  if (!object.hasOwnProperty('__props__')) {
     object.__props__ = Object.create(object.__props__ || null);
   }
 
   object.__props__[name] = descriptor;
 
-  if (!object.hasOwnProperty("__deps__")) {
+  if (!object.hasOwnProperty('__deps__')) {
     object.__deps__ = Object.create(object.__deps__ || null);
   }
 
   descriptor.on.forEach(function (prop) {
     (object.__deps__[prop] = object.__deps__[prop] || []).push(name);
 
-    if (prop.indexOf(".") !== -1) {
-      var segments = prop.split("."),
+    if (prop.indexOf('.') !== -1) {
+      var segments = prop.split('.'),
           first = segments[0];
       if (segments.length > 2) {
-        throw new Error("Basis.Object.defineProp: dependent property paths of more than two segments are not allowed: `" + prop + "`");
+        throw new Error('Basis.Object.defineProp: dependent property paths of more than two segments are not allowed: `' + prop + '`');
       }
       (object.__deps__[first] = object.__deps__[first] || []).push(name);
     }
@@ -194,7 +202,7 @@ BasisObject.extend = function (f) {
   subclass.prototype.constructor = subclass;
   subclass.__super__ = this.prototype;
 
-  if (typeof f === "function") {
+  if (typeof f === 'function') {
     f.call(subclass);
   }
 
@@ -238,7 +246,7 @@ BasisObject.props = function (props) {
 
 // Public: Returns a string containing the class's name.
 BasisObject.toString = function () {
-  return this.displayName || this.name || "(Unknown)";
+  return this.displayName || this.name || '(Unknown)';
 };
 
 // Public: The `Basis.Object` initializer. Sets the given props and begins observing dependent
@@ -322,8 +330,14 @@ BasisObject.prototype.didChange = function (name) {
   (this.__changedProps__ = this.__changedProps__ || {})[name] = true;
   changedObjects[this.objectId] = this;
 
+  // FIXME: The double setTimeout here is to work around an issue we've been seeing in Firefox
+  // with promises. In Chrome the flush is getting run after promises callbacks are invoked but
+  // in firefox its running before which is causing some timing issues. The double setTimeout
+  // ensures that the flush gets run after promise callbacks.
   if (!flushTimer) {
-    flushTimer = setTimeout(flush);
+    flushTimer = setTimeout(function () {
+      setTimeout(flush);
+    });
   }
 
   return this;
@@ -331,7 +345,7 @@ BasisObject.prototype.didChange = function (name) {
 
 // Public: Returns a string representation of the object.
 BasisObject.prototype.toString = function () {
-  return "#<" + this.constructor + ":" + this.objectId + ">";
+  return '#<' + this.constructor + ':' + this.objectId + '>';
 };
 
 // Public: Indicates whether the receiver is equal to the given object. The default implementation
@@ -352,11 +366,11 @@ BasisObject.prototype.eq = function (other) {
 // Throws `Error` if there is no property with the given name.
 BasisObject.prototype._getProp = function (name) {
   var descriptor = this.__props__ && this.__props__[name],
-      key = "__" + name,
+      key = '__' + name,
       value;
 
   if (!descriptor) {
-    throw new Error("Basis.Object#_getProp: unknown prop name `" + name + "`");
+    throw new Error('Basis.Object#_getProp: unknown prop name `' + name + '`');
   }
 
   if (descriptor.cache && isCached.call(this, name)) {
@@ -364,7 +378,7 @@ BasisObject.prototype._getProp = function (name) {
   }
 
   value = descriptor.get ? descriptor.get.call(this) : this[key];
-  value = value === undefined ? descriptor["default"] : value;
+  value = value === undefined ? descriptor['default'] : value;
 
   if (descriptor.cache) {
     cache.call(this, name, value);
@@ -383,15 +397,15 @@ BasisObject.prototype._getProp = function (name) {
 // Throws `TypeError` if the property is readonly.
 BasisObject.prototype._setProp = function (name, value) {
   var descriptor = this.__props__ && this.__props__[name],
-      key = "__" + name,
+      key = '__' + name,
       old = this._getProp(name);
 
   if (!descriptor) {
-    throw new Error("Basis.Object#_setProp: unknown prop name `" + name + "`");
+    throw new Error('Basis.Object#_setProp: unknown prop name `' + name + '`');
   }
 
   if (descriptor.readonly) {
-    throw new TypeError("Basis.Object#_setProp: cannot set readonly property `" + name + "` of " + this);
+    throw new TypeError('Basis.Object#_setProp: cannot set readonly property `' + name + '` of ' + this);
   }
 
   if (descriptor.set) {
@@ -423,18 +437,19 @@ BasisObject.prototype._notify = function (prop) {
 // given proxy object with the given name as a prefix for the property name.
 BasisObject.prototype._registerProxy = function (object, name) {
   this.__proxies__ = this.__proxies__ || {};
-  this.__proxies__["" + object.objectId + "," + name] = { object: object, name: name };
+  this.__proxies__['' + object.objectId + ',' + name] = { object: object, name: name };
   return this;
 };
 
 // Internal: Deregisters a proxy object previously registered with `#_registerProxy`.
 BasisObject.prototype._deregisterProxy = function (object, name) {
   if (this.__proxies__) {
-    delete this.__proxies__["" + object.objectId + "," + name];
+    delete this.__proxies__['' + object.objectId + ',' + name];
   }
   return this;
 };
 
-BasisObject.displayName = "Basis.Object";
+BasisObject.displayName = 'Basis.Object';
 
-module.exports = BasisObject;
+exports['default'] = BasisObject;
+module.exports = exports['default'];

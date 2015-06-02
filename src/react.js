@@ -3,7 +3,7 @@ import BasisArray from "./array";
 export var PropsMixin = function(props) {
   return {
     componentWillMount: function() {
-      this._basisFU = this._basisFU || () => { this.isMounted() && this.forceUpdate(); };
+      this._basisFU = this._basisFU || (() => { this.isMounted() && this.forceUpdate(); });
 
       for (let k in props) {
         props[k].forEach(function(prop) {
@@ -49,7 +49,7 @@ export var StateMixin = function(object, props) {
     },
 
     componentWillMount: function() {
-      this._basisFU = this._basisFU || () => { this.isMounted() && this.forceUpdate(); };
+      this._basisFU = this._basisFU || (() => { this.isMounted() && this.forceUpdate(); });
 
       this._basisSyncState = () => {
         var state = {};

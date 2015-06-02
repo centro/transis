@@ -1,12 +1,20 @@
 "use strict";
 
-var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
 
-var BasisObject = _interopRequire(require("./object"));
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var util = _interopRequireWildcard(require("./util"));
+var _object = require("./object");
+
+var _object2 = _interopRequireDefault(_object);
+
+var _util = require("./util");
+
+var util = _interopRequireWildcard(_util);
 
 var iframe;
 
@@ -36,8 +44,8 @@ var splice = _BasisArray$prototype.splice;
 var map = _BasisArray$prototype.map;
 var filter = _BasisArray$prototype.filter;
 
-Object.assign(BasisArray, BasisObject);
-Object.assign(BasisArray.prototype, BasisObject.prototype);
+Object.assign(BasisArray, _object2["default"]);
+Object.assign(BasisArray.prototype, _object2["default"].prototype);
 
 // Internal: Copy over polyfilled methods from `Array` to `Basis.Array`.
 ["findIndex", "find"].forEach(function (x) {
@@ -54,7 +62,7 @@ BasisArray.of = function () {
   var a = new BasisArray(arguments.length),
       i,
       n;
-  BasisObject.call(a);
+  _object2["default"].call(a);
   for (i = 0, n = arguments.length; i < n; i++) {
     a[i] = arguments[i];
   }
@@ -138,13 +146,13 @@ BasisArray.from = function (a) {
 
     if (this.__proxy__) {
       removed.forEach(function (x) {
-        if (x instanceof BasisObject || x instanceof BasisArray) {
+        if (x instanceof _object2["default"] || x instanceof BasisArray) {
           x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
         }
       }, this);
 
       added.forEach(function (x) {
-        if (x instanceof BasisObject || x instanceof BasisArray) {
+        if (x instanceof _object2["default"] || x instanceof BasisArray) {
           x._registerProxy(this.__proxy__.to, this.__proxy__.name);
         }
       }, this);
@@ -403,7 +411,7 @@ BasisArray.from = function (a) {
     this.__proxy__ = { to: to, name: name };
 
     this.forEach(function (x) {
-      if (x instanceof BasisObject || x instanceof BasisArray) {
+      if (x instanceof _object2["default"] || x instanceof BasisArray) {
         x._registerProxy(to, name);
       }
     });
@@ -415,7 +423,7 @@ BasisArray.from = function (a) {
   this.prototype.unproxy = function () {
     if (this.__proxy__) {
       this.forEach(function (x) {
-        if (x instanceof BasisObject || x instanceof BasisArray) {
+        if (x instanceof _object2["default"] || x instanceof BasisArray) {
           x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
         }
       }, this);
@@ -433,4 +441,5 @@ BasisArray.from = function (a) {
   };
 }).call(BasisArray);
 
-module.exports = BasisArray;
+exports["default"] = BasisArray;
+module.exports = exports["default"];

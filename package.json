@@ -16,8 +16,7 @@
     "pluralize": "1.1.2"
   },
   "devDependencies": {
-    "babel": "4.4.5",
-    "babel-core": "^4.6.6",
+    "babel": "^5.4.7",
     "babel-loader": "^4.0.0",
     "es5-shim": "^4.1.0",
     "es6-shim": "^0.22.2",

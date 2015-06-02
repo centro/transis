@@ -1,14 +1,20 @@
-"use strict";
+'use strict';
 
-var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
 
-var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
 
-var parsers = _interopRequireWildcard(require("./parsers"));
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var IdentityAttr = exports.IdentityAttr = {
+var _parsers = require('./parsers');
+
+var parsers = _interopRequireWildcard(_parsers);
+
+var IdentityAttr = {
   coerce: function coerce(v) {
     return v;
   },
@@ -17,7 +23,9 @@ var IdentityAttr = exports.IdentityAttr = {
   }
 };
 
-var StringAttr = exports.StringAttr = (function () {
+exports.IdentityAttr = IdentityAttr;
+
+var StringAttr = (function () {
   function StringAttr() {
     var opts = arguments[0] === undefined ? {} : arguments[0];
 
@@ -26,35 +34,31 @@ var StringAttr = exports.StringAttr = (function () {
     this.opts = Object.assign({ trim: true }, opts);
   }
 
-  _prototypeProperties(StringAttr, null, {
-    coerce: {
-      value: function coerce(v) {
-        v = v != null ? String(v) : v;
-        if (typeof v === "string" && this.opts.trim) {
-          v = v.trim();
-        }
-        return v;
-      },
-      writable: true,
-      configurable: true
-    },
-    serialize: {
-      value: function serialize(s) {
-        return s;
-      },
-      writable: true,
-      configurable: true
+  _createClass(StringAttr, [{
+    key: 'coerce',
+    value: function coerce(v) {
+      v = v != null ? String(v) : v;
+      if (typeof v === 'string' && this.opts.trim) {
+        v = v.trim();
+      }
+      return v;
     }
-  });
+  }, {
+    key: 'serialize',
+    value: function serialize(s) {
+      return s;
+    }
+  }]);
 
   return StringAttr;
 })();
 
-var NumberAttr = exports.NumberAttr = {
+exports.StringAttr = StringAttr;
+var NumberAttr = {
   coerce: function coerce(v) {
-    if (typeof v === "number") {
+    if (typeof v === 'number') {
       return v;
-    } else if (typeof v === "string") {
+    } else if (typeof v === 'string') {
       return parsers.parseNumber(v);
     } else if (v === undefined) {
       return undefined;
@@ -68,7 +72,8 @@ var NumberAttr = exports.NumberAttr = {
   }
 };
 
-var BooleanAttr = exports.BooleanAttr = {
+exports.NumberAttr = NumberAttr;
+var BooleanAttr = {
   coerce: function coerce(v) {
     return v === undefined ? v : !!v;
   },
@@ -77,38 +82,40 @@ var BooleanAttr = exports.BooleanAttr = {
   }
 };
 
-var DateAttr = exports.DateAttr = {
+exports.BooleanAttr = BooleanAttr;
+var DateAttr = {
   coerce: function coerce(v) {
     if (v == null || v instanceof Date) {
       return v;
     }
-    if (typeof v === "number") {
+    if (typeof v === 'number') {
       return new Date(v);
     }
 
-    if (typeof v !== "string") {
-      throw new Error("Basis.DateAttr#coerce: don't know how to coerce `" + v + "` to a Date");
+    if (typeof v !== 'string') {
+      throw new Error('Basis.DateAttr#coerce: don\'t know how to coerce `' + v + '` to a Date');
     }
 
     return parsers.parseDate(v);
   },
 
   serialize: function serialize(date) {
-    return date instanceof Date ? date.toJSON().replace(/T.*$/, "") : date;
+    return date instanceof Date ? date.toJSON().replace(/T.*$/, '') : date;
   }
 };
 
-var DateTimeAttr = exports.DateTimeAttr = {
+exports.DateAttr = DateAttr;
+var DateTimeAttr = {
   coerce: function coerce(v) {
     if (v == null || v instanceof Date) {
       return v;
     }
-    if (typeof v === "number") {
+    if (typeof v === 'number') {
       return new Date(v);
     }
 
-    if (typeof v !== "string") {
-      throw new Error("Basis.DateTimeAttr#coerce: don't know how to coerce `" + v + "` to a Date");
+    if (typeof v !== 'string') {
+      throw new Error('Basis.DateTimeAttr#coerce: don\'t know how to coerce `' + v + '` to a Date');
     }
 
     return parsers.parseDateTime(v);
@@ -118,6 +125,4 @@ var DateTimeAttr = exports.DateTimeAttr = {
     return date instanceof Date ? date.toJSON() : date;
   }
 };
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+exports.DateTimeAttr = DateTimeAttr;

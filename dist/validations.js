@@ -1,17 +1,27 @@
 "use strict";
 
-var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
 
-var BasisArray = _interopRequire(require("./array"));
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var util = _interopRequireWildcard(require("./util"));
+var _array = require("./array");
 
-var parsers = _interopRequireWildcard(require("./parsers"));
+var _array2 = _interopRequireDefault(_array);
+
+var _util = require("./util");
+
+var util = _interopRequireWildcard(_util);
+
+var _parsers = require("./parsers");
+
+var parsers = _interopRequireWildcard(_parsers);
 
 function isBlank(v) {
-  return v == null || util.type(v) === "string" && v.match(/^\s*$/) || util.type(v) === "array" && v.length === 0 || v instanceof BasisArray && v.length === 0;
+  return v == null || util.type(v) === "string" && v.match(/^\s*$/) || util.type(v) === "array" && v.length === 0 || v instanceof _array2["default"] && v.length === 0;
 }
 
 var Validations = {
@@ -180,4 +190,5 @@ var Validations = {
   }
 };
 
-module.exports = Validations;
+exports["default"] = Validations;
+module.exports = exports["default"];

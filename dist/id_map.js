@@ -1,5 +1,8 @@
 "use strict";
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 var IdMap = {
   models: new Map(),
 
@@ -40,4 +43,5 @@ var IdMap = {
   }
 };
 
-module.exports = IdMap;
+exports["default"] = IdMap;
+module.exports = exports["default"];

@@ -1,17 +1,19 @@
 "use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 require("es6-shim");
 
-var Model = _interopRequire(require("../model"));
+var _model = require("../model");
+
+var _model2 = _interopRequireDefault(_model);
 
 describe("Model validations", function () {
   describe(".validatesPresence", function () {
-    var Foo = Model.extend("ValidatesPresenceFoo");
-    var Bar = Model.extend("ValidatesPresenceBar");
+    var Foo = _model2["default"].extend("ValidatesPresenceFoo");
+    var Bar = _model2["default"].extend("ValidatesPresenceBar");
 
-    var ValidatesPresenceModel = Model.extend("ValidatesPresenceModel", function () {
+    var ValidatesPresenceModel = _model2["default"].extend("ValidatesPresenceModel", function () {
       this.attr("str", "string");
       this.attr("num", "number");
       this.attr("conditionalNum", "number");
@@ -83,7 +85,7 @@ describe("Model validations", function () {
   });
 
   describe(".validatesNumber", function () {
-    var ValidatesNumberModel = Model.extend("ValidatesNumberModel", function () {
+    var ValidatesNumberModel = _model2["default"].extend("ValidatesNumberModel", function () {
       this.attr("foo", "number");
       this.attr("bar", "number");
       this.validatesNumber("foo");
@@ -123,7 +125,7 @@ describe("Model validations", function () {
   });
 
   describe(".validatesDate", function () {
-    var ValidatesDateModel = Model.extend("ValidatesDateModel", function () {
+    var ValidatesDateModel = _model2["default"].extend("ValidatesDateModel", function () {
       this.attr("foo", "date");
       this.validatesDate("foo");
     });
@@ -153,7 +155,7 @@ describe("Model validations", function () {
   });
 
   describe(".validatesEmail", function () {
-    var ValidatesEmailModel = Model.extend("ValidatesEmailModel", function () {
+    var ValidatesEmailModel = _model2["default"].extend("ValidatesEmailModel", function () {
       this.attr("foo", "string");
       this.validatesEmail("foo");
     });
@@ -196,7 +198,7 @@ describe("Model validations", function () {
   });
 
   describe(".validatesPhone", function () {
-    var ValidatesPhoneModel = Model.extend("ValidatesPhoneModel", function () {
+    var ValidatesPhoneModel = _model2["default"].extend("ValidatesPhoneModel", function () {
       this.attr("foo", "string");
       this.validatesPhone("foo");
     });
@@ -246,7 +248,7 @@ describe("Model validations", function () {
   });
 
   describe(".validatesDuration", function () {
-    var ValidatesDurationModel = Model.extend("ValidatesDurationModel", function () {
+    var ValidatesDurationModel = _model2["default"].extend("ValidatesDurationModel", function () {
       this.attr("foo", "string");
       this.validatesDuration("foo");
     });

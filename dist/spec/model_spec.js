@@ -1,18 +1,26 @@
 "use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 require("es6-shim");
 
-var BasisObject = _interopRequire(require("../object"));
+var _object = require("../object");
 
-var Model = _interopRequire(require("../model"));
+var _object2 = _interopRequireDefault(_object);
 
-var IdMap = _interopRequire(require("../id_map"));
+var _model = require("../model");
 
-var BasisArray = _interopRequire(require("../array"));
+var _model2 = _interopRequireDefault(_model);
 
-var A = BasisArray.of;
+var _id_map = require("../id_map");
+
+var _id_map2 = _interopRequireDefault(_id_map);
+
+var _array = require("../array");
+
+var _array2 = _interopRequireDefault(_array);
+
+var A = _array2["default"].of;
 
 describe("Model", function () {
   var TestMapper = {
@@ -23,61 +31,61 @@ describe("Model", function () {
     "delete": function _delete() {}
   };
 
-  var BasicModel = Model.extend("BasicModel", function () {
+  var BasicModel = _model2["default"].extend("BasicModel", function () {
     this.attr("str", "string");
     this.attr("strWithDefault", "string", { "default": "zzz" });
     this.attr("num", "number");
     this.attr("date", "date");
   });
 
-  var Author = Model.extend("Author", function () {
+  var Author = _model2["default"].extend("Author", function () {
     this.attr("first", "string");
     this.attr("last", "string");
     this.hasMany("posts", "Post", { inverse: "author" });
   });
 
-  var Post = Model.extend("Post", function () {
+  var Post = _model2["default"].extend("Post", function () {
     this.attr("title", "string");
     this.attr("body", "string");
     this.hasOne("author", "Author", { inverse: "posts" });
     this.hasMany("tags", "Tag", { inverse: "posts" });
   });
 
-  var Tag = Model.extend("Tag", function () {
+  var Tag = _model2["default"].extend("Tag", function () {
     this.attr("name", "string");
     this.hasMany("posts", "Post", { inverse: "tags" });
   });
 
-  var Company = Model.extend("Company", function () {
+  var Company = _model2["default"].extend("Company", function () {
     this.hasMany("invoices", "Invoice", { inverse: "company" });
     this.attr("name", "string");
   });
 
-  var Address = Model.extend("Address", function () {
+  var Address = _model2["default"].extend("Address", function () {
     this.attr("name", "string");
     this.attr("address", "string");
   });
 
-  var Invoice = Model.extend("Invoice", function () {
+  var Invoice = _model2["default"].extend("Invoice", function () {
     this.hasOne("company", "Company", { inverse: "invoices" });
     this.hasOne("billingAddress", "Address", { owner: true });
     this.hasMany("lineItems", "LineItem", { owner: true, inverse: "invoice" });
     this.attr("name", "string");
   });
 
-  var LineItem = Model.extend("LineItem", function () {
+  var LineItem = _model2["default"].extend("LineItem", function () {
     this.hasOne("invoice", "Invoice", { inverse: "lineItems" });
     this.attr("name", "string");
     this.attr("quantity", "number");
     this.attr("rate", "number");
   });
 
-  var CircularA = Model.extend("CircularA", function () {
+  var CircularA = _model2["default"].extend("CircularA", function () {
     this.attr("name", "string");
     this.hasMany("bs", "CircularB", { inverse: "as", owner: true });
   });
 
-  var CircularB = Model.extend("CircularB", function () {
+  var CircularB = _model2["default"].extend("CircularB", function () {
     this.attr("name", "string");
     this.hasMany("as", "CircularA", { inverse: "bs", owner: true });
   });
@@ -87,11 +95,11 @@ describe("Model", function () {
   });
 
   afterEach(function () {
-    IdMap.clear();
+    _id_map2["default"].clear();
   });
 
   describe(".extend", function () {
-    var Child = Model.extend("Child", function () {
+    var Child = _model2["default"].extend("Child", function () {
       this.prototype.init = function () {};
     });
 
@@ -107,7 +115,7 @@ describe("Model", function () {
     describe("with no name argument", function () {
       it("throws an exception", function () {
         expect(function () {
-          Model.extend();
+          _model2["default"].extend();
         }).toThrow(new Error("Basis.Model.extend: a name is required"));
       });
     });
@@ -115,16 +123,16 @@ describe("Model", function () {
 
   describe(".empty", function () {
     it("returns an instance of the class with sourceState set to EMPTY and the given id", function () {
-      var m = Model.empty(127);
+      var m = _model2["default"].empty(127);
       expect(m.id).toBe(127);
-      expect(m.sourceState).toBe(Model.EMPTY);
+      expect(m.sourceState).toBe(_model2["default"].EMPTY);
     });
   });
 
   describe(".registerAttr", function () {
     it("throws an exception when an attribute with the given name has already been defined", function () {
       expect(function () {
-        Model.registerAttr("string");
+        _model2["default"].registerAttr("string");
       }).toThrow(new Error("Basis.Model.registerAttr: an attribute with the name `string` has already been defined"));
     });
   });
@@ -191,12 +199,12 @@ describe("Model", function () {
 
   describe(".hasOne", function () {
     describe("with no inverse", function () {
-      var Baz = Model.extend("Baz");
-      var Bar = Model.extend("Bar", function () {
+      var Baz = _model2["default"].extend("Baz");
+      var Bar = _model2["default"].extend("Bar", function () {
         this.attr("x", "number");
         this.hasMany("bazs", Baz);
       });
-      var Foo = Model.extend("Foo", function () {
+      var Foo = _model2["default"].extend("Foo", function () {
         this.hasOne("bar", Bar);
       });
 
@@ -223,10 +231,10 @@ describe("Model", function () {
 
         f.on("bar", spy);
         f.bar = b;
-        BasisObject.flush();
+        _object2["default"].flush();
         expect(spy).toHaveBeenCalledWith("bar");
         f.bar = undefined;
-        BasisObject.flush();
+        _object2["default"].flush();
         expect(spy.calls.count()).toBe(2);
       });
 
@@ -237,7 +245,7 @@ describe("Model", function () {
 
         f.on("bar.x", spy);
         b.x = 2;
-        BasisObject.flush();
+        _object2["default"].flush();
         expect(spy).toHaveBeenCalledWith("bar.x");
       });
 
@@ -249,14 +257,14 @@ describe("Model", function () {
 
         f.on("bar.bazs", spy);
         b.bazs.push(baz);
-        BasisObject.flush();
+        _object2["default"].flush();
         expect(spy).toHaveBeenCalledWith("bar.bazs");
       });
     });
 
     describe("with a hasOne inverse", function () {
-      var Bar = Model.extend("Bar");
-      var Foo = Model.extend("Foo");
+      var Bar = _model2["default"].extend("Bar");
+      var Foo = _model2["default"].extend("Foo");
       Foo.hasOne("bar", Bar, { inverse: "foo" });
       Bar.hasOne("foo", Foo, { inverse: "bar" });
 
@@ -282,8 +290,8 @@ describe("Model", function () {
     });
 
     describe("with a hasMany inverse", function () {
-      var Foo = Model.extend("Foo");
-      var Bar = Model.extend("Bar");
+      var Foo = _model2["default"].extend("Foo");
+      var Bar = _model2["default"].extend("Bar");
       Foo.hasOne("bar", Bar, { inverse: "foos" });
       Bar.hasMany("foos", Foo, { inverse: "bar" });
 
@@ -316,12 +324,12 @@ describe("Model", function () {
 
   describe(".hasMany", function () {
     describe("with no inverse", function () {
-      var Baz = Model.extend("Baz");
-      var Bar = Model.extend("Bar", function () {
+      var Baz = _model2["default"].extend("Baz");
+      var Bar = _model2["default"].extend("Bar", function () {
         this.attr("x", "number");
         this.hasMany("bazs", Baz);
       });
-      var Foo = Model.extend("Foo", function () {
+      var Foo = _model2["default"].extend("Foo", function () {
         this.hasMany("bars", Bar);
       });
 
@@ -359,7 +367,7 @@ describe("Model", function () {
 
         f.on("bars", spy);
         f.bars.push(b);
-        BasisObject.flush();
+        _object2["default"].flush();
         expect(spy).toHaveBeenCalledWith("bars");
       });
 
@@ -371,7 +379,7 @@ describe("Model", function () {
         f.bars.push(b);
         f.on("bars", spy);
         f.bars.pop();
-        BasisObject.flush();
+        _object2["default"].flush();
         expect(spy).toHaveBeenCalledWith("bars");
       });
 
@@ -383,7 +391,7 @@ describe("Model", function () {
         f.bars = [b];
         f.on("bars.x", spy);
         b.x = 2;
-        BasisObject.flush();
+        _object2["default"].flush();
         expect(spy).toHaveBeenCalledWith("bars.x");
       });
 
@@ -395,14 +403,14 @@ describe("Model", function () {
 
         f.on("bars.bazs", spy);
         b.bazs.push(baz);
-        BasisObject.flush();
+        _object2["default"].flush();
         expect(spy).toHaveBeenCalledWith("bars.bazs");
       });
     });
 
     describe("with a hasOne inverse", function () {
-      var Foo = Model.extend("Foo");
-      var Bar = Model.extend("Bar");
+      var Foo = _model2["default"].extend("Foo");
+      var Bar = _model2["default"].extend("Bar");
       Foo.hasMany("bars", Bar, { inverse: "foo" });
       Bar.hasOne("foo", Foo, { inverse: "bars" });
 
@@ -474,8 +482,8 @@ describe("Model", function () {
     });
 
     describe("with a hasMany inverse", function () {
-      var Foo = Model.extend("Foo");
-      var Bar = Model.extend("Bar");
+      var Foo = _model2["default"].extend("Foo");
+      var Bar = _model2["default"].extend("Bar");
       Foo.hasMany("bars", Bar, { inverse: "foos" });
       Bar.hasMany("foos", Foo, { inverse: "bars" });
 
@@ -557,7 +565,7 @@ describe("Model", function () {
     describe("for an id of a model that is not loaded into the identity map", function () {
       it("returns an empty instance of the model", function () {
         var m = BasicModel.local(4567);
-        expect(m.sourceState).toBe(Model.EMPTY);
+        expect(m.sourceState).toBe(_model2["default"].EMPTY);
       });
 
       it("does not invoke the mapper's get method", function () {
@@ -590,7 +598,7 @@ describe("Model", function () {
 
       it("sets the sourceState to LOADED", function () {
         var m = BasicModel.load({ id: 128, str: "s", num: 1 });
-        expect(m.sourceState).toBe(Model.LOADED);
+        expect(m.sourceState).toBe(_model2["default"].LOADED);
       });
 
       it("sets isBusy to false", function () {
@@ -614,7 +622,7 @@ describe("Model", function () {
 
         m.str = "x";
         BasicModel.load({ id: 201, str: "s3" });
-        expect(m.sourceState).toBe(Model.LOADED);
+        expect(m.sourceState).toBe(_model2["default"].LOADED);
       });
 
       describe("when the model in the identity map is empty", function () {
@@ -625,7 +633,7 @@ describe("Model", function () {
             BasicModel.load({ id: 19, str: "x", num: 2 });
           }).not.toThrow();
 
-          expect(m.sourceState).toBe(Model.LOADED);
+          expect(m.sourceState).toBe(_model2["default"].LOADED);
           expect(m.str).toBe("x");
           expect(m.num).toBe(2);
         });
@@ -680,7 +688,7 @@ describe("Model", function () {
         it("creates an empty instance of the associated object and hooks up the association", function () {
           var p = Post.load({ id: 186, author: 12 });
           expect(p.author.id).toBe(12);
-          expect(p.author.sourceState).toBe(Model.EMPTY);
+          expect(p.author.sourceState).toBe(_model2["default"].EMPTY);
           expect(p.author.posts).toEqual([p]);
         });
       });
@@ -776,10 +784,10 @@ describe("Model", function () {
           var p = Post.load({ id: 153, title: "the title", body: "the body", tags: [42, 43] });
 
           expect(p.tags.at(0).id).toBe(42);
-          expect(p.tags.at(0).sourceState).toBe(Model.EMPTY);
+          expect(p.tags.at(0).sourceState).toBe(_model2["default"].EMPTY);
           expect(p.tags.at(0).posts).toEqual(A(p));
           expect(p.tags.at(1).id).toBe(43);
-          expect(p.tags.at(1).sourceState).toBe(Model.EMPTY);
+          expect(p.tags.at(1).sourceState).toBe(_model2["default"].EMPTY);
           expect(p.tags.at(1).posts).toEqual(A(p));
         });
       });
@@ -822,13 +830,13 @@ describe("Model", function () {
         });
 
         expect(p.tags.at(0).id).toBe(48);
-        expect(p.tags.at(0).sourceState).toBe(Model.LOADED);
+        expect(p.tags.at(0).sourceState).toBe(_model2["default"].LOADED);
         expect(p.tags.at(0).posts).toEqual(A(p));
         expect(p.tags.at(1).id).toBe(49);
-        expect(p.tags.at(1).sourceState).toBe(Model.LOADED);
+        expect(p.tags.at(1).sourceState).toBe(_model2["default"].LOADED);
         expect(p.tags.at(1).posts).toEqual(A(p));
         expect(p.tags.at(2).id).toBe(50);
-        expect(p.tags.at(2).sourceState).toBe(Model.EMPTY);
+        expect(p.tags.at(2).sourceState).toBe(_model2["default"].EMPTY);
         expect(p.tags.at(2).posts).toEqual(A(p));
         expect(p.tags.map(function (t) {
           return t.id;
@@ -898,7 +906,7 @@ describe("Model", function () {
 
     it("returns an empty Basis.Array", function () {
       expect(this.a).toEqual([]);
-      expect(this.a instanceof BasisArray).toBe(true);
+      expect(this.a instanceof _array2["default"]).toBe(true);
     });
 
     it("does not invoke the mapper's query method", function () {
@@ -929,7 +937,7 @@ describe("Model", function () {
   });
 
   describe("query array", function () {
-    var QueryTest = Model.extend("QueryTest", function () {
+    var QueryTest = _model2["default"].extend("QueryTest", function () {
       this.attr("str", "string");
       this.attr("num", "number");
     });
@@ -969,51 +977,51 @@ describe("Model", function () {
       });
 
       it("sets the isBusy property to false when the promise is resolved", function (done) {
-        var _this = this;
+        var _this2 = this;
 
         this.a.query();
         expect(this.a.isBusy).toBe(true);
         this.resolve([]);
         this.delay(function () {
-          expect(_this.a.isBusy).toBe(false);
+          expect(_this2.a.isBusy).toBe(false);
           done();
         });
       });
 
       it("sets the isBusy property to false when the promise is rejected", function (done) {
-        var _this = this;
+        var _this3 = this;
 
         this.a.query();
         expect(this.a.isBusy).toBe(true);
         this.reject("foo");
         this.delay(function () {
-          expect(_this.a.isBusy).toBe(false);
+          expect(_this3.a.isBusy).toBe(false);
           done();
         });
       });
 
       it("sets the error property when the promise is rejected", function (done) {
-        var _this = this;
+        var _this4 = this;
 
         this.a.query();
         this.reject("foobar");
         this.delay(function () {
-          expect(_this.a.error).toBe("foobar");
+          expect(_this4.a.error).toBe("foobar");
           done();
         });
       });
 
       it("clears the error property when the promise is resolved", function (done) {
-        var _this = this;
+        var _this5 = this;
 
         this.a.query();
         this.reject("foobar");
         this.delay(function () {
-          expect(_this.a.error).toBe("foobar");
-          _this.a.query();
-          _this.resolve([]);
-          _this.delay(function () {
-            expect(_this.a.error).toBeUndefined();
+          expect(_this5.a.error).toBe("foobar");
+          _this5.a.query();
+          _this5.resolve([]);
+          _this5.delay(function () {
+            expect(_this5.a.error).toBeUndefined();
             done();
           });
         });
@@ -1021,16 +1029,16 @@ describe("Model", function () {
 
       describe("when resolved with an array", function () {
         it("loads the resolved array of objects and replaces the contents of the array with the loaded models", function (done) {
-          var _this = this;
+          var _this6 = this;
 
           this.a.query();
           this.resolve([{ id: 600, str: "s1" }, { id: 601, str: "s2" }]);
           this.delay(function () {
-            expect(_this.a.length).toBe(2);
-            expect(_this.a.at(0).id).toBe(600);
-            expect(_this.a.at(0).str).toBe("s1");
-            expect(_this.a.at(1).id).toBe(601);
-            expect(_this.a.at(1).str).toBe("s2");
+            expect(_this6.a.length).toBe(2);
+            expect(_this6.a.at(0).id).toBe(600);
+            expect(_this6.a.at(0).str).toBe("s1");
+            expect(_this6.a.at(1).id).toBe(601);
+            expect(_this6.a.at(1).str).toBe("s2");
             done();
           });
         });
@@ -1038,7 +1046,7 @@ describe("Model", function () {
 
       describe("when resolved with an object containing `results` and `meta` keys", function () {
         it("loads the results key and sets the meta property", function (done) {
-          var _this = this;
+          var _this7 = this;
 
           this.a.query();
           this.resolve({
@@ -1046,12 +1054,12 @@ describe("Model", function () {
             results: [{ id: 600, str: "s1" }, { id: 601, str: "s2" }]
           });
           this.delay(function () {
-            expect(_this.a.length).toBe(2);
-            expect(_this.a.at(0).id).toBe(600);
-            expect(_this.a.at(0).str).toBe("s1");
-            expect(_this.a.at(1).id).toBe(601);
-            expect(_this.a.at(1).str).toBe("s2");
-            expect(_this.a.meta).toEqual({ total: 121, current_page: 1, next_page: 2 });
+            expect(_this7.a.length).toBe(2);
+            expect(_this7.a.at(0).id).toBe(600);
+            expect(_this7.a.at(0).str).toBe("s1");
+            expect(_this7.a.at(1).id).toBe(601);
+            expect(_this7.a.at(1).str).toBe("s2");
+            expect(_this7.a.meta).toEqual({ total: 121, current_page: 1, next_page: 2 });
             done();
           });
         });
@@ -1096,7 +1104,7 @@ describe("Model", function () {
       });
 
       it("throws an exception when the class's mapper is not defined", function () {
-        var Foo = Model.extend("Foo");
+        var Foo = _model2["default"].extend("Foo");
 
         expect(function () {
           Foo.buildQuery().query();
@@ -1104,7 +1112,7 @@ describe("Model", function () {
       });
 
       it("throws an exception when the class's mapper does not define a query method", function () {
-        var Foo = Model.extend("Foo");
+        var Foo = _model2["default"].extend("Foo");
         Foo.mapper = {};
 
         expect(function () {
@@ -1113,7 +1121,7 @@ describe("Model", function () {
       });
 
       it("throws an exception when the class's mapper.query method does not return a promise", function () {
-        var Foo = Model.extend("Foo");
+        var Foo = _model2["default"].extend("Foo");
         Foo.mapper = { query: function query() {} };
 
         expect(function () {
@@ -1130,12 +1138,12 @@ describe("Model", function () {
 
       describe("when called before the #query method", function () {
         it("invokes the fulfilled callback", function (done) {
-          var _this = this;
+          var _this8 = this;
 
           this.a.then(this.onFulfilled, this.onRejected);
           this.delay(function () {
-            expect(_this.onFulfilled).toHaveBeenCalled();
-            expect(_this.onRejected).not.toHaveBeenCalled();
+            expect(_this8.onFulfilled).toHaveBeenCalled();
+            expect(_this8.onRejected).not.toHaveBeenCalled();
             done();
           });
         });
@@ -1143,25 +1151,25 @@ describe("Model", function () {
 
       describe("when called after the #query method", function () {
         it("invokes the fulfilled callback when the mapper fulfills its promise", function (done) {
-          var _this = this;
+          var _this9 = this;
 
           this.a.query().then(this.onFulfilled, this.onRejected);
           this.resolve([]);
           this.delay(function () {
-            expect(_this.onFulfilled).toHaveBeenCalled();
-            expect(_this.onRejected).not.toHaveBeenCalled();
+            expect(_this9.onFulfilled).toHaveBeenCalled();
+            expect(_this9.onRejected).not.toHaveBeenCalled();
             done();
           });
         });
 
         it("invokes the rejected callback when the mapper rejects its promise", function (done) {
-          var _this = this;
+          var _this10 = this;
 
           this.a.query().then(this.onFulfilled, this.onRejected);
           this.reject("foo");
           this.delay(function () {
-            expect(_this.onFulfilled).not.toHaveBeenCalled();
-            expect(_this.onRejected).toHaveBeenCalled();
+            expect(_this10.onFulfilled).not.toHaveBeenCalled();
+            expect(_this10.onRejected).toHaveBeenCalled();
             done();
           });
         });
@@ -1175,11 +1183,11 @@ describe("Model", function () {
 
       describe("when called before the #query method", function () {
         it("does nothing", function (done) {
-          var _this = this;
+          var _this11 = this;
 
           this.a["catch"](this.onRejected);
           this.delay(function () {
-            expect(_this.onRejected).not.toHaveBeenCalled();
+            expect(_this11.onRejected).not.toHaveBeenCalled();
             done();
           });
         });
@@ -1187,23 +1195,23 @@ describe("Model", function () {
 
       describe("when called after the #query method", function () {
         it("does nothing when the mapper fulfills its promise", function (done) {
-          var _this = this;
+          var _this12 = this;
 
           this.a.query()["catch"](this.onRejected);
           this.resolve([]);
           this.delay(function () {
-            expect(_this.onRejected).not.toHaveBeenCalled();
+            expect(_this12.onRejected).not.toHaveBeenCalled();
             done();
           });
         });
 
         it("invokes the callback when the mapper rejects its promise", function (done) {
-          var _this = this;
+          var _this13 = this;
 
           this.a.query()["catch"](this.onRejected);
           this.reject("foo");
           this.delay(function () {
-            expect(_this.onRejected).toHaveBeenCalledWith("foo");
+            expect(_this13.onRejected).toHaveBeenCalledWith("foo");
             done();
           });
         });
@@ -1253,16 +1261,16 @@ describe("Model", function () {
 
       it("returns an EMPTY instance with isBusy set to true", function () {
         var m = BasicModel.get(703);
-        expect(m.sourceState).toBe(Model.EMPTY);
+        expect(m.sourceState).toBe(_model2["default"].EMPTY);
         expect(m.isBusy).toBe(true);
       });
 
       it("sets the sourceState to LOADED and isBusy to false when the mapper resolves the promise", function (done) {
         var m = BasicModel.get(704);
-        expect(m.sourceState).toBe(Model.EMPTY);
+        expect(m.sourceState).toBe(_model2["default"].EMPTY);
         this.resolve({ id: 704, str: "foo" });
         this.delay(function () {
-          expect(m.sourceState).toBe(Model.LOADED);
+          expect(m.sourceState).toBe(_model2["default"].LOADED);
           expect(m.isBusy).toBe(false);
           done();
         });
@@ -1270,7 +1278,7 @@ describe("Model", function () {
 
       it("loads the resolved object", function (done) {
         var m = BasicModel.get(705);
-        expect(m.sourceState).toBe(Model.EMPTY);
+        expect(m.sourceState).toBe(_model2["default"].EMPTY);
         this.resolve({ id: 705, str: "abc", num: 21 });
         this.delay(function () {
           expect(m.str).toBe("abc");
@@ -1281,10 +1289,10 @@ describe("Model", function () {
 
       it("does not set the sourceState to LOADED when the mapper rejects the promise", function (done) {
         var m = BasicModel.get(706);
-        expect(m.sourceState).toBe(Model.EMPTY);
+        expect(m.sourceState).toBe(_model2["default"].EMPTY);
         this.reject("error!");
         this.delay(function () {
-          expect(m.sourceState).toBe(Model.EMPTY);
+          expect(m.sourceState).toBe(_model2["default"].EMPTY);
           done();
         });
       });
@@ -1309,15 +1317,15 @@ describe("Model", function () {
       });
 
       it("clears the error property when the mapper resolves the promise", function (done) {
-        var _this = this;
+        var _this14 = this;
 
         var m = BasicModel.get(708);
         this.reject("blah");
         this.delay(function () {
           expect(m.errors.base).toEqual(["blah"]);
           BasicModel.get(708);
-          _this.resolve({ id: 708, str: "asdf" });
-          _this.delay(function () {
+          _this14.resolve({ id: 708, str: "asdf" });
+          _this14.delay(function () {
             expect(m.errors).toEqual({});
             done();
           });
@@ -1432,88 +1440,88 @@ describe("Model", function () {
       });
 
       it("sets isBusy to false when the mapper resolves the promise", function (done) {
-        var _this = this;
+        var _this15 = this;
 
         this.model.save();
         expect(this.model.isBusy).toBe(true);
         this.resolve({ id: 123 });
         this.delay(function () {
-          expect(_this.model.isBusy).toBe(false);
+          expect(_this15.model.isBusy).toBe(false);
           done();
         });
       });
 
       it("sets sourceState to LOADED when the mapper resolves the promise", function (done) {
-        var _this = this;
+        var _this16 = this;
 
         this.model.save();
-        expect(this.model.sourceState).toBe(Model.NEW);
+        expect(this.model.sourceState).toBe(_model2["default"].NEW);
         this.resolve({ id: 123 });
         this.delay(function () {
-          expect(_this.model.sourceState).toBe(Model.LOADED);
+          expect(_this16.model.sourceState).toBe(_model2["default"].LOADED);
           done();
         });
       });
 
       it("loads the resolved attributes", function (done) {
-        var _this = this;
+        var _this17 = this;
 
         this.model.save();
         this.resolve({ id: 123, str: "the string", num: 6 });
         this.delay(function () {
-          expect(_this.model.id).toBe(123);
-          expect(_this.model.str).toBe("the string");
-          expect(_this.model.num).toBe(6);
+          expect(_this17.model.id).toBe(123);
+          expect(_this17.model.str).toBe("the string");
+          expect(_this17.model.num).toBe(6);
           done();
         });
       });
 
       it("does not change the sourceState when the mapper rejects the promise", function (done) {
-        var _this = this;
+        var _this18 = this;
 
         this.model.save();
-        expect(this.model.sourceState).toBe(Model.NEW);
+        expect(this.model.sourceState).toBe(_model2["default"].NEW);
         this.reject("failed");
         this.delay(function () {
-          expect(_this.model.sourceState).toBe(Model.NEW);
+          expect(_this18.model.sourceState).toBe(_model2["default"].NEW);
           done();
         });
       });
 
       it("sets isBusy to false when the mapper rejects the promise", function (done) {
-        var _this = this;
+        var _this19 = this;
 
         this.model.save();
         expect(this.model.isBusy).toBe(true);
         this.reject("failed");
         this.delay(function () {
-          expect(_this.model.isBusy).toBe(false);
+          expect(_this19.model.isBusy).toBe(false);
           done();
         });
       });
 
       it("adds an error when the mapper rejects the promise", function (done) {
-        var _this = this;
+        var _this20 = this;
 
         this.model.save();
         this.reject("failed");
         this.delay(function () {
-          expect(_this.model.errors.base).toEqual(["failed"]);
+          expect(_this20.model.errors.base).toEqual(["failed"]);
           done();
         });
       });
 
       it("clears the errors when the mapper resolves the promise", function (done) {
-        var _this = this;
+        var _this21 = this;
 
         this.model.save();
         this.reject("failed");
         this.delay(function () {
-          expect(_this.model.errors.base).toEqual(["failed"]);
-          _this.model.save();
-          _this.resolve({ id: 123 });
-          _this.delay(function () {
-            expect(_this.model.errors).toEqual({});
+          expect(_this21.model.errors.base).toEqual(["failed"]);
+          _this21.model.save();
+          _this21.resolve({ id: 123 });
+          _this21.delay(function () {
+            expect(_this21.model.errors).toEqual({});
             done();
           });
         });
@@ -1548,12 +1556,12 @@ describe("Model", function () {
       });
 
       it("throws an exception when the model is BUSY", function () {
-        var _this = this;
+        var _this22 = this;
 
         this.model.save();
         expect(this.model.isBusy).toBe(true);
         expect(function () {
-          _this.model.save();
+          _this22.model.save();
         }).toThrow(new Error("BasicModel#save: can't save a model in the LOADED-BUSY state: " + this.model));
       });
 
@@ -1564,65 +1572,65 @@ describe("Model", function () {
       });
 
       it("sets isBusy to false when the mapper resolves the promise", function (done) {
-        var _this = this;
+        var _this23 = this;
 
         this.model.save();
         expect(this.model.isBusy).toBe(true);
         this.resolve({ id: 800 });
         this.delay(function () {
-          expect(_this.model.isBusy).toBe(false);
+          expect(_this23.model.isBusy).toBe(false);
           done();
         });
       });
 
       it("loads the resolved attributes", function (done) {
-        var _this = this;
+        var _this24 = this;
 
         this.model.save();
         this.resolve({ id: 800, str: "xyz", num: 14 });
         this.delay(function () {
-          expect(_this.model.str).toBe("xyz");
-          expect(_this.model.num).toBe(14);
+          expect(_this24.model.str).toBe("xyz");
+          expect(_this24.model.num).toBe(14);
           done();
         });
       });
 
       it("sets isBusy to false when the mapper rejects the promise", function (done) {
-        var _this = this;
+        var _this25 = this;
 
         this.model.save();
         expect(this.model.isBusy).toBe(true);
         this.reject("no");
         this.delay(function () {
-          expect(_this.model.isBusy).toBe(false);
+          expect(_this25.model.isBusy).toBe(false);
           done();
         });
       });
 
       it("adds an error when the mapper rejects the promise", function (done) {
-        var _this = this;
+        var _this26 = this;
 
         this.model.save();
         expect(this.model.errors.base).toBeUndefined();
         this.reject({ str: "no" });
         this.delay(function () {
-          expect(_this.model.errors.str).toEqual(["no"]);
+          expect(_this26.model.errors.str).toEqual(["no"]);
           done();
         });
       });
 
       it("clears the errors when the mapper resolves the promise", function (done) {
-        var _this = this;
+        var _this27 = this;
 
         this.model.save();
         expect(this.model.errors.base).toBeUndefined();
         this.reject("no");
         this.delay(function () {
-          expect(_this.model.errors.base).toEqual(["no"]);
-          _this.model.save();
-          _this.resolve({ id: 800 });
-          _this.delay(function () {
-            expect(_this.model.errors.base).toBeUndefined();
+          expect(_this27.model.errors.base).toEqual(["no"]);
+          _this27.model.save();
+          _this27.resolve({ id: 800 });
+          _this27.delay(function () {
+            expect(_this27.model.errors.base).toBeUndefined();
             done();
           });
         });
@@ -1655,7 +1663,7 @@ describe("Model", function () {
         m["delete"]();
         this.deleteResolve();
         this.delay(function () {
-          expect(m.sourceState).toBe(Model.DELETED);
+          expect(m.sourceState).toBe(_model2["default"].DELETED);
           expect(function () {
             m.save();
           }).toThrow(new Error("BasicModel#save: can't save a model in the DELETED state: " + m));
@@ -1702,38 +1710,38 @@ describe("Model", function () {
     });
 
     it("sets isBusy to false when the mapper resolves its promise", function (done) {
-      var _this = this;
+      var _this28 = this;
 
       this.model["delete"]();
       expect(this.model.isBusy).toBe(true);
       this.resolve();
       this.delay(function () {
-        expect(_this.model.isBusy).toBe(false);
+        expect(_this28.model.isBusy).toBe(false);
         done();
       });
     });
 
     it("sets sourceState to DELETED when the mapper resolves its promise", function (done) {
-      var _this = this;
+      var _this29 = this;
 
       this.model["delete"]();
-      expect(this.model.sourceState).toBe(Model.LOADED);
+      expect(this.model.sourceState).toBe(_model2["default"].LOADED);
       this.resolve();
       this.delay(function () {
-        expect(_this.model.sourceState).toBe(Model.DELETED);
+        expect(_this29.model.sourceState).toBe(_model2["default"].DELETED);
         done();
       });
     });
 
     it("removes the model from the identity map when the mapper resolves its promise", function (done) {
-      var _this = this;
+      var _this30 = this;
 
       this.model["delete"]();
       expect(BasicModel.get(this.model.id)).toBe(this.model);
       this.resolve();
       this.delay(function () {
-        var m = BasicModel.get(_this.model.id);
-        expect(m).not.toBe(_this.model);
+        var m = BasicModel.get(_this30.model.id);
+        expect(m).not.toBe(_this30.model);
         expect(m.isEmpty).toBe(true);
         done();
       });
@@ -1763,25 +1771,25 @@ describe("Model", function () {
     });
 
     it("sets isBusy to false when the mapper rejects its promise", function (done) {
-      var _this = this;
+      var _this31 = this;
 
       this.model["delete"]();
       expect(this.model.isBusy).toBe(true);
       this.reject();
       this.delay(function () {
-        expect(_this.model.isBusy).toBe(false);
+        expect(_this31.model.isBusy).toBe(false);
         done();
       });
     });
 
     it("does not change the sourceState when the mapper rejects its promise", function (done) {
-      var _this = this;
+      var _this32 = this;
 
       this.model["delete"]();
-      expect(this.model.sourceState).toBe(Model.LOADED);
+      expect(this.model.sourceState).toBe(_model2["default"].LOADED);
       this.reject();
       this.delay(function () {
-        expect(_this.model.sourceState).toBe(Model.LOADED);
+        expect(_this32.model.sourceState).toBe(_model2["default"].LOADED);
         done();
       });
     });
@@ -1794,26 +1802,26 @@ describe("Model", function () {
     });
 
     it("does nothing when the model state is DELETED", function (done) {
-      var _this = this;
+      var _this33 = this;
 
       this.model["delete"]();
       this.resolve();
       this.delay(function () {
         BasicModel.mapper["delete"].calls.reset();
-        expect(_this.model.sourceState).toBe(Model.DELETED);
-        _this.model["delete"]();
+        expect(_this33.model.sourceState).toBe(_model2["default"].DELETED);
+        _this33.model["delete"]();
         expect(BasicModel.mapper["delete"]).not.toHaveBeenCalled();
         done();
       });
     });
 
     it("throws an exception when the model is BUSY", function () {
-      var _this = this;
+      var _this34 = this;
 
       this.model["delete"]();
       expect(this.model.isBusy).toBe(true);
       expect(function () {
-        _this.model["delete"]();
+        _this34.model["delete"]();
       }).toThrow(new Error("BasicModel#delete: can't delete a model in the LOADED-BUSY state: " + this.model));
     });
   });
@@ -1826,12 +1834,12 @@ describe("Model", function () {
 
     describe("on a NEW model", function () {
       it("invokes the fulfillment callback immediately", function (done) {
-        var _this = this;
+        var _this35 = this;
 
         var m = new BasicModel();
         m.then(this.onFulfilled, this.onRejected);
         this.delay(function () {
-          expect(_this.onFulfilled).toHaveBeenCalledWith(undefined);
+          expect(_this35.onFulfilled).toHaveBeenCalledWith(undefined);
           done();
         });
       });
@@ -1850,14 +1858,14 @@ describe("Model", function () {
       });
 
       it("invokes the fulfillment callback when the mapper resolves the pending promise", function (done) {
-        var _this = this;
+        var _this36 = this;
 
         var m = BasicModel.get(19);
         expect(m.isBusy).toBe(true);
         m.then(this.onFulfilled, this.onRejected);
         this.resolve({ id: 19 });
         this.delay(function () {
-          expect(_this.onFulfilled).toHaveBeenCalledWith(undefined);
+          expect(_this36.onFulfilled).toHaveBeenCalledWith(undefined);
           done();
         });
       });
@@ -1877,14 +1885,14 @@ describe("Model", function () {
       });
 
       it("invokes the rejected callback when the mapper rejects the pending promise", function (done) {
-        var _this = this;
+        var _this37 = this;
 
         var m = BasicModel.get(19);
         expect(m.isBusy).toBe(true);
         m.then(this.onFulfilled, this.onRejected);
         this.reject("blah");
         this.delay(function () {
-          expect(_this.onRejected).toHaveBeenCalledWith("blah");
+          expect(_this37.onRejected).toHaveBeenCalledWith("blah");
           done();
         });
       });
@@ -1906,14 +1914,14 @@ describe("Model", function () {
     });
 
     it("invokes the callback when the mapper rejects the pending promise", function (done) {
-      var _this = this;
+      var _this38 = this;
 
       var m = BasicModel.get(19);
       expect(m.isBusy).toBe(true);
       m["catch"](this.onRejected);
       this.reject("blah");
       this.delay(function () {
-        expect(_this.onRejected).toHaveBeenCalledWith("blah");
+        expect(_this38.onRejected).toHaveBeenCalledWith("blah");
         done();
       });
     });
@@ -1924,7 +1932,7 @@ describe("Model", function () {
       var a = new Author();
 
       a.load({ id: 5, first: "Homer", last: "Simpson" });
-      expect(a.sourceState).toBe(Model.LOADED);
+      expect(a.sourceState).toBe(_model2["default"].LOADED);
       expect(a.id).toBe(5);
       expect(a.first).toBe("Homer");
       expect(a.last).toBe("Simpson");
@@ -1968,7 +1976,7 @@ describe("Model", function () {
         lineItems: [{ id: 10, name: "foo", quantity: 10, rate: 3.5 }, { id: 11, name: "bar", quantity: 3, rate: 12.25 }, { id: 12, name: "baz", quantity: 8, rate: 5 }]
       });
 
-      BasisObject.flush();
+      _object2["default"].flush();
     });
 
     it("keeps track of changes to attributes in the `changes` property", function () {
@@ -1978,7 +1986,7 @@ describe("Model", function () {
     });
 
     it("does not keep track of regular prop changes", function () {
-      var X = Model.extend("X", function () {
+      var X = _model2["default"].extend("X", function () {
         this.prop("foo");
       });
 
@@ -1994,7 +2002,7 @@ describe("Model", function () {
 
       this.invoice.on("changes", spy);
       this.invoice.name = "B";
-      BasisObject.flush();
+      _object2["default"].flush();
       expect(spy).toHaveBeenCalledWith("changes");
     });
 
@@ -2035,7 +2043,7 @@ describe("Model", function () {
 
       this.invoice.on("changes", spy);
       this.invoice.billingAddress = new Address();
-      BasisObject.flush();
+      _object2["default"].flush();
       expect(spy).toHaveBeenCalledWith("changes");
     });
 
@@ -2074,7 +2082,7 @@ describe("Model", function () {
 
       this.invoice.on("changes", spy);
       this.invoice.lineItems.pop();
-      BasisObject.flush();
+      _object2["default"].flush();
       expect(spy).toHaveBeenCalledWith("changes");
     });
 
@@ -2228,25 +2236,25 @@ describe("Model", function () {
 
         it("are fired when an attribute changes", function () {
           this.invoice.name = "B";
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it("are fired when an owned hasMany association is mutated", function () {
           this.invoice.lineItems.pop();
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it("are not fired when an owned associated model changes", function () {
           this.invoice.billingAddress.name = "Bob Smith";
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
 
         it("are not fired when an unowned associated model changes", function () {
           this.invoice.company.name = "Foo";
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });
@@ -2324,31 +2332,31 @@ describe("Model", function () {
 
         it("are fired when an attribute changes", function () {
           this.invoice.name = "B";
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it("are fired when an owned hasMany association is mutated", function () {
           this.invoice.lineItems.pop();
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it("are fired when an owned hasOne associated model changes", function () {
           this.invoice.billingAddress.name = "Bob Smith";
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it("are fired when an owned hasMany associated model changes", function () {
           this.invoice.lineItems.at(0).name = "xyz";
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it("are not fired when an unowned associated model changes", function () {
           this.invoice.company.name = "Foo";
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });
@@ -2356,7 +2364,7 @@ describe("Model", function () {
   });
 
   describe("validations", function () {
-    var ValidatedFoo = Model.extend("ValidatedFoo", function () {
+    var ValidatedFoo = _model2["default"].extend("ValidatedFoo", function () {
       this.attr("name", "string");
       this.attr("num", "number");
       this.attr("notValidated", "number");
@@ -2385,7 +2393,7 @@ describe("Model", function () {
       };
     });
 
-    var ValidatedBar = Model.extend("ValidatedBar", function () {
+    var ValidatedBar = _model2["default"].extend("ValidatedBar", function () {
       this.attr("x", "number");
 
       this.validate("x", function () {
@@ -2406,7 +2414,7 @@ describe("Model", function () {
         lineItems: [{ id: 10, name: "foo", quantity: 10, rate: 3.5 }, { id: 11, name: "bar", quantity: 3, rate: 12.25 }, { id: 12, name: "baz", quantity: 8, rate: 5 }]
       });
 
-      BasisObject.flush();
+      _object2["default"].flush();
     });
 
     describe("#addError", function () {
@@ -2438,7 +2446,7 @@ describe("Model", function () {
         var spy = jasmine.createSpy();
         this.m.on("errors", spy);
         this.m.addError("str", "foo");
-        BasisObject.flush();
+        _object2["default"].flush();
         expect(spy).toHaveBeenCalledWith("errors");
       });
     });
@@ -2482,28 +2490,28 @@ describe("Model", function () {
 
         it("are fired when a validation error is added", function () {
           this.invoice.addError("name", "x");
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it("are fired when _destroy is changed", function () {
           this.invoice.addError("name", "x");
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy.calls.count()).toBe(1);
           this.invoice._destroy = true;
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy.calls.count()).toBe(2);
         });
 
         it("are not fired when an owned associated model has a validation error added", function () {
           this.invoice.billingAddress.addError("name", "y");
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
 
         it("are not fired when an unowned associated model has a validation error added", function () {
           this.invoice.company.addError("name", "z");
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });
@@ -2564,19 +2572,19 @@ describe("Model", function () {
 
         it("are fired when a validation error is added", function () {
           this.invoice.addError("name", "x");
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it("are fired when an owned associated model has a validation error added", function () {
           this.invoice.billingAddress.addError("name", "y");
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it("are not fired when an unowned associated model has a validation error added", function () {
           this.invoice.company.addError("name", "z");
-          BasisObject.flush();
+          _object2["default"].flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });

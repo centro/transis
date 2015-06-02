@@ -1,14 +1,18 @@
 "use strict";
 
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
 
 require("es6-shim");
 
-var util = _interopRequireWildcard(require("../util"));
+var _util = require("../util");
 
-var BasisObject = _interopRequire(require("../object"));
+var util = _interopRequireWildcard(_util);
+
+var _object = require("../object");
+
+var _object2 = _interopRequireDefault(_object);
 
 beforeEach(function () {
   spyOn(console, "error");
@@ -22,5 +26,5 @@ beforeEach(function () {
 });
 
 afterEach(function () {
-  BasisObject.flush();
+  _object2["default"].flush();
 });
