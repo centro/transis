@@ -505,7 +505,7 @@ describe("Basis.Object", function () {
     });
   });
 
-  describe("#get", function () {
+  describe("#getPath", function () {
     var Foo = _object2["default"].extend(function () {
       this.prop("bar");
     });
@@ -516,8 +516,8 @@ describe("Basis.Object", function () {
 
     it("returns the value at the given path", function () {
       var f = new Foo({ bar: new Bar({ baz: 3 }) });
-      expect(f.get("bar.baz")).toBe(3);
-      expect(f.get("bar.quux")).toBeUndefined();
+      expect(f.getPath("bar.baz")).toBe(3);
+      expect(f.getPath("bar.quux")).toBeUndefined();
     });
   });
 });

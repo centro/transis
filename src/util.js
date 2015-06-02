@@ -232,7 +232,7 @@ export function capitalize(s) {
 // path - A string containing the dot separated path to resolve.
 //
 // Returns the resolved value or `undefined` if some segment of the path does not exist.
-export function get(o, path) {
+export function getPath(o, path) {
   var head, tail;
 
   path = typeof path === 'string' ? path.split('.') : path;
@@ -241,5 +241,5 @@ export function get(o, path) {
   o    = o[head];
 
   if (!tail.length) { return o; }
-  else { return o ? get(o, tail) : undefined; }
+  else { return o ? getPath(o, tail) : undefined; }
 }

@@ -292,7 +292,7 @@ BasisObject.prototype.toString = function() {
 // Returns a `true` if the objects are equal and `false` otherwise.
 BasisObject.prototype.eq = function(other) { return this === other; };
 
-BasisObject.prototype.get = function(path) { return util.get(this, path); };
+BasisObject.prototype.getPath = function(path) { return util.getPath(this, path); };
 
 // Internal: Returns the current value of the given property or the default value if it is not
 // defined.

@@ -432,8 +432,8 @@ this["Basis"] =
 	  return this === other;
 	};
 
-	BasisObject.prototype.get = function (path) {
-	  return util.get(this, path);
+	BasisObject.prototype.getPath = function (path) {
+	  return util.getPath(this, path);
 	};
 
 	// Internal: Returns the current value of the given property or the default value if it is not
@@ -2588,7 +2588,7 @@ this["Basis"] =
 	// path - A string containing the dot separated path to resolve.
 	//
 	// Returns the resolved value or `undefined` if some segment of the path does not exist.
-	exports.get = get;
+	exports.getPath = getPath;
 	var toString = Object.prototype.toString;
 
 	var seenObjects = [];
@@ -2798,7 +2798,7 @@ this["Basis"] =
 	  return typeof s === "string" && s.length ? s[0].toUpperCase() + s.slice(1) : s;
 	}
 
-	function get(_x, _x2) {
+	function getPath(_x, _x2) {
 	  var _again = true;
 
 	  _function: while (_again) {

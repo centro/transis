@@ -11,7 +11,7 @@ exports.objectEq = objectEq;
 exports.camelize = camelize;
 exports.underscore = underscore;
 exports.capitalize = capitalize;
-exports.get = get;
+exports.getPath = getPath;
 var toString = Object.prototype.toString;
 
 var seenObjects = [];
@@ -289,7 +289,7 @@ function capitalize(s) {
 //
 // Returns the resolved value or `undefined` if some segment of the path does not exist.
 
-function get(_x, _x2) {
+function getPath(_x, _x2) {
   var _again = true;
 
   _function: while (_again) {
