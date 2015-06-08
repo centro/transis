@@ -520,4 +520,24 @@ describe("Basis.Object", function () {
       expect(f.getPath("bar.quux")).toBeUndefined();
     });
   });
+
+  describe(".flush", function () {
+    it("handles exceptions in the observer callback", function () {
+      var t1 = new Test({ str: "a" }),
+          t2 = new Test({ str: "b" }),
+          spy1 = jasmine.createSpy().and.throwError(),
+          spy2 = jasmine.createSpy();
+
+      t1.on("str", spy1);
+      t2.on("str", spy2);
+
+      t1.str = "aa";
+      t2.str = "bb";
+
+      _object2["default"].flush();
+
+      expect(spy1).toHaveBeenCalled();
+      expect(spy2).toHaveBeenCalled();
+    });
+  });
 });
