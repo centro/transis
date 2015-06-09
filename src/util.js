@@ -47,6 +47,20 @@ function unmark(o1, o2) {
   }
 }
 
+// Internal: Used by `getPath` to resolve a path into a value.
+//
+// o            - The object to resolve the path from.
+// pathSegments - An array of strings representing segments of the path to resolve.
+//
+// Returns the resolved value or `undefined` if some segment of the path does not exist.
+function _getPath(o, pathSegments) {
+  var head = pathSegments[0], tail = pathSegments.slice(1);
+  o = o[head];
+
+  if (!tail.length) { return o; }
+  else { return o ? _getPath(o, tail) : undefined; }
+}
+
 // Internal: Used to detect cases of recursion on the same pair of objects. Returns `true` if the
 // given objects have already been seen. Otherwise the given function is called and `false` is
 // returned.
@@ -233,13 +247,5 @@ export function capitalize(s) {
 //
 // Returns the resolved value or `undefined` if some segment of the path does not exist.
 export function getPath(o, path) {
-  var head, tail;
-
-  path = typeof path === 'string' ? path.split('.') : path;
-  head = path[0];
-  tail = path.slice(1);
-  o    = o[head];
-
-  if (!tail.length) { return o; }
-  else { return o ? getPath(o, tail) : undefined; }
+  return _getPath(o, path.split('.'));
 }
