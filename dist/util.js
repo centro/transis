@@ -65,8 +65,8 @@ function unmark(o1, o2) {
 
 // Internal: Used by `getPath` to resolve a path into a value.
 //
-// o    - The object to resolve the path from.
-// path - An array of strings representing segments of the path to resolve.
+// o            - The object to resolve the path from.
+// pathSegments - An array of strings representing segments of the path to resolve.
 //
 // Returns the resolved value or `undefined` if some segment of the path does not exist.
 function _getPath(_x, _x2) {

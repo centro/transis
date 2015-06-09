@@ -53,17 +53,17 @@ this["Basis"] =
 
 	var BasisObject = _interopRequire(__webpack_require__(1));
 
-	var BasisArray = _interopRequire(__webpack_require__(3));
+	var BasisArray = _interopRequire(__webpack_require__(2));
 
-	var Model = _interopRequire(__webpack_require__(4));
+	var Model = _interopRequire(__webpack_require__(3));
 
-	var react = _interopRequireWildcard(__webpack_require__(10));
+	var react = _interopRequireWildcard(__webpack_require__(4));
 
-	var util = _interopRequireWildcard(__webpack_require__(2));
+	var util = _interopRequireWildcard(__webpack_require__(5));
 
-	var parsers = _interopRequireWildcard(__webpack_require__(8));
+	var parsers = _interopRequireWildcard(__webpack_require__(6));
 
-	var pluralize = _interopRequire(__webpack_require__(5));
+	var pluralize = _interopRequire(__webpack_require__(7));
 
 	module.exports = Object.assign({
 	  Object: BasisObject,
@@ -83,7 +83,7 @@ this["Basis"] =
 
 	var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
 
-	var util = _interopRequireWildcard(__webpack_require__(2));
+	var util = _interopRequireWildcard(__webpack_require__(5));
 
 	var objectId = 0,
 	    changedObjects = {},
@@ -538,337 +538,6 @@ this["Basis"] =
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-
-	// Internal: Used to detect cases of recursion on the same pair of objects. Returns `true` if the
-	// given objects have already been seen. Otherwise the given function is called and `false` is
-	// returned.
-	//
-	// This function is used internally when traversing objects and arrays to avoid getting stuck in
-	// infinite loops when circular objects are encountered. It should be wrapped around all recursive
-	// function calls where a circular object may be encountered. See `Basis.eq` for an example.
-	//
-	// o1 - The first object to check for recursion.
-	// o2 - The paired object to check for recursion (default: `undefined`).
-	// f  - A function that make the recursive funciton call.
-	//
-	// Returns `true` if recursion on the given objects has been detected. If the given pair of objects
-	//   has yet to be seen, calls `f` and returns `false`.
-	"use strict";
-
-	exports.detectRecursion = detectRecursion;
-
-	// Public: Returns a string indicating the type of the given object. This can be considered an
-	// enhanced version of the javascript `typeof` operator.
-	//
-	// Examples
-	//
-	//   Basis.type([])       // => 'array'
-	//   Basis.type({})       // => 'object'
-	//   Basis.type(9)        // => 'number'
-	//   Basis.type(/fo*/)    // => 'regexp'
-	//   Basis.type(new Date) // => 'date'
-	//
-	// o - The object to get the type of.
-	//
-	// Returns a string indicating the object's type.
-	exports.type = type;
-
-	// Public: Performs an object equality test. If the first argument is a `Basis.Object` then it is
-	// sent the `eq` method, otherwise custom equality code is run based on the object type.
-	//
-	// a - Any object.
-	// b - Any object.
-	//
-	// Returns `true` if the objects are equal and `false` otherwise.
-	exports.eq = eq;
-
-	// Public: Performs a a deep array equality test.
-	//
-	// a - An Array object.
-	// b - An Array object.
-	//
-	// Returns `true` if the objects are equal and `false` otherwise.
-	exports.arrayEq = arrayEq;
-
-	// Public: Performs a a deep object equality test.
-	//
-	// a - Any object.
-	// b - Any object.
-	//
-	// Returns `true` if the objects are equal and `false` otherwise.
-	exports.objectEq = objectEq;
-
-	// Public: Converts the given string to CamelCase.
-	exports.camelize = camelize;
-
-	// Public: Converts the given string to under_score_case.
-	exports.underscore = underscore;
-
-	// Public: Capitalizes the first letter of the given string.
-	exports.capitalize = capitalize;
-
-	// Public: Resolves a path into a value. The path must be relative to the given object.
-	//
-	// o    - The object to resolve the path from.
-	// path - A string containing the dot separated path to resolve.
-	//
-	// Returns the resolved value or `undefined` if some segment of the path does not exist.
-	exports.getPath = getPath;
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	var toString = Object.prototype.toString;
-
-	var seenObjects = [];
-
-	// Internal: Used by `detectRecursion` to check to see if the given pair of objects has been
-	// encountered yet on a previous recursive call.
-	//
-	// o1 - The first object to check for recursion.
-	// o2 - The paired object to check for recursion.
-	//
-	// Returns `true` if the pair has been seen previously and `false` otherwise.
-	function seen(o1, o2) {
-	  var i, len;
-
-	  for (i = 0, len = seenObjects.length; i < len; i++) {
-	    if (seenObjects[i][0] === o1 && seenObjects[i][1] === o2) {
-	      return true;
-	    }
-	  }
-
-	  return false;
-	}
-
-	// Internal: Used by `detectRecursion` to mark the given pair of objects as seen before recursing.
-	//
-	// o1 - The first object to mark.
-	// o2 - The paired object to mark.
-	//
-	// Returns nothing.
-	function mark(o1, o2) {
-	  seenObjects.push([o1, o2]);
-	}
-
-	// Internal: Used by `detectRecursion` to unmark the given pair of objects after a recursive call
-	// has completed.
-	//
-	// o1 - The first object to unmark.
-	// o2 - The paired object to unmark.
-	//
-	// Returns nothing.
-	function unmark(o1, o2) {
-	  var i, n;
-
-	  for (i = 0, n = seenObjects.length; i < n; i++) {
-	    if (seenObjects[i][0] === o1 && seenObjects[i][1] === o2) {
-	      seenObjects.splice(i, 1);
-	      return;
-	    }
-	  }
-	}
-
-	// Internal: Used by `getPath` to resolve a path into a value.
-	//
-	// o    - The object to resolve the path from.
-	// path - An array of strings representing segments of the path to resolve.
-	//
-	// Returns the resolved value or `undefined` if some segment of the path does not exist.
-	function _getPath(_x, _x2) {
-	  var _again = true;
-
-	  _function: while (_again) {
-	    _again = false;
-	    var o = _x,
-	        pathSegments = _x2;
-	    head = tail = undefined;
-
-	    var head = pathSegments[0],
-	        tail = pathSegments.slice(1);
-	    o = o[head];
-
-	    if (!tail.length) {
-	      return o;
-	    } else {
-	      if (o) {
-	        _x = o;
-	        _x2 = tail;
-	        _again = true;
-	        continue _function;
-	      } else {
-	        return undefined;
-	      }
-	    }
-	  }
-	}
-	function detectRecursion(o1, o2, f) {
-	  if (arguments.length === 2) {
-	    f = o2;o2 = undefined;
-	  }
-
-	  if (seen(o1, o2)) {
-	    return true;
-	  } else {
-	    mark(o1, o2);
-	    try {
-	      f();
-	    } finally {
-	      unmark(o1, o2);
-	    }
-	    return false;
-	  }
-	}
-
-	;
-	function type(o) {
-	  if (o === null) {
-	    return "null";
-	  }
-	  if (o === undefined) {
-	    return "undefined";
-	  }
-
-	  switch (toString.call(o)) {
-	    case "[object Array]":
-	      return "array";
-	    case "[object Arguments]":
-	      return "arguments";
-	    case "[object Function]":
-	      return "function";
-	    case "[object String]":
-	      return "string";
-	    case "[object Number]":
-	      return "number";
-	    case "[object Boolean]":
-	      return "boolean";
-	    case "[object Date]":
-	      return "date";
-	    case "[object RegExp]":
-	      return "regexp";
-	    case "[object Object]":
-	      if (o.hasOwnProperty("callee")) {
-	        return "arguments";
-	      } // ie fallback
-	      else {
-	        return "object";
-	      }
-	  }
-
-	  return "unknown";
-	}
-
-	;
-	function eq(a, b) {
-	  var atype, btype;
-
-	  // identical objects are equal
-	  if (a === b) {
-	    return true;
-	  }
-
-	  // if the first argument is a Basis.Object, delegate to its `eq` method
-	  if (a && a.objectId && typeof a.eq === "function") {
-	    return a.eq(b);
-	  }
-
-	  atype = type(a);
-	  btype = type(b);
-
-	  // native objects that are not of the same type are not equal
-	  if (atype !== btype) {
-	    return false;
-	  }
-
-	  switch (atype) {
-	    case "boolean":
-	    case "string":
-	    case "date":
-	    case "number":
-	      return a.valueOf() === b.valueOf();
-	    case "regexp":
-	      return a.source === b.source && a.global === b.global && a.multiline === b.multiline && a.ignoreCase === b.ignoreCase;
-	    case "array":
-	      return arrayEq(a, b);
-	    case "object":
-	      return objectEq(a, b);
-	    default:
-	      return false;
-	  }
-	}
-
-	function arrayEq(a, b) {
-	  var r;
-
-	  if (a.length !== b.length) {
-	    return false;
-	  }
-
-	  r = true;
-
-	  detectRecursion(a, b, function () {
-	    var i, len;
-
-	    for (i = 0, len = a.length; i < len; i++) {
-	      if (!eq(a[i], b[i])) {
-	        r = false;break;
-	      }
-	    }
-	  });
-
-	  return r;
-	}
-
-	function objectEq(a, b) {
-	  var akeys = Object.keys(a),
-	      bkeys = Object.keys(b),
-	      r;
-
-	  if (akeys.length !== bkeys.length) {
-	    return false;
-	  }
-
-	  r = true;
-
-	  detectRecursion(a, b, function () {
-	    var i, len, key;
-
-	    for (i = 0, len = akeys.length; i < len; i++) {
-	      key = akeys[i];
-	      if (!b.hasOwnProperty(key)) {
-	        r = false;break;
-	      }
-	      if (!eq(a[key], b[key])) {
-	        r = false;break;
-	      }
-	    }
-	  });
-
-	  return r;
-	}
-
-	function camelize(s) {
-	  return typeof s === "string" ? s.replace(/(?:[-_])(\w)/g, function (_, c) {
-	    return c ? c.toUpperCase() : "";
-	  }) : s;
-	}
-
-	function underscore(s) {
-	  return typeof s === "string" ? s.replace(/([a-z\d])([A-Z]+)/g, "$1_$2").replace(/[-\s]+/g, "_").toLowerCase() : s;
-	}
-
-	function capitalize(s) {
-	  return typeof s === "string" && s.length ? s[0].toUpperCase() + s.slice(1) : s;
-	}
-
-	function getPath(o, path) {
-	  return _getPath(o, path.split("."));
-	}
-
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
 	"use strict";
 
 	var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
@@ -877,7 +546,7 @@ this["Basis"] =
 
 	var BasisObject = _interopRequire(__webpack_require__(1));
 
-	var util = _interopRequireWildcard(__webpack_require__(2));
+	var util = _interopRequireWildcard(__webpack_require__(5));
 
 	var iframe;
 
@@ -1307,7 +976,7 @@ this["Basis"] =
 	module.exports = BasisArray;
 
 /***/ },
-/* 4 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1316,19 +985,19 @@ this["Basis"] =
 
 	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-	var pluralize = _interopRequire(__webpack_require__(5));
+	var pluralize = _interopRequire(__webpack_require__(7));
 
-	var IdMap = _interopRequire(__webpack_require__(6));
+	var IdMap = _interopRequire(__webpack_require__(8));
 
 	var BasisObject = _interopRequire(__webpack_require__(1));
 
-	var BasisArray = _interopRequire(__webpack_require__(3));
+	var BasisArray = _interopRequire(__webpack_require__(2));
 
-	var Validations = _interopRequire(__webpack_require__(7));
+	var Validations = _interopRequire(__webpack_require__(9));
 
-	var attrs = _interopRequireWildcard(__webpack_require__(9));
+	var attrs = _interopRequireWildcard(__webpack_require__(10));
 
-	var util = _interopRequireWildcard(__webpack_require__(2));
+	var util = _interopRequireWildcard(__webpack_require__(5));
 
 	var registeredAttrs = {},
 	    subclasses = {},
@@ -2695,7 +2364,639 @@ this["Basis"] =
 	module.exports = Model;
 
 /***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+	var BasisArray = _interopRequire(__webpack_require__(2));
+
+	var PropsMixin = exports.PropsMixin = function PropsMixin(props) {
+	  return {
+	    componentWillMount: function componentWillMount() {
+	      var _this = this;
+
+	      this._basisFU = this._basisFU || function () {
+	        _this.isMounted() && _this.forceUpdate();
+	      };
+
+	      for (var k in props) {
+	        (function (k) {
+	          props[k].forEach(function (prop) {
+	            if (this.props[k]) {
+	              this.props[k].on(prop, this._basisFU);
+	            }
+	          }, _this);
+	        })(k);
+	      }
+	    },
+
+	    componentWillUnmount: function componentWillUnmount() {
+	      var _this = this;
+
+	      for (var k in props) {
+	        (function (k) {
+	          props[k].forEach(function (prop) {
+	            if (this.props[k]) {
+	              this.props[k].off(prop, this._basisFU);
+	            }
+	          }, _this);
+	        })(k);
+	      }
+	    },
+
+	    componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
+	      var _this = this;
+
+	      for (var k in props) {
+	        (function (k) {
+	          props[k].forEach(function (prop) {
+	            if (nextProps[k] !== this.props[k]) {
+	              if (this.props[k]) {
+	                this.props[k].off(prop, this._basisFU);
+	              }
+	              if (nextProps[k]) {
+	                nextProps[k].on(prop, this._basisFU);
+	              }
+	            }
+	          }, _this);
+	        })(k);
+	      }
+	    }
+	  };
+	};
+
+	var StateMixin = exports.StateMixin = function StateMixin(object, props) {
+	  if (typeof props !== "object") {
+	    props = BasisArray.from(arguments).slice(1).reduce(function (acc, prop) {
+	      acc[prop] = [];
+	      return acc;
+	    }, {});
+	  }
+
+	  return {
+	    getInitialState: function getInitialState() {
+	      var state = {};
+	      for (var k in props) {
+	        state[k] = object[k];
+	      }
+	      return state;
+	    },
+
+	    componentWillMount: function componentWillMount() {
+	      var _this = this;
+
+	      this._basisFU = this._basisFU || function () {
+	        _this.isMounted() && _this.forceUpdate();
+	      };
+
+	      this._basisSyncState = function () {
+	        var state = {};
+
+	        for (var k in props) {
+	          (function (k) {
+	            if (_this.state[k] !== object[k]) {
+	              if (_this.state[k] && typeof _this.state[k].off === "function") {
+	                props[k].forEach(function (path) {
+	                  _this.state[k].off(path, _this._basisFU);
+	                });
+	              }
+
+	              if (object[k] && typeof object[k].on === "function") {
+	                props[k].forEach(function (path) {
+	                  object[k].on(path, _this._basisFU);
+	                });
+	              }
+
+	              state[k] = object[k];
+	            }
+	          })(k);
+	        }
+
+	        if (Object.keys(state).length) {
+	          _this.setState(state);
+	        }
+	      };
+
+	      for (var k in props) {
+	        (function (k) {
+	          if (object[k] && typeof object[k].on === "function") {
+	            props[k].forEach(function (path) {
+	              object[k].on(path, _this._basisFU);
+	            });
+	          }
+	        })(k);
+	      }
+
+	      object.on("*", this._basisSyncState);
+	    },
+
+	    componentWillUnmount: function componentWillUnmount() {
+	      var _this = this;
+
+	      for (var k in props) {
+	        (function (k) {
+	          if (_this.state[k] && typeof _this.state[k].off === "function") {
+	            props[k].forEach(function (path) {
+	              _this.state[k].off(path, _this._basisFU);
+	            });
+	          }
+	        })(k);
+	      }
+
+	      object.off("*", this._basisSyncState);
+	    }
+	  };
+	};
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+/***/ },
 /* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	// Internal: Used to detect cases of recursion on the same pair of objects. Returns `true` if the
+	// given objects have already been seen. Otherwise the given function is called and `false` is
+	// returned.
+	//
+	// This function is used internally when traversing objects and arrays to avoid getting stuck in
+	// infinite loops when circular objects are encountered. It should be wrapped around all recursive
+	// function calls where a circular object may be encountered. See `Basis.eq` for an example.
+	//
+	// o1 - The first object to check for recursion.
+	// o2 - The paired object to check for recursion (default: `undefined`).
+	// f  - A function that make the recursive funciton call.
+	//
+	// Returns `true` if recursion on the given objects has been detected. If the given pair of objects
+	//   has yet to be seen, calls `f` and returns `false`.
+	exports.detectRecursion = detectRecursion;
+
+	// Public: Returns a string indicating the type of the given object. This can be considered an
+	// enhanced version of the javascript `typeof` operator.
+	//
+	// Examples
+	//
+	//   Basis.type([])       // => 'array'
+	//   Basis.type({})       // => 'object'
+	//   Basis.type(9)        // => 'number'
+	//   Basis.type(/fo*/)    // => 'regexp'
+	//   Basis.type(new Date) // => 'date'
+	//
+	// o - The object to get the type of.
+	//
+	// Returns a string indicating the object's type.
+	exports.type = type;
+
+	// Public: Performs an object equality test. If the first argument is a `Basis.Object` then it is
+	// sent the `eq` method, otherwise custom equality code is run based on the object type.
+	//
+	// a - Any object.
+	// b - Any object.
+	//
+	// Returns `true` if the objects are equal and `false` otherwise.
+	exports.eq = eq;
+
+	// Public: Performs a a deep array equality test.
+	//
+	// a - An Array object.
+	// b - An Array object.
+	//
+	// Returns `true` if the objects are equal and `false` otherwise.
+	exports.arrayEq = arrayEq;
+
+	// Public: Performs a a deep object equality test.
+	//
+	// a - Any object.
+	// b - Any object.
+	//
+	// Returns `true` if the objects are equal and `false` otherwise.
+	exports.objectEq = objectEq;
+
+	// Public: Converts the given string to CamelCase.
+	exports.camelize = camelize;
+
+	// Public: Converts the given string to under_score_case.
+	exports.underscore = underscore;
+
+	// Public: Capitalizes the first letter of the given string.
+	exports.capitalize = capitalize;
+
+	// Public: Resolves a path into a value. The path must be relative to the given object.
+	//
+	// o    - The object to resolve the path from.
+	// path - A string containing the dot separated path to resolve.
+	//
+	// Returns the resolved value or `undefined` if some segment of the path does not exist.
+	exports.getPath = getPath;
+	var toString = Object.prototype.toString;
+
+	var seenObjects = [];
+
+	// Internal: Used by `detectRecursion` to check to see if the given pair of objects has been
+	// encountered yet on a previous recursive call.
+	//
+	// o1 - The first object to check for recursion.
+	// o2 - The paired object to check for recursion.
+	//
+	// Returns `true` if the pair has been seen previously and `false` otherwise.
+	function seen(o1, o2) {
+	  var i, len;
+
+	  for (i = 0, len = seenObjects.length; i < len; i++) {
+	    if (seenObjects[i][0] === o1 && seenObjects[i][1] === o2) {
+	      return true;
+	    }
+	  }
+
+	  return false;
+	}
+
+	// Internal: Used by `detectRecursion` to mark the given pair of objects as seen before recursing.
+	//
+	// o1 - The first object to mark.
+	// o2 - The paired object to mark.
+	//
+	// Returns nothing.
+	function mark(o1, o2) {
+	  seenObjects.push([o1, o2]);
+	}
+
+	// Internal: Used by `detectRecursion` to unmark the given pair of objects after a recursive call
+	// has completed.
+	//
+	// o1 - The first object to unmark.
+	// o2 - The paired object to unmark.
+	//
+	// Returns nothing.
+	function unmark(o1, o2) {
+	  var i, n;
+
+	  for (i = 0, n = seenObjects.length; i < n; i++) {
+	    if (seenObjects[i][0] === o1 && seenObjects[i][1] === o2) {
+	      seenObjects.splice(i, 1);
+	      return;
+	    }
+	  }
+	}
+
+	// Internal: Used by `getPath` to resolve a path into a value.
+	//
+	// o            - The object to resolve the path from.
+	// pathSegments - An array of strings representing segments of the path to resolve.
+	//
+	// Returns the resolved value or `undefined` if some segment of the path does not exist.
+	function _getPath(_x, _x2) {
+	  var _again = true;
+
+	  _function: while (_again) {
+	    _again = false;
+	    var o = _x,
+	        pathSegments = _x2;
+	    head = tail = undefined;
+
+	    var head = pathSegments[0],
+	        tail = pathSegments.slice(1);
+	    o = o[head];
+
+	    if (!tail.length) {
+	      return o;
+	    } else {
+	      if (o) {
+	        _x = o;
+	        _x2 = tail;
+	        _again = true;
+	        continue _function;
+	      } else {
+	        return undefined;
+	      }
+	    }
+	  }
+	}
+	function detectRecursion(o1, o2, f) {
+	  if (arguments.length === 2) {
+	    f = o2;o2 = undefined;
+	  }
+
+	  if (seen(o1, o2)) {
+	    return true;
+	  } else {
+	    mark(o1, o2);
+	    try {
+	      f();
+	    } finally {
+	      unmark(o1, o2);
+	    }
+	    return false;
+	  }
+	}
+
+	;
+	function type(o) {
+	  if (o === null) {
+	    return "null";
+	  }
+	  if (o === undefined) {
+	    return "undefined";
+	  }
+
+	  switch (toString.call(o)) {
+	    case "[object Array]":
+	      return "array";
+	    case "[object Arguments]":
+	      return "arguments";
+	    case "[object Function]":
+	      return "function";
+	    case "[object String]":
+	      return "string";
+	    case "[object Number]":
+	      return "number";
+	    case "[object Boolean]":
+	      return "boolean";
+	    case "[object Date]":
+	      return "date";
+	    case "[object RegExp]":
+	      return "regexp";
+	    case "[object Object]":
+	      if (o.hasOwnProperty("callee")) {
+	        return "arguments";
+	      } // ie fallback
+	      else {
+	        return "object";
+	      }
+	  }
+
+	  return "unknown";
+	}
+
+	;
+	function eq(a, b) {
+	  var atype, btype;
+
+	  // identical objects are equal
+	  if (a === b) {
+	    return true;
+	  }
+
+	  // if the first argument is a Basis.Object, delegate to its `eq` method
+	  if (a && a.objectId && typeof a.eq === "function") {
+	    return a.eq(b);
+	  }
+
+	  atype = type(a);
+	  btype = type(b);
+
+	  // native objects that are not of the same type are not equal
+	  if (atype !== btype) {
+	    return false;
+	  }
+
+	  switch (atype) {
+	    case "boolean":
+	    case "string":
+	    case "date":
+	    case "number":
+	      return a.valueOf() === b.valueOf();
+	    case "regexp":
+	      return a.source === b.source && a.global === b.global && a.multiline === b.multiline && a.ignoreCase === b.ignoreCase;
+	    case "array":
+	      return arrayEq(a, b);
+	    case "object":
+	      return objectEq(a, b);
+	    default:
+	      return false;
+	  }
+	}
+
+	function arrayEq(a, b) {
+	  var r;
+
+	  if (a.length !== b.length) {
+	    return false;
+	  }
+
+	  r = true;
+
+	  detectRecursion(a, b, function () {
+	    var i, len;
+
+	    for (i = 0, len = a.length; i < len; i++) {
+	      if (!eq(a[i], b[i])) {
+	        r = false;break;
+	      }
+	    }
+	  });
+
+	  return r;
+	}
+
+	function objectEq(a, b) {
+	  var akeys = Object.keys(a),
+	      bkeys = Object.keys(b),
+	      r;
+
+	  if (akeys.length !== bkeys.length) {
+	    return false;
+	  }
+
+	  r = true;
+
+	  detectRecursion(a, b, function () {
+	    var i, len, key;
+
+	    for (i = 0, len = akeys.length; i < len; i++) {
+	      key = akeys[i];
+	      if (!b.hasOwnProperty(key)) {
+	        r = false;break;
+	      }
+	      if (!eq(a[key], b[key])) {
+	        r = false;break;
+	      }
+	    }
+	  });
+
+	  return r;
+	}
+
+	function camelize(s) {
+	  return typeof s === "string" ? s.replace(/(?:[-_])(\w)/g, function (_, c) {
+	    return c ? c.toUpperCase() : "";
+	  }) : s;
+	}
+
+	function underscore(s) {
+	  return typeof s === "string" ? s.replace(/([a-z\d])([A-Z]+)/g, "$1_$2").replace(/[-\s]+/g, "_").toLowerCase() : s;
+	}
+
+	function capitalize(s) {
+	  return typeof s === "string" && s.length ? s[0].toUpperCase() + s.slice(1) : s;
+	}
+
+	function getPath(o, path) {
+	  return _getPath(o, path.split("."));
+	}
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	// Public: Parses a string containing a number.
+	//
+	// s - The string to parse.
+	//
+	// Returns a number or `null` if parsing fails.
+	exports.parseNumber = parseNumber;
+
+	// Public: Parses a string containing a percent.
+	//
+	// s - The string to parse.
+	//
+	// Returns a number or `null` if parsing fails.
+	exports.parsePercent = parsePercent;
+
+	// Public: Parses a string containing a date in the following formats:
+	//   - YYYY-MM-DD (ISO8601)
+	//   - MM/DD
+	//   - MM/DD/YY
+	//   - MM/DD/YYYY
+	//
+	// s - The string to parse.
+	//
+	// Returns a `Date` or `null` if parsing fails.
+	exports.parseDate = parseDate;
+
+	// Public: Parses a string containing an ISO8601 formatted date and time.
+	//
+	// s - The string to parse.
+	//
+	// Returns a `Date` or `null` if parsing fails.
+	exports.parseDateTime = parseDateTime;
+
+	// Public: Parses a string containing an email.
+	//
+	// s - The string to parse.
+	//
+	// Returns the email string.
+	exports.parseEmail = parseEmail;
+
+	// Public: Parses a string containing an phone number.
+	//
+	// s - The string to parse.
+	//
+	// Returns the phone string.
+	exports.parsePhone = parsePhone;
+
+	// Public: Parses a string containing a time duration. The format is: "HH:MM:SS" where hours and
+	// minutes are optional.
+	//
+	// s - The string to parse.
+	//
+	// Returns the number of seconds or `null` if parsing fails.
+	exports.parseDuration = parseDuration;
+	var NUMBER_RE = /^[-]?([0-9]*[0-9][0-9]*(\.[0-9]+)?|[0]*\.[0-9]*[0-9][0-9]*)$/;
+	function parseNumber(s) {
+	  s = String(s).replace(/[^\d-.]/g, "").replace(/\.$/, "");
+	  if (!s.match(NUMBER_RE)) {
+	    return null;
+	  }
+	  return parseFloat(s, 10);
+	}
+
+	var MDY_DATE_RE = /^\s*(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\s*$/;
+	var ISO8601_DATE_RE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
+	function parsePercent(s) {
+	  var n = parseNumber(String(s).replace("%", ""));
+	  return n == null ? null : n / 100;
+	}
+
+	function parseDate(s) {
+	  var m, d, y, date, parts;
+
+	  s = String(s).replace(/\s/g, "");
+
+	  if (parts = s.match(ISO8601_DATE_RE)) {
+	    y = parseInt(parts[1], 10);
+	    m = parseInt(parts[2], 10) - 1;
+	    d = parseInt(parts[3], 10);
+	    date = new Date(y, m, d);
+	    return date.getMonth() === m ? date : null;
+	  } else if (parts = s.match(MDY_DATE_RE)) {
+	    m = parseInt(parts[1], 10) - 1;
+	    d = parseInt(parts[2], 10);
+	    y = parts[3] ? parseInt(parts[3], 10) : new Date().getFullYear();
+	    if (0 <= y && y <= 68) {
+	      y += 2000;
+	    }
+	    if (69 <= y && y <= 99) {
+	      y += 1900;
+	    }
+	    date = new Date(y, m, d);
+	    return date.getMonth() === m ? date : null;
+	  } else {
+	    return null;
+	  }
+	}
+
+	var NO_TZ_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?$/;
+	function parseDateTime(s) {
+	  var n;
+	  s = String(s);
+	  if (s.match(NO_TZ_RE)) {
+	    s += "Z";
+	  }
+	  return (n = Date.parse(s)) ? new Date(n) : null;
+	}
+
+	var EMAIL_FORMAT = /^([^@\s]+)@([-a-z0-9]+\.+[a-z]{2,})$/i;
+	function parseEmail(s) {
+	  s = String(s);
+	  return EMAIL_FORMAT.test(s) ? s : null;
+	}
+
+	var PHONE_FORMAT = /^\d{10}$/;
+	var PHONE_CHARS = /[\(\)\s-]/g;
+	function parsePhone(s) {
+	  s = String(s);
+	  return PHONE_FORMAT.test(s.replace(PHONE_CHARS, "")) ? s : null;
+	}
+
+	var DURATION_RE = /^\s*(?:(?::?\d+)|(?::?\d+:\d+)|(?:\d+:\d+:\d+))\s*$/;
+	function parseDuration(s) {
+	  s = String(s);
+
+	  if (!DURATION_RE.test(s)) {
+	    return null;
+	  }
+
+	  var parts = s.split(":").map(function (p) {
+	    return +p;
+	  });
+
+	  if (parts.length === 3) {
+	    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+	  } else if (parts.length === 2) {
+	    return parts[0] * 60 + parts[1];
+	  } else {
+	    return parts[0];
+	  }
+	}
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+/***/ },
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function (root, pluralize) {
@@ -3127,7 +3428,7 @@ this["Basis"] =
 
 
 /***/ },
-/* 6 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -3175,7 +3476,7 @@ this["Basis"] =
 	module.exports = IdMap;
 
 /***/ },
-/* 7 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -3184,11 +3485,11 @@ this["Basis"] =
 
 	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-	var BasisArray = _interopRequire(__webpack_require__(3));
+	var BasisArray = _interopRequire(__webpack_require__(2));
 
-	var util = _interopRequireWildcard(__webpack_require__(2));
+	var util = _interopRequireWildcard(__webpack_require__(5));
 
-	var parsers = _interopRequireWildcard(__webpack_require__(8));
+	var parsers = _interopRequireWildcard(__webpack_require__(6));
 
 	function isBlank(v) {
 	  return v == null || util.type(v) === "string" && v.match(/^\s*$/) || util.type(v) === "array" && v.length === 0 || v instanceof BasisArray && v.length === 0;
@@ -3363,176 +3664,20 @@ this["Basis"] =
 	module.exports = Validations;
 
 /***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-
-	// Public: Parses a string containing a number.
-	//
-	// s - The string to parse.
-	//
-	// Returns a number or `null` if parsing fails.
-	"use strict";
-
-	exports.parseNumber = parseNumber;
-
-	// Public: Parses a string containing a percent.
-	//
-	// s - The string to parse.
-	//
-	// Returns a number or `null` if parsing fails.
-	exports.parsePercent = parsePercent;
-
-	// Public: Parses a string containing a date in the following formats:
-	//   - YYYY-MM-DD (ISO8601)
-	//   - MM/DD
-	//   - MM/DD/YY
-	//   - MM/DD/YYYY
-	//
-	// s - The string to parse.
-	//
-	// Returns a `Date` or `null` if parsing fails.
-	exports.parseDate = parseDate;
-
-	// Public: Parses a string containing an ISO8601 formatted date and time.
-	//
-	// s - The string to parse.
-	//
-	// Returns a `Date` or `null` if parsing fails.
-	exports.parseDateTime = parseDateTime;
-
-	// Public: Parses a string containing an email.
-	//
-	// s - The string to parse.
-	//
-	// Returns the email string.
-	exports.parseEmail = parseEmail;
-
-	// Public: Parses a string containing an phone number.
-	//
-	// s - The string to parse.
-	//
-	// Returns the phone string.
-	exports.parsePhone = parsePhone;
-
-	// Public: Parses a string containing a time duration. The format is: "HH:MM:SS" where hours and
-	// minutes are optional.
-	//
-	// s - The string to parse.
-	//
-	// Returns the number of seconds or `null` if parsing fails.
-	exports.parseDuration = parseDuration;
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	var NUMBER_RE = /^[-]?([0-9]*[0-9][0-9]*(\.[0-9]+)?|[0]*\.[0-9]*[0-9][0-9]*)$/;
-	function parseNumber(s) {
-	  s = String(s).replace(/[^\d-.]/g, "").replace(/\.$/, "");
-	  if (!s.match(NUMBER_RE)) {
-	    return null;
-	  }
-	  return parseFloat(s, 10);
-	}
-
-	var MDY_DATE_RE = /^\s*(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\s*$/;
-	var ISO8601_DATE_RE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
-	function parsePercent(s) {
-	  var n = parseNumber(String(s).replace("%", ""));
-	  return n == null ? null : n / 100;
-	}
-
-	function parseDate(s) {
-	  var m, d, y, date, parts;
-
-	  s = String(s).replace(/\s/g, "");
-
-	  if (parts = s.match(ISO8601_DATE_RE)) {
-	    y = parseInt(parts[1], 10);
-	    m = parseInt(parts[2], 10) - 1;
-	    d = parseInt(parts[3], 10);
-	    date = new Date(y, m, d);
-	    return date.getMonth() === m ? date : null;
-	  } else if (parts = s.match(MDY_DATE_RE)) {
-	    m = parseInt(parts[1], 10) - 1;
-	    d = parseInt(parts[2], 10);
-	    y = parts[3] ? parseInt(parts[3], 10) : new Date().getFullYear();
-	    if (0 <= y && y <= 68) {
-	      y += 2000;
-	    }
-	    if (69 <= y && y <= 99) {
-	      y += 1900;
-	    }
-	    date = new Date(y, m, d);
-	    return date.getMonth() === m ? date : null;
-	  } else {
-	    return null;
-	  }
-	}
-
-	var NO_TZ_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?$/;
-	function parseDateTime(s) {
-	  var n;
-	  s = String(s);
-	  if (s.match(NO_TZ_RE)) {
-	    s += "Z";
-	  }
-	  return (n = Date.parse(s)) ? new Date(n) : null;
-	}
-
-	var EMAIL_FORMAT = /^([^@\s]+)@([-a-z0-9]+\.+[a-z]{2,})$/i;
-	function parseEmail(s) {
-	  s = String(s);
-	  return EMAIL_FORMAT.test(s) ? s : null;
-	}
-
-	var PHONE_FORMAT = /^\d{10}$/;
-	var PHONE_CHARS = /[\(\)\s-]/g;
-	function parsePhone(s) {
-	  s = String(s);
-	  return PHONE_FORMAT.test(s.replace(PHONE_CHARS, "")) ? s : null;
-	}
-
-	var DURATION_RE = /^\s*(?:(?::?\d+)|(?::?\d+:\d+)|(?:\d+:\d+:\d+))\s*$/;
-	function parseDuration(s) {
-	  s = String(s);
-
-	  if (!DURATION_RE.test(s)) {
-	    return null;
-	  }
-
-	  var parts = s.split(":").map(function (p) {
-	    return +p;
-	  });
-
-	  if (parts.length === 3) {
-	    return parts[0] * 3600 + parts[1] * 60 + parts[2];
-	  } else if (parts.length === 2) {
-	    return parts[0] * 60 + parts[1];
-	  } else {
-	    return parts[0];
-	  }
-	}
-
-/***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
 
-	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
 
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
+	var parsers = _interopRequireWildcard(__webpack_require__(6));
 
-	var parsers = _interopRequireWildcard(__webpack_require__(8));
-
-	var IdentityAttr = {
+	var IdentityAttr = exports.IdentityAttr = {
 	  coerce: function coerce(v) {
 	    return v;
 	  },
@@ -3540,8 +3685,6 @@ this["Basis"] =
 	    return v;
 	  }
 	};
-
-	exports.IdentityAttr = IdentityAttr;
 
 	var StringAttr = exports.StringAttr = (function () {
 	  function StringAttr() {
@@ -3552,7 +3695,7 @@ this["Basis"] =
 	    this.opts = Object.assign({ trim: true }, opts);
 	  }
 
-	  _createClass(StringAttr, {
+	  _prototypeProperties(StringAttr, null, {
 	    coerce: {
 	      value: function coerce(v) {
 	        v = v != null ? String(v) : v;
@@ -3560,19 +3703,23 @@ this["Basis"] =
 	          v = v.trim();
 	        }
 	        return v;
-	      }
+	      },
+	      writable: true,
+	      configurable: true
 	    },
 	    serialize: {
 	      value: function serialize(s) {
 	        return s;
-	      }
+	      },
+	      writable: true,
+	      configurable: true
 	    }
 	  });
 
 	  return StringAttr;
 	})();
 
-	var NumberAttr = {
+	var NumberAttr = exports.NumberAttr = {
 	  coerce: function coerce(v) {
 	    if (typeof v === "number") {
 	      return v;
@@ -3590,8 +3737,7 @@ this["Basis"] =
 	  }
 	};
 
-	exports.NumberAttr = NumberAttr;
-	var BooleanAttr = {
+	var BooleanAttr = exports.BooleanAttr = {
 	  coerce: function coerce(v) {
 	    return v === undefined ? v : !!v;
 	  },
@@ -3600,8 +3746,7 @@ this["Basis"] =
 	  }
 	};
 
-	exports.BooleanAttr = BooleanAttr;
-	var DateAttr = {
+	var DateAttr = exports.DateAttr = {
 	  coerce: function coerce(v) {
 	    if (v == null || v instanceof Date) {
 	      return v;
@@ -3622,8 +3767,7 @@ this["Basis"] =
 	  }
 	};
 
-	exports.DateAttr = DateAttr;
-	var DateTimeAttr = {
+	var DateTimeAttr = exports.DateTimeAttr = {
 	  coerce: function coerce(v) {
 	    if (v == null || v instanceof Date) {
 	      return v;
@@ -3643,161 +3787,9 @@ this["Basis"] =
 	    return date instanceof Date ? date.toJSON() : date;
 	  }
 	};
-	exports.DateTimeAttr = DateTimeAttr;
-
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-
-	var BasisArray = _interopRequire(__webpack_require__(3));
-
-	var PropsMixin = function PropsMixin(props) {
-	  return {
-	    componentWillMount: function componentWillMount() {
-	      var _this = this;
-
-	      this._basisFU = this._basisFU || function () {
-	        _this.isMounted() && _this.forceUpdate();
-	      };
-
-	      for (var k in props) {
-	        (function (k) {
-	          props[k].forEach(function (prop) {
-	            if (this.props[k]) {
-	              this.props[k].on(prop, this._basisFU);
-	            }
-	          }, _this);
-	        })(k);
-	      }
-	    },
-
-	    componentWillUnmount: function componentWillUnmount() {
-	      var _this = this;
-
-	      for (var k in props) {
-	        (function (k) {
-	          props[k].forEach(function (prop) {
-	            if (this.props[k]) {
-	              this.props[k].off(prop, this._basisFU);
-	            }
-	          }, _this);
-	        })(k);
-	      }
-	    },
-
-	    componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
-	      var _this = this;
-
-	      for (var k in props) {
-	        (function (k) {
-	          props[k].forEach(function (prop) {
-	            if (nextProps[k] !== this.props[k]) {
-	              if (this.props[k]) {
-	                this.props[k].off(prop, this._basisFU);
-	              }
-	              if (nextProps[k]) {
-	                nextProps[k].on(prop, this._basisFU);
-	              }
-	            }
-	          }, _this);
-	        })(k);
-	      }
-	    }
-	  };
-	};
-
-	exports.PropsMixin = PropsMixin;
-	var StateMixin = function StateMixin(object, props) {
-	  if (typeof props !== "object") {
-	    props = BasisArray.from(arguments).slice(1).reduce(function (acc, prop) {
-	      acc[prop] = [];
-	      return acc;
-	    }, {});
-	  }
-
-	  return {
-	    getInitialState: function getInitialState() {
-	      var state = {};
-	      for (var k in props) {
-	        state[k] = object[k];
-	      }
-	      return state;
-	    },
-
-	    componentWillMount: function componentWillMount() {
-	      var _this = this;
-
-	      this._basisFU = this._basisFU || function () {
-	        _this.isMounted() && _this.forceUpdate();
-	      };
-
-	      this._basisSyncState = function () {
-	        var state = {};
-
-	        for (var k in props) {
-	          (function (k) {
-	            if (_this.state[k] !== object[k]) {
-	              if (_this.state[k] && typeof _this.state[k].off === "function") {
-	                props[k].forEach(function (path) {
-	                  _this.state[k].off(path, _this._basisFU);
-	                });
-	              }
-
-	              if (object[k] && typeof object[k].on === "function") {
-	                props[k].forEach(function (path) {
-	                  object[k].on(path, _this._basisFU);
-	                });
-	              }
-
-	              state[k] = object[k];
-	            }
-	          })(k);
-	        }
-
-	        if (Object.keys(state).length) {
-	          _this.setState(state);
-	        }
-	      };
-
-	      for (var k in props) {
-	        (function (k) {
-	          if (object[k] && typeof object[k].on === "function") {
-	            props[k].forEach(function (path) {
-	              object[k].on(path, _this._basisFU);
-	            });
-	          }
-	        })(k);
-	      }
-
-	      object.on("*", this._basisSyncState);
-	    },
-
-	    componentWillUnmount: function componentWillUnmount() {
-	      var _this = this;
-
-	      for (var k in props) {
-	        (function (k) {
-	          if (_this.state[k] && typeof _this.state[k].off === "function") {
-	            props[k].forEach(function (path) {
-	              _this.state[k].off(path, _this._basisFU);
-	            });
-	          }
-	        })(k);
-	      }
-
-	      object.off("*", this._basisSyncState);
-	    }
-	  };
-	};
-	exports.StateMixin = StateMixin;
 
 /***/ }
 /******/ ]);
