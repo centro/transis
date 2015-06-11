@@ -2065,6 +2065,14 @@ describe('Model', function () {
         this.invoice.undoChanges();
         expect(this.invoice.errors.name).toBeUndefined();
       });
+
+      it('handles circular owner associations', function() {
+        var a = CircularA.load({id: 1, bs: [2, 3]});
+
+        expect(function() {
+          a.undoChanges();
+        }).not.toThrow();
+      });
     });
 
     describe('#hasOwnChanges', function() {
@@ -2545,6 +2553,14 @@ describe('Model', function () {
         m.addError('notValidated', 'foobar');
         m.validate();
         expect(m.errors.notValidated).toBeUndefined();
+      });
+
+      it('handles circular owner associations', function() {
+        var a = CircularA.load({id: 1, bs: [2, 3]});
+
+        expect(function() {
+          a.validate();
+        }).not.toThrow();
       });
     });
   });

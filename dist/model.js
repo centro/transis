@@ -1153,21 +1153,23 @@ var Model = _object2["default"].extend(function () {
       _loop3(prop);
     }
 
-    for (var _name6 in associations) {
-      var desc = associations[_name6];
+    util.detectRecursion(this, (function () {
+      for (var _name6 in associations) {
+        var desc = associations[_name6];
 
-      if (!desc.owner) {
-        continue;
-      }
+        if (!desc.owner) {
+          continue;
+        }
 
-      if (desc.type === "hasOne") {
-        this[_name6] && this[_name6].undoChanges();
-      } else if (desc.type === "hasMany") {
-        this[_name6].forEach(function (m) {
-          return m.undoChanges();
-        });
+        if (desc.type === "hasOne") {
+          this[_name6] && this[_name6].undoChanges();
+        } else if (desc.type === "hasMany") {
+          this[_name6].forEach(function (m) {
+            return m.undoChanges();
+          });
+        }
       }
-    }
+    }).bind(this));
 
     this.validate();
   };
@@ -1230,21 +1232,23 @@ var Model = _object2["default"].extend(function () {
       this.validateAttr(_name7);
     }
 
-    for (var _name8 in associations) {
-      var desc = associations[_name8];
+    util.detectRecursion(this, (function () {
+      for (var _name8 in associations) {
+        var desc = associations[_name8];
 
-      if (!desc.owner) {
-        continue;
-      }
+        if (!desc.owner) {
+          continue;
+        }
 
-      if (desc.type === "hasOne") {
-        this[_name8] && !this[_name8]._destroy && this[_name8].validate();
-      } else if (desc.type === "hasMany") {
-        this[_name8].forEach(function (m) {
-          return !m._destroy && m.validate();
-        });
+        if (desc.type === "hasOne") {
+          this[_name8] && !this[_name8]._destroy && this[_name8].validate();
+        } else if (desc.type === "hasMany") {
+          this[_name8].forEach(function (m) {
+            return !m._destroy && m.validate();
+          });
+        }
       }
-    }
+    }).bind(this));
 
     return !this.hasErrors;
   };

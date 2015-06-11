@@ -956,18 +956,20 @@ var Model = BasisObject.extend(function() {
       }
     }
 
-    for (let name in associations) {
-      let desc = associations[name];
+    util.detectRecursion(this, function() {
+      for (let name in associations) {
+        let desc = associations[name];
 
-      if (!desc.owner) { continue; }
+        if (!desc.owner) { continue; }
 
-      if (desc.type === 'hasOne') {
-        this[name] && this[name].undoChanges();
+        if (desc.type === 'hasOne') {
+          this[name] && this[name].undoChanges();
+        }
+        else if (desc.type === 'hasMany') {
+          this[name].forEach(m => m.undoChanges());
+        }
       }
-      else if (desc.type === 'hasMany') {
-        this[name].forEach(m => m.undoChanges());
-      }
-    }
+    }.bind(this));
 
     this.validate();
   };
@@ -1022,18 +1024,20 @@ var Model = BasisObject.extend(function() {
 
     for (let name in this.validators) { this.validateAttr(name); }
 
-    for (let name in associations) {
-      let desc = associations[name];
+    util.detectRecursion(this, function() {
+      for (let name in associations) {
+        let desc = associations[name];
 
-      if (!desc.owner) { continue; }
+        if (!desc.owner) { continue; }
 
-      if (desc.type === 'hasOne') {
-        this[name] && !this[name]._destroy && this[name].validate();
+        if (desc.type === 'hasOne') {
+          this[name] && !this[name]._destroy && this[name].validate();
+        }
+        else if (desc.type === 'hasMany') {
+          this[name].forEach(m => !m._destroy && m.validate());
+        }
       }
-      else if (desc.type === 'hasMany') {
-        this[name].forEach(m => !m._destroy && m.validate());
-      }
-    }
+    }.bind(this));
 
     return !this.hasErrors;
   };
