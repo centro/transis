@@ -14,15 +14,19 @@ var _object = require("../object");
 
 var _object2 = _interopRequireDefault(_object);
 
+function delay(f) {
+  setTimeout(f, 5);
+}
+function jasmineToString() {
+  return this.toString();
+};
+
 beforeEach(function () {
   spyOn(console, "error");
   spyOn(console, "warn");
-  jasmine.addCustomEqualityTester(function (a, b) {
-    return util.eq(a, b);
-  });
-  this.delay = function (f) {
-    setTimeout(f, 5);
-  };
+  jasmine.addCustomEqualityTester(util.eq);
+  this.delay = delay;
+  _object2["default"].prototype.jasmineToString = jasmineToString;
 });
 
 afterEach(function () {

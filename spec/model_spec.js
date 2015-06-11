@@ -2028,7 +2028,7 @@ describe('Model', function () {
         expect(this.invoice.lineItems).toEqual(orig);
       });
 
-      it('clears the `changes` objects', function() {
+      it('clears the `changes` object', function() {
         this.invoice.name = 'B';
         this.invoice.billingAddress = new Address;
         this.invoice.lineItems.pop();
@@ -2063,6 +2063,102 @@ describe('Model', function () {
       it('re-runs validations', function() {
         this.invoice.addError('name', 'foo');
         this.invoice.undoChanges();
+        expect(this.invoice.errors.name).toBeUndefined();
+      });
+    });
+
+    describe('#redoChanges', function() {
+      it('restores the changed attributes to their value when changes were last undone', function() {
+        this.invoice.name = 'B';
+        this.invoice.undoChanges();
+        expect(this.invoice.name).toBe('A');
+        this.invoice.redoChanges();
+        expect(this.invoice.name).toBe('B');
+        this.invoice.undoChanges();
+        expect(this.invoice.name).toBe('A');
+        this.invoice.redoChanges();
+        expect(this.invoice.name).toBe('B');
+      });
+
+      it('restores owned hasOne associations to their value when changes were last undone', function() {
+        var address = this.invoice.billingAddress, newAddress = new Address;
+
+        this.invoice.billingAddress = newAddress;
+        this.invoice.undoChanges();
+        expect(this.invoice.billingAddress).toBe(address);
+        this.invoice.redoChanges();
+        expect(this.invoice.billingAddress).toBe(newAddress);
+        this.invoice.undoChanges();
+        expect(this.invoice.billingAddress).toBe(address);
+        this.invoice.redoChanges();
+        expect(this.invoice.billingAddress).toBe(newAddress);
+      });
+
+      it('restores owned hasMany associations to their value when changes were last undone', function() {
+        var li10   = this.invoice.lineItems[0],
+            li11   = this.invoice.lineItems[1],
+            li12   = this.invoice.lineItems[2],
+            added1 = new LineItem,
+            added2 = new LineItem;
+
+        this.invoice.lineItems.pop();
+        this.invoice.lineItems.push(added1, added2);
+        expect(this.invoice.lineItems).toEqual([li10, li11, added1, added2]);
+        this.invoice.undoChanges();
+        expect(this.invoice.lineItems).toEqual([li10, li11, li12]);
+        this.invoice.redoChanges();
+        expect(this.invoice.lineItems).toEqual([li10, li11, added1, added2]);
+        this.invoice.undoChanges();
+        expect(this.invoice.lineItems).toEqual([li10, li11, li12]);
+        this.invoice.redoChanges();
+        expect(this.invoice.lineItems).toEqual([li10, li11, added1, added2]);
+      });
+
+      it('clears the `undoneChanges` object', function() {
+        this.invoice.name = 'B';
+        this.invoice.billingAddress = new Address;
+        this.invoice.lineItems.pop();
+        this.invoice.lineItems.push(new LineItem);
+
+        expect(this.invoice.undoneChanges).toEqual({});
+        this.invoice.undoChanges();
+        expect(Object.keys(this.invoice.undoneChanges).length > 0).toBe(true);
+        this.invoice.redoChanges();
+        expect(this.invoice.undoneChanges).toEqual({});
+      });
+
+      it('redos changes on owned associations', function() {
+        var li = this.invoice.lineItems.at(0);
+
+        li.quantity = 11;
+        this.invoice.billingAddress.name = 'Bob Smith';
+        this.invoice.undoChanges()
+        expect(li.quantity).toBe(10);
+        expect(this.invoice.billingAddress.name).toBe('Joe Blow');
+        this.invoice.redoChanges()
+        expect(li.quantity).toBe(11);
+        expect(this.invoice.billingAddress.name).toBe('Bob Smith');
+        this.invoice.undoChanges()
+        expect(li.quantity).toBe(10);
+        expect(this.invoice.billingAddress.name).toBe('Joe Blow');
+        this.invoice.redoChanges()
+        expect(li.quantity).toBe(11);
+        expect(this.invoice.billingAddress.name).toBe('Bob Smith');
+      });
+
+      it('does not redo changes to unowned associations', function() {
+        this.invoice.company.name = 'Foobar';
+        this.invoice.company.undoChanges();
+        expect(this.invoice.company.name).toBe('Acme, Inc.');
+        this.invoice.redoChanges();
+        expect(this.invoice.company.name).toBe('Acme, Inc.');
+      });
+
+      it('re-runs validations', function() {
+        this.invoice.name = 'foo';
+        this.invoice.undoChanges();
+        this.invoice.addError('name', 'foo');
+        this.invoice.redoChanges();
         expect(this.invoice.errors.name).toBeUndefined();
       });
     });

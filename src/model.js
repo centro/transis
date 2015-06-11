@@ -714,6 +714,10 @@ var Model = BasisObject.extend(function() {
     get: function() { return this.__changes = this.__changes || {}; }
   });
 
+  this.prop('undoneChanges', {
+    get: function() { return this.__undoneChanges = this.__undoneChanges || {}; }
+  });
+
   // Public: Returns a boolean indicating whether the model has any property changes or any
   // owned `hasMany` associations that have been mutated.
   this.prop('hasOwnChanges', {
@@ -940,6 +944,8 @@ var Model = BasisObject.extend(function() {
 
   // Public: Undoes all property and owned assocation changes made to this model since it was last
   // loaded.
+  //
+  // Returns the receiver.
   this.prototype.undoChanges = function() {
     var associations = this.associations;
 
@@ -948,10 +954,13 @@ var Model = BasisObject.extend(function() {
         let removed = this.changes[prop].removed.slice();
         let added   = this.changes[prop].added.slice();
 
+        this.undoneChanges[prop] = {added: removed, removed: added};
+
         removed.reverse().forEach((m) => { this[prop].push(m); });
         added.forEach((m) => { this[prop].splice(this[prop].indexOf(m), 1); });
       }
       else {
+        this.undoneChanges[prop] = this[prop];
         this[prop] = this.changes[prop];
       }
     }
@@ -970,6 +979,47 @@ var Model = BasisObject.extend(function() {
     }
 
     this.validate();
+
+    return this;
+  };
+
+  // Public: Redoes all property and owned association changes that were undone by the latest call
+  // to `#undoChanges`.
+  //
+  // Returns the receiver.
+  this.prototype.redoChanges = function() {
+    var associations = this.associations;
+
+    for (let prop in this.undoneChanges) {
+      if (associations[prop] && associations[prop].type === 'hasMany') {
+        let removed = this.undoneChanges[prop].removed.slice();
+        let added   = this.undoneChanges[prop].added.slice();
+
+        removed.forEach((m) => { this[prop].push(m); });
+        added.forEach((m) => { this[prop].splice(this[prop].indexOf(m), 1); });
+      }
+      else {
+        this[prop] = this.undoneChanges[prop];
+      }
+    }
+
+    for (let name in associations) {
+      let desc = associations[name];
+
+      if (!desc.owner) { continue; }
+
+      if (desc.type === 'hasOne') {
+        this[name] && this[name].redoChanges();
+      }
+      else if (desc.type === 'hasMany') {
+        this[name].forEach(m => m.redoChanges());
+      }
+    }
+
+    this.__undoneChanges = {};
+    this.validate();
+
+    return this;
   };
 
   // Public: Add a validation error for the given property name and type. Adding an error will cause
