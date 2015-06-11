@@ -505,7 +505,7 @@ this["Basis"] =
 	        try {
 	          this.__observers__[prop][i](prop);
 	        } catch (e) {
-	          console.error("Basis.Object#_notify: exception caught in observer: " + e);
+	          console.error("Basis.Object#_notify: exception caught in observer:", e);
 	        }
 	      }
 	    }
