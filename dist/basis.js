@@ -2121,21 +2121,23 @@ this["Basis"] =
 	      })(prop);
 	    }
 
-	    for (var _name in associations) {
-	      var desc = associations[_name];
+	    util.detectRecursion(this, (function () {
+	      for (var _name in associations) {
+	        var desc = associations[_name];
 
-	      if (!desc.owner) {
-	        continue;
-	      }
+	        if (!desc.owner) {
+	          continue;
+	        }
 
-	      if (desc.type === "hasOne") {
-	        this[_name] && this[_name].undoChanges();
-	      } else if (desc.type === "hasMany") {
-	        this[_name].forEach(function (m) {
-	          return m.undoChanges();
-	        });
+	        if (desc.type === "hasOne") {
+	          this[_name] && this[_name].undoChanges();
+	        } else if (desc.type === "hasMany") {
+	          this[_name].forEach(function (m) {
+	            return m.undoChanges();
+	          });
+	        }
 	      }
-	    }
+	    }).bind(this));
 
 	    this.validate();
 
@@ -2169,21 +2171,23 @@ this["Basis"] =
 	      })(prop);
 	    }
 
-	    for (var _name in associations) {
-	      var desc = associations[_name];
+	    util.detectRecursion(this, (function () {
+	      for (var _name in associations) {
+	        var desc = associations[_name];
 
-	      if (!desc.owner) {
-	        continue;
-	      }
+	        if (!desc.owner) {
+	          continue;
+	        }
 
-	      if (desc.type === "hasOne") {
-	        this[_name] && this[_name].redoChanges();
-	      } else if (desc.type === "hasMany") {
-	        this[_name].forEach(function (m) {
-	          return m.redoChanges();
-	        });
+	        if (desc.type === "hasOne") {
+	          this[_name] && this[_name].redoChanges();
+	        } else if (desc.type === "hasMany") {
+	          this[_name].forEach(function (m) {
+	            return m.redoChanges();
+	          });
+	        }
 	      }
-	    }
+	    }).bind(this));
 
 	    this.__undoneChanges = {};
 	    this.validate();
@@ -2249,21 +2253,23 @@ this["Basis"] =
 	      this.validateAttr(_name);
 	    }
 
-	    for (var _name2 in associations) {
-	      var desc = associations[_name2];
+	    util.detectRecursion(this, (function () {
+	      for (var _name2 in associations) {
+	        var desc = associations[_name2];
 
-	      if (!desc.owner) {
-	        continue;
-	      }
+	        if (!desc.owner) {
+	          continue;
+	        }
 
-	      if (desc.type === "hasOne") {
-	        this[_name2] && !this[_name2]._destroy && this[_name2].validate();
-	      } else if (desc.type === "hasMany") {
-	        this[_name2].forEach(function (m) {
-	          return !m._destroy && m.validate();
-	        });
+	        if (desc.type === "hasOne") {
+	          this[_name2] && !this[_name2]._destroy && this[_name2].validate();
+	        } else if (desc.type === "hasMany") {
+	          this[_name2].forEach(function (m) {
+	            return !m._destroy && m.validate();
+	          });
+	        }
 	      }
-	    }
+	    }).bind(this));
 
 	    return !this.hasErrors;
 	  };
