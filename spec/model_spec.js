@@ -2060,6 +2060,22 @@ describe('Model', function () {
         expect(this.invoice.company.changes).toEqual({name: 'Acme, Inc.'});
       });
 
+      it('does not undo changes to the owned association specified in the except option as a string', function() {
+        var li = this.invoice.lineItems.at(0);
+
+        this.invoice.billingAddress.name = 'Bob Smith';
+        this.invoice.undoChanges({except: 'billingAddress'});
+        expect(this.invoice.billingAddress.name).toBe('Bob Smith');
+      });
+
+      it('does not undo changes to owned associations specified in the exception option as an array', function() {
+        var li = this.invoice.lineItems.at(0);
+
+        this.invoice.billingAddress.name = 'Bob Smith';
+        this.invoice.undoChanges({except: ['billingAddress']});
+        expect(this.invoice.billingAddress.name).toBe('Bob Smith');
+      });
+
       it('re-runs validations', function() {
         this.invoice.addError('name', 'foo');
         this.invoice.undoChanges();
@@ -2228,6 +2244,30 @@ describe('Model', function () {
           BasisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
+      });
+    });
+
+    describe('#previousValueFor', function() {
+      it('returns undefined with the given attribute has not changed', function() {
+        expect(this.invoice.previousValueFor('name')).toBeUndefined();
+      });
+
+      it('returns the previous value for attributes that have changed', function() {
+        this.invoice.name = 'B';
+        expect(this.invoice.previousValueFor('name')).toBe('A');
+      });
+
+      it('returns the previous value of hasOne associations', function() {
+        var address = this.invoice.billingAddress;
+        this.invoice.billingAddress = new Address;
+        expect(this.invoice.previousValueFor('billingAddress')).toBe(address);
+      });
+
+      it('returns an array of the previous contents of a hasMany association', function() {
+        var lis = this.invoice.lineItems.slice();
+        this.invoice.lineItems.pop();
+        this.invoice.lineItems.pop();
+        expect(this.invoice.previousValueFor('lineItems')).toEqual(lis);
       });
     });
   });

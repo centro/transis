@@ -1126,26 +1126,67 @@ var Model = _object2["default"].extend(function () {
     return a.join("-");
   };
 
+  // Public: Returns the previous for the given attribute or association name. If no change has been
+  // made then `undefined` is returned.
+  //
+  // name - A string containing the name of an attribute or association.
+  this.prototype.previousValueFor = function (name) {
+    var _this8 = this;
+
+    var change = this.changes[name];
+
+    if (change && this.associations[name] && this.associations[name].type === "hasMany") {
+      var _ret4 = (function () {
+        var previous = _this8[name].slice();
+        var removed = change.removed.slice();
+        var added = change.added.slice();
+
+        removed.reverse().forEach(function (m) {
+          previous.push(m);
+        });
+        added.forEach(function (m) {
+          previous.splice(previous.indexOf(m), 1);
+        });
+
+        return {
+          v: previous
+        };
+      })();
+
+      if (typeof _ret4 === "object") return _ret4.v;
+    } else {
+      return change;
+    }
+  };
+
   // Public: Undoes all property and owned assocation changes made to this model since it was last
   // loaded.
+  //
+  // opts - An object containing zero or more of the following keys:
+  //   except - Either a string or an array of strings of owned association names to skip over when
+  //            undoing changes on owned associations.
+  //
+  // Returns the receiver.
   this.prototype.undoChanges = function () {
-    var _this8 = this;
+    var _this9 = this;
+
+    var opts = arguments[0] === undefined ? {} : arguments[0];
 
     var associations = this.associations;
 
     var _loop3 = function (prop) {
       if (associations[prop] && associations[prop].type === "hasMany") {
-        var removed = _this8.changes[prop].removed.slice();
-        var added = _this8.changes[prop].added.slice();
+        var removed = _this9.changes[prop].removed.slice();
+        var added = _this9.changes[prop].added.slice();
 
         removed.reverse().forEach(function (m) {
-          _this8[prop].push(m);
+          _this9[prop].push(m);
         });
         added.forEach(function (m) {
-          _this8[prop].splice(_this8[prop].indexOf(m), 1);
+          _this9[prop].splice(_this9[prop].indexOf(m), 1);
         });
       } else {
-        _this8[prop] = _this8.changes[prop];
+        _this9[prop] = _this9.changes[prop];
       }
     };
 
@@ -1160,6 +1201,12 @@ var Model = _object2["default"].extend(function () {
         if (!desc.owner) {
           continue;
         }
+        if (opts.except === _name6) {
+          continue;
+        }
+        if (Array.isArray(opts.except) && opts.except.indexOf(_name6) >= 0) {
+          continue;
+        }
 
         if (desc.type === "hasOne") {
           this[_name6] && this[_name6].undoChanges();
@@ -1172,6 +1219,8 @@ var Model = _object2["default"].extend(function () {
     }).bind(this));
 
     this.validate();
+
+    return this;
   };
 
   // Public: Add a validation error for the given property name and type. Adding an error will cause
@@ -1283,16 +1332,16 @@ var Model = _object2["default"].extend(function () {
   //
   // Returns the receiver.
   this.prototype._loadErrors = function (errors) {
-    var _this9 = this;
+    var _this10 = this;
 
     if (typeof errors === "object") {
       var _loop4 = function (k) {
         if (Array.isArray(errors[k])) {
           errors[k].forEach(function (error) {
             this.addError(k, error);
-          }, _this9);
+          }, _this10);
         } else {
-          _this9.addError(k, String(errors[k]));
+          _this10.addError(k, String(errors[k]));
         }
       };
 

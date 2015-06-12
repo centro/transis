@@ -938,9 +938,37 @@ var Model = BasisObject.extend(function() {
     return a.join('-');
   };
 
+  // Public: Returns the previous for the given attribute or association name. If no change has been
+  // made then `undefined` is returned.
+  //
+  // name - A string containing the name of an attribute or association.
+  this.prototype.previousValueFor = function(name) {
+    var change = this.changes[name];
+
+    if (change && this.associations[name] && this.associations[name].type === 'hasMany') {
+      let previous = this[name].slice();
+      let removed  = change.removed.slice();
+      let added    = change.added.slice();
+
+      removed.reverse().forEach((m) => { previous.push(m); });
+      added.forEach((m) => { previous.splice(previous.indexOf(m), 1); });
+
+      return previous;
+    }
+    else {
+      return change;
+    }
+  };
+
   // Public: Undoes all property and owned assocation changes made to this model since it was last
   // loaded.
-  this.prototype.undoChanges = function() {
+  //
+  // opts - An object containing zero or more of the following keys:
+  //   except - Either a string or an array of strings of owned association names to skip over when
+  //            undoing changes on owned associations.
+  //
+  // Returns the receiver.
+  this.prototype.undoChanges = function(opts = {}) {
     var associations = this.associations;
 
     for (let prop in this.changes) {
@@ -961,6 +989,8 @@ var Model = BasisObject.extend(function() {
         let desc = associations[name];
 
         if (!desc.owner) { continue; }
+        if (opts.except === name) { continue; }
+        if (Array.isArray(opts.except) && opts.except.indexOf(name) >= 0) { continue; }
 
         if (desc.type === 'hasOne') {
           this[name] && this[name].undoChanges();
@@ -972,6 +1002,8 @@ var Model = BasisObject.extend(function() {
     }.bind(this));
 
     this.validate();
+
+    return this;
   };
 
   // Public: Add a validation error for the given property name and type. Adding an error will cause

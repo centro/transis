@@ -2085,10 +2085,51 @@ this["Basis"] =
 	    return a.join("-");
 	  };
 
+	  // Public: Returns the previous for the given attribute or association name. If no change has been
+	  // made then `undefined` is returned.
+	  //
+	  // name - A string containing the name of an attribute or association.
+	  this.prototype.previousValueFor = function (name) {
+	    var _this = this;
+
+	    var change = this.changes[name];
+
+	    if (change && this.associations[name] && this.associations[name].type === "hasMany") {
+	      var _ret = (function () {
+	        var previous = _this[name].slice();
+	        var removed = change.removed.slice();
+	        var added = change.added.slice();
+
+	        removed.reverse().forEach(function (m) {
+	          previous.push(m);
+	        });
+	        added.forEach(function (m) {
+	          previous.splice(previous.indexOf(m), 1);
+	        });
+
+	        return {
+	          v: previous
+	        };
+	      })();
+
+	      if (typeof _ret === "object") return _ret.v;
+	    } else {
+	      return change;
+	    }
+	  };
+
 	  // Public: Undoes all property and owned assocation changes made to this model since it was last
 	  // loaded.
+	  //
+	  // opts - An object containing zero or more of the following keys:
+	  //   except - Either a string or an array of strings of owned association names to skip over when
+	  //            undoing changes on owned associations.
+	  //
+	  // Returns the receiver.
 	  this.prototype.undoChanges = function () {
 	    var _this = this;
+
+	    var opts = arguments[0] === undefined ? {} : arguments[0];
 
 	    var associations = this.associations;
 
@@ -2117,6 +2158,12 @@ this["Basis"] =
 	        if (!desc.owner) {
 	          continue;
 	        }
+	        if (opts.except === _name) {
+	          continue;
+	        }
+	        if (Array.isArray(opts.except) && opts.except.indexOf(_name) >= 0) {
+	          continue;
+	        }
 
 	        if (desc.type === "hasOne") {
 	          this[_name] && this[_name].undoChanges();
@@ -2129,6 +2176,8 @@ this["Basis"] =
 	    }).bind(this));
 
 	    this.validate();
+
+	    return this;
 	  };
 
 	  // Public: Add a validation error for the given property name and type. Adding an error will cause
