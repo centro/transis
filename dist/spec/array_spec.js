@@ -178,6 +178,12 @@ describe("Array", function () {
       expect(A(NaN).eq(A(NaN))).toBe(false);
     });
 
+    it("returns false when passed a non-array object", function () {
+      expect(A().eq(undefined)).toBe(false);
+      expect(A().eq({})).toBe(false);
+      expect(A().eq("foobar")).toBe(false);
+    });
+
     it("returns `true` if all corresponding items are equal", function () {
       expect(A().eq(A())).toBe(true);
       expect(A(1, 2, 3).eq(A(1, 2, 3))).toBe(true);
