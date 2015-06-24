@@ -499,4 +499,41 @@ describe('Basis.Object', function() {
       expect(spy2).toHaveBeenCalled();
     });
   });
+
+  describe('#notify', function() {
+    beforeEach(function() {
+      this.object = new BasisObject;
+      this.spy = jasmine.createSpy();
+      this.object.on('foo', this.spy);
+    });
+
+    it('invokes observers registered with the on method', function() {
+      this.object.notify('foo');
+      expect(this.spy).toHaveBeenCalled();
+    });
+
+    it('passes the event name to the observer', function() {
+      this.object.notify('foo');
+      expect(this.spy).toHaveBeenCalledWith('foo');
+    });
+
+    it('passes any additional arguments on to the observer', function() {
+      this.object.notify('foo', 1, 2, 3);
+      expect(this.spy).toHaveBeenCalledWith('foo', 1, 2, 3);
+    });
+
+    it('does not invoke observers removed with the off method', function() {
+      this.object.off('foo', this.spy);
+      this.object.notify('foo', 1, 2, 3);
+      expect(this.spy).not.toHaveBeenCalled();
+    });
+
+    it('swallows exceptions thrown by the observer', function() {
+      var spy = jasmine.createSpy().and.throwError();
+      this.object.on('baz', spy);
+      expect(function() {
+        this.object.notify('baz');
+      }.bind(this)).not.toThrow();
+    });
+  });
 });

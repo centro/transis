@@ -153,11 +153,11 @@ this["Basis"] =
 	      if (changes[i].indexOf(".") === -1) {
 	        star = true;
 	      }
-	      object._notify(changes[i]);
+	      object.notify(changes[i]);
 	    }
 
 	    if (star) {
-	      object._notify("*");
+	      object.notify("*");
 	    }
 	  }
 
@@ -392,6 +392,35 @@ this["Basis"] =
 	  return this;
 	};
 
+	// Public: Notifies observers of an event. Observers are invoked with the name of the event and
+	// any additional arguments passed to `notify`.
+	//
+	// event   - A string containing the name of the event.
+	// ...args - Zero or more additional arguments to pass along to observers.
+	//
+	// Returns the receiver.
+	BasisObject.prototype.notify = function (event) {
+	  for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+	    args[_key - 1] = arguments[_key];
+	  }
+
+	  if (this.__observers__ && this.__observers__[event]) {
+	    for (var i = 0, n = this.__observers__[event].length; i < n; i++) {
+	      if (this.__observers__[event][i]) {
+	        try {
+	          var _observers__$event;
+
+	          (_observers__$event = this.__observers__[event])[i].apply(_observers__$event, [event].concat(args));
+	        } catch (e) {
+	          console.error("Basis.Object#notify: exception caught in observer:", e);
+	        }
+	      }
+	    }
+	  }
+
+	  return this;
+	};
+
 	// Public: Registers a property change and asynchronously triggers property observers. This is
 	// called automatically when a prop is set. This should only be used when the state of a prop is
 	// managed by external code.
@@ -494,24 +523,6 @@ this["Basis"] =
 	  this.didChange(name);
 
 	  return old;
-	};
-
-	// Internal: Notifies observers of a prop change and proxies the prop change to registered proxy
-	// objects.
-	BasisObject.prototype._notify = function (prop) {
-	  if (this.__observers__ && this.__observers__[prop]) {
-	    for (var i = 0, n = this.__observers__[prop].length; i < n; i++) {
-	      if (this.__observers__[prop][i]) {
-	        try {
-	          this.__observers__[prop][i](prop);
-	        } catch (e) {
-	          console.error("Basis.Object#_notify: exception caught in observer:", e);
-	        }
-	      }
-	    }
-	  }
-
-	  return this;
 	};
 
 	// Internal: Registers a proxy object. All prop changes on the receiver will be proxied to the

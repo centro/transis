@@ -60,10 +60,10 @@ function flush() {
 
     for (let i = 0, n = changes.length; i < n; i++) {
       if (changes[i].indexOf('.') === -1) { star = true; }
-      object._notify(changes[i]);
+      object.notify(changes[i]);
     }
 
-    if (star) { object._notify('*'); }
+    if (star) { object.notify('*'); }
   }
 
   changedObjects = {};
@@ -258,6 +258,30 @@ BasisObject.prototype.off = function(prop, callback) {
   return this;
 };
 
+// Public: Notifies observers of an event. Observers are invoked with the name of the event and
+// any additional arguments passed to `notify`.
+//
+// event   - A string containing the name of the event.
+// ...args - Zero or more additional arguments to pass along to observers.
+//
+// Returns the receiver.
+BasisObject.prototype.notify = function(event, ...args) {
+  if (this.__observers__ && this.__observers__[event]) {
+    for (let i = 0, n = this.__observers__[event].length; i < n; i++) {
+      if (this.__observers__[event][i]) {
+        try {
+          this.__observers__[event][i](event, ...args);
+        }
+        catch (e) {
+          console.error('Basis.Object#notify: exception caught in observer:', e);
+        }
+      }
+    }
+  }
+
+  return this;
+};
+
 // Public: Registers a property change and asynchronously triggers property observers. This is
 // called automatically when a prop is set. This should only be used when the state of a prop is
 // managed by external code.
@@ -343,25 +367,6 @@ BasisObject.prototype._setProp = function(name, value) {
   this.didChange(name);
 
   return old;
-};
-
-// Internal: Notifies observers of a prop change and proxies the prop change to registered proxy
-// objects.
-BasisObject.prototype._notify = function(prop) {
-  if (this.__observers__ && this.__observers__[prop]) {
-    for (let i = 0, n = this.__observers__[prop].length; i < n; i++) {
-      if (this.__observers__[prop][i]) {
-        try {
-          this.__observers__[prop][i](prop);
-        }
-        catch (e) {
-          console.error('Basis.Object#_notify: exception caught in observer:', e);
-        }
-      }
-    }
-  }
-
-  return this;
 };
 
 // Internal: Registers a proxy object. All prop changes on the receiver will be proxied to the
