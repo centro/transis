@@ -15,7 +15,7 @@ module.exports = {
 
   output:  {
     library: 'Basis',
-    libraryTarget: 'this'
+    libraryTarget: 'umd'
   },
 
   module: {
