@@ -54,6 +54,8 @@ function unmark(o1, o2) {
 //
 // Returns the resolved value or `undefined` if some segment of the path does not exist.
 function _getPath(o, pathSegments) {
+  if (o == null) { return undefined; }
+
   var head = pathSegments[0], tail = pathSegments.slice(1);
   o = o[head];
 

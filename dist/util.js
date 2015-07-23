@@ -78,6 +78,10 @@ function _getPath(_x, _x2) {
     head = tail = undefined;
     _again = false;
 
+    if (o == null) {
+      return undefined;
+    }
+
     var head = pathSegments[0],
         tail = pathSegments.slice(1);
     o = o[head];

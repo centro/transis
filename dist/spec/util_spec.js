@@ -455,4 +455,9 @@ describe("getPath", function () {
     var a = { b: {} };
     expect(util.getPath(a, "b.c.d.e")).toBeUndefined();
   });
+
+  it("returns undefined when the given object is null or undefined", function () {
+    expect(util.getPath(null, "b.c.d.e")).toBeUndefined();
+    expect(util.getPath(undefined, "b.c.d.e")).toBeUndefined();
+  });
 });
