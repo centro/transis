@@ -287,6 +287,18 @@ describe("Model", function () {
         expect(f.bar).toBeUndefined();
         expect(b.foo).toBeUndefined();
       });
+
+      it("notifies observers on the inverse side", function () {
+        var f = new Foo(),
+            b = new Bar(),
+            spy = jasmine.createSpy();
+
+        b.on("foo", spy);
+
+        f.bar = b;
+        _object2["default"].flush();
+        expect(spy).toHaveBeenCalled();
+      });
     });
 
     describe("with a hasMany inverse", function () {
@@ -318,6 +330,17 @@ describe("Model", function () {
         expect(b.foos).toEqual(A(f2));
         f2.bar = null;
         expect(b.foos).toEqual(A());
+      });
+
+      it("notifies observers on the inverse side", function () {
+        var f = new Foo(),
+            b = new Bar(),
+            spy = jasmine.createSpy();
+
+        b.on("foos", spy);
+        f.bar = b;
+        _object2["default"].flush();
+        expect(spy).toHaveBeenCalled();
       });
     });
   });
@@ -479,6 +502,17 @@ describe("Model", function () {
         expect(b1.foo).toBeUndefined();
         expect(b2.foo).toBeUndefined();
       });
+
+      it("notifies observers on the inverse side", function () {
+        var f = new Foo(),
+            b = new Bar(),
+            spy = jasmine.createSpy();
+
+        b.on("foo", spy);
+        f.bars.push(b);
+        _object2["default"].flush();
+        expect(spy).toHaveBeenCalled();
+      });
     });
 
     describe("with a hasMany inverse", function () {
@@ -550,6 +584,17 @@ describe("Model", function () {
         expect(f.bars).toEqual(A());
         expect(b1.foos).toEqual(A());
         expect(b2.foos).toEqual(A());
+      });
+
+      it("notifies observers on the inverse side", function () {
+        var f = new Foo(),
+            b = new Bar(),
+            spy = jasmine.createSpy();
+
+        b.on("foos", spy);
+        f.bars.push(b);
+        _object2["default"].flush();
+        expect(spy).toHaveBeenCalled();
       });
     });
   });

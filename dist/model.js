@@ -1383,6 +1383,7 @@ var Model = _object2["default"].extend(function () {
 
     if (desc.type === "hasOne") {
       hasOneSet.call(this, desc, undefined, false);
+      this.didChange(desc.name);
     } else if (desc.type === "hasMany") {
       this[desc.name]._inverseRemove(model);
     }
@@ -1404,6 +1405,7 @@ var Model = _object2["default"].extend(function () {
 
     if (desc.type === "hasOne") {
       hasOneSet.call(this, desc, model, false);
+      this.didChange(desc.name);
     } else if (desc.type === "hasMany") {
       this[desc.name]._inverseAdd(model);
     }
