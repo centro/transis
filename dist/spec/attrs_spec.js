@@ -76,6 +76,41 @@ describe("StringAttr#serialize", function () {
   });
 });
 
+describe("IntegerAttr#coerce", function () {
+  it("returns the given number rounded to an integer", function () {
+    expect(attrs.IntegerAttr.coerce(9)).toBe(9);
+    expect(attrs.IntegerAttr.coerce(3.14)).toBe(3);
+    expect(attrs.IntegerAttr.coerce(3.7)).toBe(4);
+  });
+
+  it("parses the given string to a number rounded to an integer", function () {
+    expect(attrs.IntegerAttr.coerce("9")).toBe(9);
+    expect(attrs.IntegerAttr.coerce("3.14")).toBe(3);
+    expect(attrs.IntegerAttr.coerce("3.7")).toBe(4);
+    expect(attrs.IntegerAttr.coerce("xyz")).toBeNull();
+  });
+
+  it("returns null when given null", function () {
+    expect(attrs.IntegerAttr.coerce(null)).toBeNull();
+  });
+
+  it("returns undefined when given undefined", function () {
+    expect(attrs.IntegerAttr.coerce(undefined)).toBeUndefined();
+  });
+
+  it("returns null when given something other than a number or string", function () {
+    expect(attrs.IntegerAttr.coerce({})).toBeNull();
+  });
+});
+
+describe("IntegerAttr#serialize", function () {
+  it("returns its argument", function () {
+    expect(attrs.IntegerAttr.serialize(5)).toBe(5);
+    expect(attrs.IntegerAttr.serialize(null)).toBeNull();
+    expect(attrs.IntegerAttr.serialize(undefined)).toBeUndefined();
+  });
+});
+
 describe("NumberAttr#coerce", function () {
   it("returns the given number", function () {
     expect(attrs.NumberAttr.coerce(9)).toBe(9);

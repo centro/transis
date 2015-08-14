@@ -1277,6 +1277,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  this.registerAttr("identity", attrs.IdentityAttr);
 	  this.registerAttr("string", attrs.StringAttr);
+	  this.registerAttr("integer", attrs.IntegerAttr);
 	  this.registerAttr("number", attrs.NumberAttr);
 	  this.registerAttr("boolean", attrs.BooleanAttr);
 	  this.registerAttr("date", attrs.DateAttr);
@@ -3801,6 +3802,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  return StringAttr;
 	})();
+
+	var IntegerAttr = exports.IntegerAttr = {
+	  coerce: function coerce(v) {
+	    if (typeof v === "number") {
+	      return Math.round(v);
+	    } else if (typeof v === "string") {
+	      var parsed = parsers.parseNumber(v);
+	      return parsed ? Math.round(parsed) : parsed;
+	    } else if (v === undefined) {
+	      return undefined;
+	    } else {
+	      return null;
+	    }
+	  },
+
+	  serialize: function serialize(n) {
+	    return n;
+	  }
+	};
 
 	var NumberAttr = exports.NumberAttr = {
 	  coerce: function coerce(v) {

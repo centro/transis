@@ -54,6 +54,26 @@ var StringAttr = (function () {
 })();
 
 exports.StringAttr = StringAttr;
+var IntegerAttr = {
+  coerce: function coerce(v) {
+    if (typeof v === 'number') {
+      return Math.round(v);
+    } else if (typeof v === 'string') {
+      var parsed = parsers.parseNumber(v);
+      return parsed ? Math.round(parsed) : parsed;
+    } else if (v === undefined) {
+      return undefined;
+    } else {
+      return null;
+    }
+  },
+
+  serialize: function serialize(n) {
+    return n;
+  }
+};
+
+exports.IntegerAttr = IntegerAttr;
 var NumberAttr = {
   coerce: function coerce(v) {
     if (typeof v === 'number') {

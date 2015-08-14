@@ -218,6 +218,7 @@ var Model = BasisObject.extend(function() {
 
   this.registerAttr('identity', attrs.IdentityAttr);
   this.registerAttr('string', attrs.StringAttr);
+  this.registerAttr('integer', attrs.IntegerAttr);
   this.registerAttr('number', attrs.NumberAttr);
   this.registerAttr('boolean', attrs.BooleanAttr);
   this.registerAttr('date', attrs.DateAttr);

@@ -17,6 +17,20 @@ export class StringAttr {
   serialize(s) { return s; }
 }
 
+export var IntegerAttr = {
+  coerce(v) {
+    if (typeof v === 'number') { return Math.round(v); }
+    else if (typeof v === 'string') {
+      var parsed = parsers.parseNumber(v);
+      return parsed ? Math.round(parsed) : parsed;
+    }
+    else if (v === undefined) { return undefined; }
+    else { return null; }
+  },
+
+  serialize(n) { return n; }
+};
+
 export var NumberAttr = {
   coerce(v) {
     if (typeof v === 'number') { return v; }
