@@ -383,6 +383,8 @@ BasisObject.prototype._deregisterProxy = function(object, name) {
   return this;
 };
 
+BasisObject.prototype._cache = cache;
+
 BasisObject.displayName = 'Basis.Object';
 
 export default BasisObject;

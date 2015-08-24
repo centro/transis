@@ -550,6 +550,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return this;
 	};
 
+	BasisObject.prototype._cache = cache;
+
 	BasisObject.displayName = "Basis.Object";
 
 	module.exports = BasisObject;
@@ -1219,6 +1221,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Model = BasisObject.extend(function () {
 	  this.displayName = "Basis.Model";
 
+	  //
+	  this.prop = function (name) {
+	    var options = arguments[1] === undefined ? {} : arguments[1];
+
+	    if (options.cache && options.cacheLoadValue) {
+	      if (!this.prototype.hasOwnProperty("cacheLoadValueProps")) {
+	        this.prototype.cacheLoadValueProps = Object.create(this.prototype.cacheLoadValueProps || null);
+	      }
+	      this.prototype.cacheLoadValueProps[name] = true;
+	    }
+	    return BasisObject.prop.call(this, name, options);
+	  };
+
 	  // Public: Creates a subclass of `Basis.Model`. This method overrides the `Basis.Object.extend`
 	  // method in order to force `Model` subclasses to be named.
 	  this.extend = function (name, f) {
@@ -1495,6 +1510,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 
+	    // sets props with cacheLoadValue
+	    for (var _name2 in this.prototype.cacheLoadValueProps) {
+	      // TODO(pwong): Model should expose cache method
+	      if (attrs.hasOwnProperty(_name2)) {
+	        model._cache(_name2, attrs[_name2]);
+	      }
+	    }
+
 	    // set non-association attributes
 	    model.set(attrs);
 
@@ -1504,30 +1527,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    // load and set each association
-	    for (var _name2 in associated) {
-	      var _ret = (function (_name2) {
-	        var klass = resolve(associations[_name2].klass);
-	        var data = associated[_name2];
+	    for (var _name3 in associated) {
+	      var _ret = (function (_name3) {
+	        var klass = resolve(associations[_name3].klass);
+	        var data = associated[_name3];
 
 	        // clear association
 	        if (!data) {
-	          model[_name2] = null;
+	          model[_name3] = null;
 	          return "continue";
 	        }
 
-	        if (associations[_name2].type === "hasOne") {
+	        if (associations[_name3].type === "hasOne") {
 	          var other = typeof data === "object" ? klass.load(data) : klass.local(data);
-	          model[_name2] = other;
-	        } else if (associations[_name2].type === "hasMany") {
+	          model[_name3] = other;
+	        } else if (associations[_name3].type === "hasMany") {
 	          (function () {
 	            var others = [];
 	            data.forEach(function (o) {
 	              others.push(typeof o === "object" ? klass.load(o) : klass.local(o));
 	            });
-	            model[_name2] = others;
+	            model[_name3] = others;
 	          })();
 	        }
-	      })(_name2);
+	      })(_name3);
 
 	      if (_ret === "continue") continue;
 	    }

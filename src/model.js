@@ -164,6 +164,17 @@ function mapperDeleteSuccess() {
 var Model = BasisObject.extend(function() {
   this.displayName = 'Basis.Model';
 
+  //
+  this.prop = function(name, options = {}) {
+    if(options.cache && options.cacheLoadValue) {
+      if (!this.prototype.hasOwnProperty('cacheLoadValueProps')) {
+        this.prototype.cacheLoadValueProps = Object.create(this.prototype.cacheLoadValueProps || null);
+      }
+      this.prototype.cacheLoadValueProps[name] = true;
+    }
+    return BasisObject.prop.call(this, name, options);
+  }
+
   // Public: Creates a subclass of `Basis.Model`. This method overrides the `Basis.Object.extend`
   // method in order to force `Model` subclasses to be named.
   this.extend = function(name, f) {
@@ -419,6 +430,13 @@ var Model = BasisObject.extend(function() {
       else if (desc.type === 'hasMany' && `${desc.singular}_ids` in attrs) {
         associated[name] = attrs[`${desc.singular}_ids`];
         delete attrs[`${desc.singular}_ids`];
+      }
+    }
+
+    // sets props with cacheLoadValue
+    for (let name in this.prototype.cacheLoadValueProps) {
+      if(attrs.hasOwnProperty(name)){
+        model._cache(name, attrs[name]);
       }
     }
 
