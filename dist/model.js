@@ -529,7 +529,6 @@ var Model = _object2["default"].extend(function () {
 
     // sets props with cacheLoadValue
     for (var _name3 in this.prototype.cacheLoadValueProps) {
-      // TODO(pwong): Model should expose cache method
       if (attrs.hasOwnProperty(_name3)) {
         model._cache(_name3, attrs[_name3]);
       }
