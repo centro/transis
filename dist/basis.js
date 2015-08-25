@@ -72,7 +72,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var parsers = _interopRequireWildcard(__webpack_require__(6));
 
-	var pluralize = _interopRequire(__webpack_require__(7));
+	var pluralize = _interopRequire(__webpack_require__(10));
 
 	module.exports = Object.assign({
 	  Object: BasisObject,
@@ -550,6 +550,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return this;
 	};
 
+	BasisObject.prototype._cache = cache;
+
 	BasisObject.displayName = "Basis.Object";
 
 	module.exports = BasisObject;
@@ -1005,17 +1007,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-	var pluralize = _interopRequire(__webpack_require__(7));
+	var pluralize = _interopRequire(__webpack_require__(10));
 
-	var IdMap = _interopRequire(__webpack_require__(8));
+	var IdMap = _interopRequire(__webpack_require__(7));
 
 	var BasisObject = _interopRequire(__webpack_require__(1));
 
 	var BasisArray = _interopRequire(__webpack_require__(2));
 
-	var Validations = _interopRequire(__webpack_require__(9));
+	var Validations = _interopRequire(__webpack_require__(8));
 
-	var attrs = _interopRequireWildcard(__webpack_require__(10));
+	var attrs = _interopRequireWildcard(__webpack_require__(9));
 
 	var util = _interopRequireWildcard(__webpack_require__(5));
 
@@ -1218,6 +1220,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var Model = BasisObject.extend(function () {
 	  this.displayName = "Basis.Model";
+
+	  //
+	  this.prop = function (name) {
+	    var options = arguments[1] === undefined ? {} : arguments[1];
+
+	    if (options.cache && options.cacheLoadValue) {
+	      if (!this.prototype.hasOwnProperty("cacheLoadValueProps")) {
+	        this.prototype.cacheLoadValueProps = Object.create(this.prototype.cacheLoadValueProps || null);
+	      }
+	      this.prototype.cacheLoadValueProps[name] = true;
+	    }
+	    return BasisObject.prop.call(this, name, options);
+	  };
 
 	  // Public: Creates a subclass of `Basis.Model`. This method overrides the `Basis.Object.extend`
 	  // method in order to force `Model` subclasses to be named.
@@ -1495,6 +1510,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    }
 
+	    // sets props with cacheLoadValue
+	    for (var _name2 in this.prototype.cacheLoadValueProps) {
+	      if (attrs.hasOwnProperty(_name2)) {
+	        model._cache(_name2, attrs[_name2]);
+	      }
+	    }
+
 	    // set non-association attributes
 	    model.set(attrs);
 
@@ -1504,30 +1526,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    // load and set each association
-	    for (var _name2 in associated) {
-	      var _ret = (function (_name2) {
-	        var klass = resolve(associations[_name2].klass);
-	        var data = associated[_name2];
+	    for (var _name3 in associated) {
+	      var _ret = (function (_name3) {
+	        var klass = resolve(associations[_name3].klass);
+	        var data = associated[_name3];
 
 	        // clear association
 	        if (!data) {
-	          model[_name2] = null;
+	          model[_name3] = null;
 	          return "continue";
 	        }
 
-	        if (associations[_name2].type === "hasOne") {
+	        if (associations[_name3].type === "hasOne") {
 	          var other = typeof data === "object" ? klass.load(data) : klass.local(data);
-	          model[_name2] = other;
-	        } else if (associations[_name2].type === "hasMany") {
+	          model[_name3] = other;
+	        } else if (associations[_name3].type === "hasMany") {
 	          (function () {
 	            var others = [];
 	            data.forEach(function (o) {
 	              others.push(typeof o === "object" ? klass.load(o) : klass.local(o));
 	            });
-	            model[_name2] = others;
+	            model[_name3] = others;
 	          })();
 	        }
-	      })(_name2);
+	      })(_name3);
 
 	      if (_ret === "continue") continue;
 	    }
@@ -3083,6 +3105,389 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
+	"use strict";
+
+	var IdMap = {
+	  models: new Map(),
+
+	  insert: function insert(model) {
+	    var klass = model.constructor,
+	        id = model.id,
+	        map;
+
+	    if (!(map = this.models.get(klass))) {
+	      this.models.set(klass, map = new Map());
+	    }
+
+	    if (map.get(id)) {
+	      throw new Error("IdMap.insert: model of type `" + klass + "` and id `" + id + "` has already been inserted");
+	    }
+
+	    map.set(id, model);
+
+	    return this;
+	  },
+
+	  get: function get(klass, id) {
+	    var map = this.models.get(klass);
+	    return map && map.get(id);
+	  },
+
+	  "delete": function _delete(model) {
+	    var map = this.models.get(model.constructor);
+	    if (!map) {
+	      return this;
+	    }
+	    map["delete"](model.id);
+	    return this;
+	  },
+
+	  clear: function clear() {
+	    this.models.clear();return this;
+	  }
+	};
+
+	module.exports = IdMap;
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+
+	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+	var BasisArray = _interopRequire(__webpack_require__(2));
+
+	var util = _interopRequireWildcard(__webpack_require__(5));
+
+	var parsers = _interopRequireWildcard(__webpack_require__(6));
+
+	function isBlank(v) {
+	  return v == null || util.type(v) === "string" && v.match(/^\s*$/) || util.type(v) === "array" && v.length === 0 || v instanceof BasisArray && v.length === 0;
+	}
+
+	var Validations = {
+	  "static": {
+	    // Public: Adds a validator to the model that checks the given attributes for presence.
+	    //
+	    // ...names - One or more attribute names.
+	    // opts     - An optional object containing zero or more of the following options:
+	    //   if - A function that determines whether presence is required. If this returns false, then the
+	    //        presence validator will not run.
+	    //
+	    // Returns the receiver.
+	    validatesPresence: function validatesPresence() {
+	      var names = Array.from(arguments),
+	          opts = util.type(names[names.length - 1]) === "object" ? names.pop() : {};
+
+	      names.forEach(function (name) {
+	        this.validate(name, function () {
+	          this.validatePresence(name, opts);
+	        });
+	      }, this);
+
+	      return this;
+	    },
+
+	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
+	    // numbers.
+	    //
+	    // ...names - One or more attribute names.
+	    // opts     - An optional object containing zero or more of the following options:
+	    //   nonnegative - Ensure that the number is not negative.
+	    //
+	    // Returns the receiver.
+	    validatesNumber: function validatesNumber() {
+	      var names = Array.from(arguments),
+	          opts = util.type(names[names.length - 1]) === "object" ? names.pop() : {};
+
+	      names.forEach(function (name) {
+	        this.validate(name, function () {
+	          this.validateNumber(name, opts);
+	        });
+	      }, this);
+
+	      return this;
+	    },
+
+	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
+	    // dates.
+	    //
+	    // ...names - One or more attribute names.
+	    //
+	    // Returns the receiver.
+	    validatesDate: function validatesDate() {
+	      Array.from(arguments).forEach(function (name) {
+	        this.validate(name, function () {
+	          this.validateDate(name);
+	        });
+	      }, this);
+	    },
+
+	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
+	    // emails.
+	    //
+	    // ...names - One or more attribute names.
+	    //
+	    // Returns the receiver.
+	    validatesEmail: function validatesEmail() {
+	      Array.from(arguments).forEach(function (name) {
+	        this.validate(name, function () {
+	          this.validateEmail(name);
+	        });
+	      }, this);
+
+	      return this;
+	    },
+
+	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
+	    // phone numbers.
+	    //
+	    // ...names - One or more attribute names.
+	    //
+	    // Returns the receiver.
+	    validatesPhone: function validatesPhone() {
+	      Array.from(arguments).forEach(function (name) {
+	        this.validate(name, function () {
+	          this.validatePhone(name);
+	        });
+	      }, this);
+
+	      return this;
+	    },
+
+	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
+	    // durations.
+	    //
+	    // ...names - One or more attribute names.
+	    //
+	    // Returns the receiver.
+	    validatesDuration: function validatesDuration() {
+	      Array.from(arguments).forEach(function (name) {
+	        this.validate(name, function () {
+	          this.validateDuration(name);
+	        });
+	      }, this);
+
+	      return this;
+	    }
+	  },
+
+	  instance: {
+	    validatePresence: function validatePresence(name) {
+	      var opts = arguments[1] === undefined ? {} : arguments[1];
+
+	      if (opts["if"] && !opts["if"].call(this)) {
+	        return;
+	      }
+	      var v = this["" + name + "BeforeCoercion"] != null ? this["" + name + "BeforeCoercion"] : this[name];
+	      if (isBlank(v)) {
+	        this.addError(name, "must be present");
+	      }
+	    },
+
+	    validateNumber: function validateNumber(name) {
+	      var opts = arguments[1] === undefined ? {} : arguments[1];
+
+	      if (util.type(this[name]) === "number") {
+	        if (opts.nonnegative && this[name] < 0) {
+	          this.addError(name, "must not be negative");
+	        }
+	      } else if (!isBlank(this["" + name + "BeforeCoercion"])) {
+	        this.addError(name, "is not a number");
+	      }
+	    },
+
+	    validateDate: function validateDate(name) {
+	      var v = this["" + name + "BeforeCoercion"];
+
+	      if (!isBlank(v) && !(v instanceof Date) && !parsers.parseDate(v)) {
+	        this.addError(name, "is not a date");
+	      }
+	    },
+
+	    validateEmail: function validateEmail(name) {
+	      var v = this["" + name + "BeforeCoercion"];
+
+	      if (!isBlank(v) && !parsers.parseEmail(v)) {
+	        this.addError(name, "is not an email");
+	      }
+	    },
+
+	    validatePhone: function validatePhone(name) {
+	      var v = this["" + name + "BeforeCoercion"];
+
+	      if (!isBlank(v) && !parsers.parsePhone(v)) {
+	        this.addError(name, "is not a phone number");
+	      }
+	    },
+
+	    validateDuration: function validateDuration(name) {
+	      var v = this["" + name + "BeforeCoercion"];
+
+	      if (!isBlank(v) && !parsers.parseDuration(v)) {
+	        this.addError(name, "is not a duration");
+	      }
+	    }
+	  }
+	};
+
+	module.exports = Validations;
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
+
+	var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
+
+	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+	var parsers = _interopRequireWildcard(__webpack_require__(6));
+
+	var IdentityAttr = exports.IdentityAttr = {
+	  coerce: function coerce(v) {
+	    return v;
+	  },
+	  serialize: function serialize(v) {
+	    return v;
+	  }
+	};
+
+	var StringAttr = exports.StringAttr = (function () {
+	  function StringAttr() {
+	    var opts = arguments[0] === undefined ? {} : arguments[0];
+
+	    _classCallCheck(this, StringAttr);
+
+	    this.opts = Object.assign({ trim: true }, opts);
+	  }
+
+	  _prototypeProperties(StringAttr, null, {
+	    coerce: {
+	      value: function coerce(v) {
+	        v = v != null ? String(v) : v;
+	        if (typeof v === "string" && this.opts.trim) {
+	          v = v.trim();
+	        }
+	        return v;
+	      },
+	      writable: true,
+	      configurable: true
+	    },
+	    serialize: {
+	      value: function serialize(s) {
+	        return s;
+	      },
+	      writable: true,
+	      configurable: true
+	    }
+	  });
+
+	  return StringAttr;
+	})();
+
+	var IntegerAttr = exports.IntegerAttr = {
+	  coerce: function coerce(v) {
+	    if (typeof v === "number") {
+	      return Math.round(v);
+	    } else if (typeof v === "string") {
+	      var parsed = parsers.parseNumber(v);
+	      return parsed ? Math.round(parsed) : parsed;
+	    } else if (v === undefined) {
+	      return undefined;
+	    } else {
+	      return null;
+	    }
+	  },
+
+	  serialize: function serialize(n) {
+	    return n;
+	  }
+	};
+
+	var NumberAttr = exports.NumberAttr = {
+	  coerce: function coerce(v) {
+	    if (typeof v === "number") {
+	      return v;
+	    } else if (typeof v === "string") {
+	      return parsers.parseNumber(v);
+	    } else if (v === undefined) {
+	      return undefined;
+	    } else {
+	      return null;
+	    }
+	  },
+
+	  serialize: function serialize(n) {
+	    return n;
+	  }
+	};
+
+	var BooleanAttr = exports.BooleanAttr = {
+	  coerce: function coerce(v) {
+	    return v === undefined ? v : !!v;
+	  },
+	  serialize: function serialize(b) {
+	    return b;
+	  }
+	};
+
+	var DateAttr = exports.DateAttr = {
+	  coerce: function coerce(v) {
+	    if (v == null || v instanceof Date) {
+	      return v;
+	    }
+	    if (typeof v === "number") {
+	      return new Date(v);
+	    }
+
+	    if (typeof v !== "string") {
+	      throw new Error("Basis.DateAttr#coerce: don't know how to coerce `" + v + "` to a Date");
+	    }
+
+	    return parsers.parseDate(v);
+	  },
+
+	  serialize: function serialize(date) {
+	    return date instanceof Date ? date.toJSON().replace(/T.*$/, "") : date;
+	  }
+	};
+
+	var DateTimeAttr = exports.DateTimeAttr = {
+	  coerce: function coerce(v) {
+	    if (v == null || v instanceof Date) {
+	      return v;
+	    }
+	    if (typeof v === "number") {
+	      return new Date(v);
+	    }
+
+	    if (typeof v !== "string") {
+	      throw new Error("Basis.DateTimeAttr#coerce: don't know how to coerce `" + v + "` to a Date");
+	    }
+
+	    return parsers.parseDateTime(v);
+	  },
+
+	  serialize: function serialize(date) {
+	    return date instanceof Date ? date.toJSON() : date;
+	  }
+	};
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
 	(function (root, pluralize) {
 	  /* istanbul ignore else */
 	  if (true) {
@@ -3510,389 +3915,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return pluralize;
 	});
 
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	var IdMap = {
-	  models: new Map(),
-
-	  insert: function insert(model) {
-	    var klass = model.constructor,
-	        id = model.id,
-	        map;
-
-	    if (!(map = this.models.get(klass))) {
-	      this.models.set(klass, map = new Map());
-	    }
-
-	    if (map.get(id)) {
-	      throw new Error("IdMap.insert: model of type `" + klass + "` and id `" + id + "` has already been inserted");
-	    }
-
-	    map.set(id, model);
-
-	    return this;
-	  },
-
-	  get: function get(klass, id) {
-	    var map = this.models.get(klass);
-	    return map && map.get(id);
-	  },
-
-	  "delete": function _delete(model) {
-	    var map = this.models.get(model.constructor);
-	    if (!map) {
-	      return this;
-	    }
-	    map["delete"](model.id);
-	    return this;
-	  },
-
-	  clear: function clear() {
-	    this.models.clear();return this;
-	  }
-	};
-
-	module.exports = IdMap;
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
-
-	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
-	var BasisArray = _interopRequire(__webpack_require__(2));
-
-	var util = _interopRequireWildcard(__webpack_require__(5));
-
-	var parsers = _interopRequireWildcard(__webpack_require__(6));
-
-	function isBlank(v) {
-	  return v == null || util.type(v) === "string" && v.match(/^\s*$/) || util.type(v) === "array" && v.length === 0 || v instanceof BasisArray && v.length === 0;
-	}
-
-	var Validations = {
-	  "static": {
-	    // Public: Adds a validator to the model that checks the given attributes for presence.
-	    //
-	    // ...names - One or more attribute names.
-	    // opts     - An optional object containing zero or more of the following options:
-	    //   if - A function that determines whether presence is required. If this returns false, then the
-	    //        presence validator will not run.
-	    //
-	    // Returns the receiver.
-	    validatesPresence: function validatesPresence() {
-	      var names = Array.from(arguments),
-	          opts = util.type(names[names.length - 1]) === "object" ? names.pop() : {};
-
-	      names.forEach(function (name) {
-	        this.validate(name, function () {
-	          this.validatePresence(name, opts);
-	        });
-	      }, this);
-
-	      return this;
-	    },
-
-	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
-	    // numbers.
-	    //
-	    // ...names - One or more attribute names.
-	    // opts     - An optional object containing zero or more of the following options:
-	    //   nonnegative - Ensure that the number is not negative.
-	    //
-	    // Returns the receiver.
-	    validatesNumber: function validatesNumber() {
-	      var names = Array.from(arguments),
-	          opts = util.type(names[names.length - 1]) === "object" ? names.pop() : {};
-
-	      names.forEach(function (name) {
-	        this.validate(name, function () {
-	          this.validateNumber(name, opts);
-	        });
-	      }, this);
-
-	      return this;
-	    },
-
-	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
-	    // dates.
-	    //
-	    // ...names - One or more attribute names.
-	    //
-	    // Returns the receiver.
-	    validatesDate: function validatesDate() {
-	      Array.from(arguments).forEach(function (name) {
-	        this.validate(name, function () {
-	          this.validateDate(name);
-	        });
-	      }, this);
-	    },
-
-	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
-	    // emails.
-	    //
-	    // ...names - One or more attribute names.
-	    //
-	    // Returns the receiver.
-	    validatesEmail: function validatesEmail() {
-	      Array.from(arguments).forEach(function (name) {
-	        this.validate(name, function () {
-	          this.validateEmail(name);
-	        });
-	      }, this);
-
-	      return this;
-	    },
-
-	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
-	    // phone numbers.
-	    //
-	    // ...names - One or more attribute names.
-	    //
-	    // Returns the receiver.
-	    validatesPhone: function validatesPhone() {
-	      Array.from(arguments).forEach(function (name) {
-	        this.validate(name, function () {
-	          this.validatePhone(name);
-	        });
-	      }, this);
-
-	      return this;
-	    },
-
-	    // Public: Adds a validator to the model that checks to make sure the given attributes are valid
-	    // durations.
-	    //
-	    // ...names - One or more attribute names.
-	    //
-	    // Returns the receiver.
-	    validatesDuration: function validatesDuration() {
-	      Array.from(arguments).forEach(function (name) {
-	        this.validate(name, function () {
-	          this.validateDuration(name);
-	        });
-	      }, this);
-
-	      return this;
-	    }
-	  },
-
-	  instance: {
-	    validatePresence: function validatePresence(name) {
-	      var opts = arguments[1] === undefined ? {} : arguments[1];
-
-	      if (opts["if"] && !opts["if"].call(this)) {
-	        return;
-	      }
-	      var v = this["" + name + "BeforeCoercion"] != null ? this["" + name + "BeforeCoercion"] : this[name];
-	      if (isBlank(v)) {
-	        this.addError(name, "must be present");
-	      }
-	    },
-
-	    validateNumber: function validateNumber(name) {
-	      var opts = arguments[1] === undefined ? {} : arguments[1];
-
-	      if (util.type(this[name]) === "number") {
-	        if (opts.nonnegative && this[name] < 0) {
-	          this.addError(name, "must not be negative");
-	        }
-	      } else if (!isBlank(this["" + name + "BeforeCoercion"])) {
-	        this.addError(name, "is not a number");
-	      }
-	    },
-
-	    validateDate: function validateDate(name) {
-	      var v = this["" + name + "BeforeCoercion"];
-
-	      if (!isBlank(v) && !(v instanceof Date) && !parsers.parseDate(v)) {
-	        this.addError(name, "is not a date");
-	      }
-	    },
-
-	    validateEmail: function validateEmail(name) {
-	      var v = this["" + name + "BeforeCoercion"];
-
-	      if (!isBlank(v) && !parsers.parseEmail(v)) {
-	        this.addError(name, "is not an email");
-	      }
-	    },
-
-	    validatePhone: function validatePhone(name) {
-	      var v = this["" + name + "BeforeCoercion"];
-
-	      if (!isBlank(v) && !parsers.parsePhone(v)) {
-	        this.addError(name, "is not a phone number");
-	      }
-	    },
-
-	    validateDuration: function validateDuration(name) {
-	      var v = this["" + name + "BeforeCoercion"];
-
-	      if (!isBlank(v) && !parsers.parseDuration(v)) {
-	        this.addError(name, "is not a duration");
-	      }
-	    }
-	  }
-	};
-
-	module.exports = Validations;
-
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-
-	var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
-
-	var _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
-
-	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
-
-	var parsers = _interopRequireWildcard(__webpack_require__(6));
-
-	var IdentityAttr = exports.IdentityAttr = {
-	  coerce: function coerce(v) {
-	    return v;
-	  },
-	  serialize: function serialize(v) {
-	    return v;
-	  }
-	};
-
-	var StringAttr = exports.StringAttr = (function () {
-	  function StringAttr() {
-	    var opts = arguments[0] === undefined ? {} : arguments[0];
-
-	    _classCallCheck(this, StringAttr);
-
-	    this.opts = Object.assign({ trim: true }, opts);
-	  }
-
-	  _prototypeProperties(StringAttr, null, {
-	    coerce: {
-	      value: function coerce(v) {
-	        v = v != null ? String(v) : v;
-	        if (typeof v === "string" && this.opts.trim) {
-	          v = v.trim();
-	        }
-	        return v;
-	      },
-	      writable: true,
-	      configurable: true
-	    },
-	    serialize: {
-	      value: function serialize(s) {
-	        return s;
-	      },
-	      writable: true,
-	      configurable: true
-	    }
-	  });
-
-	  return StringAttr;
-	})();
-
-	var IntegerAttr = exports.IntegerAttr = {
-	  coerce: function coerce(v) {
-	    if (typeof v === "number") {
-	      return Math.round(v);
-	    } else if (typeof v === "string") {
-	      var parsed = parsers.parseNumber(v);
-	      return parsed ? Math.round(parsed) : parsed;
-	    } else if (v === undefined) {
-	      return undefined;
-	    } else {
-	      return null;
-	    }
-	  },
-
-	  serialize: function serialize(n) {
-	    return n;
-	  }
-	};
-
-	var NumberAttr = exports.NumberAttr = {
-	  coerce: function coerce(v) {
-	    if (typeof v === "number") {
-	      return v;
-	    } else if (typeof v === "string") {
-	      return parsers.parseNumber(v);
-	    } else if (v === undefined) {
-	      return undefined;
-	    } else {
-	      return null;
-	    }
-	  },
-
-	  serialize: function serialize(n) {
-	    return n;
-	  }
-	};
-
-	var BooleanAttr = exports.BooleanAttr = {
-	  coerce: function coerce(v) {
-	    return v === undefined ? v : !!v;
-	  },
-	  serialize: function serialize(b) {
-	    return b;
-	  }
-	};
-
-	var DateAttr = exports.DateAttr = {
-	  coerce: function coerce(v) {
-	    if (v == null || v instanceof Date) {
-	      return v;
-	    }
-	    if (typeof v === "number") {
-	      return new Date(v);
-	    }
-
-	    if (typeof v !== "string") {
-	      throw new Error("Basis.DateAttr#coerce: don't know how to coerce `" + v + "` to a Date");
-	    }
-
-	    return parsers.parseDate(v);
-	  },
-
-	  serialize: function serialize(date) {
-	    return date instanceof Date ? date.toJSON().replace(/T.*$/, "") : date;
-	  }
-	};
-
-	var DateTimeAttr = exports.DateTimeAttr = {
-	  coerce: function coerce(v) {
-	    if (v == null || v instanceof Date) {
-	      return v;
-	    }
-	    if (typeof v === "number") {
-	      return new Date(v);
-	    }
-
-	    if (typeof v !== "string") {
-	      throw new Error("Basis.DateTimeAttr#coerce: don't know how to coerce `" + v + "` to a Date");
-	    }
-
-	    return parsers.parseDateTime(v);
-	  },
-
-	  serialize: function serialize(date) {
-	    return date instanceof Date ? date.toJSON() : date;
-	  }
-	};
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
 
 /***/ }
 /******/ ])

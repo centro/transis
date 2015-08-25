@@ -238,6 +238,19 @@ function mapperDeleteSuccess() {
 var Model = _object2["default"].extend(function () {
   this.displayName = "Basis.Model";
 
+  //
+  this.prop = function (name) {
+    var options = arguments[1] === undefined ? {} : arguments[1];
+
+    if (options.cache && options.cacheLoadValue) {
+      if (!this.prototype.hasOwnProperty("cacheLoadValueProps")) {
+        this.prototype.cacheLoadValueProps = Object.create(this.prototype.cacheLoadValueProps || null);
+      }
+      this.prototype.cacheLoadValueProps[name] = true;
+    }
+    return _object2["default"].prop.call(this, name, options);
+  };
+
   // Public: Creates a subclass of `Basis.Model`. This method overrides the `Basis.Object.extend`
   // method in order to force `Model` subclasses to be named.
   this.extend = function (name, f) {
@@ -514,6 +527,13 @@ var Model = _object2["default"].extend(function () {
       }
     }
 
+    // sets props with cacheLoadValue
+    for (var _name3 in this.prototype.cacheLoadValueProps) {
+      if (attrs.hasOwnProperty(_name3)) {
+        model._cache(_name3, attrs[_name3]);
+      }
+    }
+
     // set non-association attributes
     model.set(attrs);
 
@@ -522,33 +542,33 @@ var Model = _object2["default"].extend(function () {
       model.id = id;
     }
 
-    var _loop2 = function (_name3) {
-      var klass = resolve(associations[_name3].klass);
-      var data = associated[_name3];
+    var _loop2 = function (_name4) {
+      var klass = resolve(associations[_name4].klass);
+      var data = associated[_name4];
 
       // clear association
       if (!data) {
-        model[_name3] = null;
+        model[_name4] = null;
         return "continue";
       }
 
-      if (associations[_name3].type === "hasOne") {
+      if (associations[_name4].type === "hasOne") {
         var other = typeof data === "object" ? klass.load(data) : klass.local(data);
-        model[_name3] = other;
-      } else if (associations[_name3].type === "hasMany") {
+        model[_name4] = other;
+      } else if (associations[_name4].type === "hasMany") {
         (function () {
           var others = [];
           data.forEach(function (o) {
             others.push(typeof o === "object" ? klass.load(o) : klass.local(o));
           });
-          model[_name3] = others;
+          model[_name4] = others;
         })();
       }
     };
 
     // load and set each association
-    for (var _name3 in associated) {
-      var _ret2 = _loop2(_name3);
+    for (var _name4 in associated) {
+      var _ret2 = _loop2(_name4);
 
       if (_ret2 === "continue") continue;
     }
@@ -880,17 +900,17 @@ var Model = _object2["default"].extend(function () {
       var r = false;
 
       util.detectRecursion(this, (function () {
-        for (var _name4 in this.associations) {
-          if (!this.associations[_name4].owner) {
+        for (var _name5 in this.associations) {
+          if (!this.associations[_name5].owner) {
             continue;
           }
 
-          if (this.associations[_name4].type === "hasOne") {
-            if (this[_name4] && this[_name4].hasChanges) {
+          if (this.associations[_name5].type === "hasOne") {
+            if (this[_name5] && this[_name5].hasChanges) {
               r = true;
             }
-          } else if (this.associations[_name4].type === "hasMany") {
-            if (this[_name4].some(function (m) {
+          } else if (this.associations[_name5].type === "hasMany") {
+            if (this[_name5].some(function (m) {
               return m.hasChanges;
             })) {
               r = true;
@@ -933,17 +953,17 @@ var Model = _object2["default"].extend(function () {
       var r = false;
 
       util.detectRecursion(this, (function () {
-        for (var _name5 in this.associations) {
-          if (!this.associations[_name5].owner) {
+        for (var _name6 in this.associations) {
+          if (!this.associations[_name6].owner) {
             continue;
           }
 
-          if (this.associations[_name5].type === "hasOne") {
-            if (this[_name5] && this[_name5].hasErrors) {
+          if (this.associations[_name6].type === "hasOne") {
+            if (this[_name6] && this[_name6].hasErrors) {
               r = true;
             }
-          } else if (this.associations[_name5].type === "hasMany") {
-            if (this[_name5].some(function (m) {
+          } else if (this.associations[_name6].type === "hasMany") {
+            if (this[_name6].some(function (m) {
               return m.hasErrors;
             })) {
               r = true;
@@ -1196,23 +1216,23 @@ var Model = _object2["default"].extend(function () {
     }
 
     util.detectRecursion(this, (function () {
-      for (var _name6 in associations) {
-        var desc = associations[_name6];
+      for (var _name7 in associations) {
+        var desc = associations[_name7];
 
         if (!desc.owner) {
           continue;
         }
-        if (opts.except === _name6) {
+        if (opts.except === _name7) {
           continue;
         }
-        if (Array.isArray(opts.except) && opts.except.indexOf(_name6) >= 0) {
+        if (Array.isArray(opts.except) && opts.except.indexOf(_name7) >= 0) {
           continue;
         }
 
         if (desc.type === "hasOne") {
-          this[_name6] && this[_name6].undoChanges();
+          this[_name7] && this[_name7].undoChanges();
         } else if (desc.type === "hasMany") {
-          this[_name6].forEach(function (m) {
+          this[_name7].forEach(function (m) {
             return m.undoChanges();
           });
         }
@@ -1278,22 +1298,22 @@ var Model = _object2["default"].extend(function () {
 
     this._clearErrors();
 
-    for (var _name7 in this.validators) {
-      this.validateAttr(_name7);
+    for (var _name8 in this.validators) {
+      this.validateAttr(_name8);
     }
 
     util.detectRecursion(this, (function () {
-      for (var _name8 in associations) {
-        var desc = associations[_name8];
+      for (var _name9 in associations) {
+        var desc = associations[_name9];
 
         if (!desc.owner) {
           continue;
         }
 
         if (desc.type === "hasOne") {
-          this[_name8] && !this[_name8]._destroy && this[_name8].validate();
+          this[_name9] && !this[_name9]._destroy && this[_name9].validate();
         } else if (desc.type === "hasMany") {
-          this[_name8].forEach(function (m) {
+          this[_name9].forEach(function (m) {
             return !m._destroy && m.validate();
           });
         }
@@ -1307,17 +1327,17 @@ var Model = _object2["default"].extend(function () {
   this.prototype.toString = function () {
     var attrs = this.attrs();
 
-    for (var _name9 in this.associations) {
-      if (this.associations[_name9].type === "hasOne") {
-        if (this[_name9] && this[_name9].id) {
-          attrs[_name9] = this[_name9].id;
+    for (var _name10 in this.associations) {
+      if (this.associations[_name10].type === "hasOne") {
+        if (this[_name10] && this[_name10].id) {
+          attrs[_name10] = this[_name10].id;
         }
-      } else if (this.associations[_name9].type === "hasMany") {
-        var ids = this[_name9].map(function (x) {
+      } else if (this.associations[_name10].type === "hasMany") {
+        var ids = this[_name10].map(function (x) {
           return x.id;
         }).compact();
         if (ids.length) {
-          attrs[_name9] = ids;
+          attrs[_name10] = ids;
         }
       }
     }

@@ -2641,5 +2641,113 @@ describe('Model', function () {
       });
     });
   });
-});
 
+  describe('prop with cacheLoadvalue option', function() {
+    var Foo, spy;
+
+    beforeEach(function() {
+      spy = jasmine.createSpy().and.callFake(function() { return this.a * 2; });
+      Foo = Model.extend('TestModel', function() {
+        this.prop('a');
+        this.prop('doubleA', {cache: true, cacheLoadValue: true, readonly: true, on: ['a'], get: spy});
+      });
+    });
+
+    describe('when an intial value is provided on load', function() {
+      var f;
+
+      beforeEach(function() {
+        f = Foo.load({id: 123, doubleA: 9});
+      });
+
+      it('returns the cached value from load', function() {
+        expect(f.doubleA).toBe(9);
+        expect(spy.calls.count()).toBe(0);
+      });
+
+      it('returns the cached value on subsequent gets', function() {
+        expect(f.doubleA).toBe(9);
+        expect(spy.calls.count()).toBe(0);
+        expect(f.doubleA).toBe(9);
+        expect(spy.calls.count()).toBe(0);
+      });
+
+      it('recomputes the value by calling the getter function after a dependent event is observed', function() {
+        expect(f.doubleA).toBe(9);
+        expect(spy.calls.count()).toBe(0);
+        expect(f.doubleA).toBe(9);
+        expect(spy.calls.count()).toBe(0);
+        f.a = 5;
+        BasisObject.flush();
+        expect(f.doubleA).toBe(10);
+        expect(spy.calls.count()).toBe(1);
+        expect(f.doubleA).toBe(10);
+        expect(spy.calls.count()).toBe(1);
+        f.a = 21;
+        BasisObject.flush();
+        expect(f.doubleA).toBe(42);
+        expect(spy.calls.count()).toBe(2);
+        expect(f.doubleA).toBe(42);
+        expect(spy.calls.count()).toBe(2);
+      });
+    });
+
+    describe('when an intial value is not provided on load', function() {
+      var f;
+
+      beforeEach(function() {
+        f = Foo.load({id: 123});
+      });
+
+      it('calls the getter function to initially compute the value', function() {
+        expect(f.doubleA).toBeNaN();
+        expect(spy.calls.count()).toBe(1);
+      });
+
+      it('recomputes the value by calling the getter function after a dependent event is observed', function() {
+        f.a = 5;
+        BasisObject.flush();
+        expect(f.doubleA).toBe(10);
+        expect(spy.calls.count()).toBe(1);
+        expect(f.doubleA).toBe(10);
+        expect(spy.calls.count()).toBe(1);
+        f.a = 21;
+        BasisObject.flush();
+        expect(f.doubleA).toBe(42);
+        expect(spy.calls.count()).toBe(2);
+        expect(f.doubleA).toBe(42);
+        expect(spy.calls.count()).toBe(2);
+      });
+    });
+
+    describe('when an intial value and a dependent are provided on load', function() {
+      var f;
+
+      beforeEach(function() {
+        f = Foo.load({id: 123, doubleA:9, a:10});
+      });
+
+      it('calls the getter function to initially compute the value', function() {
+        BasisObject.flush();
+
+        expect(f.doubleA).toBe(20);
+        expect(spy.calls.count()).toBe(1);
+      });
+
+      it('recomputes the value by calling the getter function after a dependent event is observed', function() {
+        f.a = 5;
+        BasisObject.flush();
+        expect(f.doubleA).toBe(10);
+        expect(spy.calls.count()).toBe(1);
+        expect(f.doubleA).toBe(10);
+        expect(spy.calls.count()).toBe(1);
+        f.a = 21;
+        BasisObject.flush();
+        expect(f.doubleA).toBe(42);
+        expect(spy.calls.count()).toBe(2);
+        expect(f.doubleA).toBe(42);
+        expect(spy.calls.count()).toBe(2);
+      });
+    });
+  });
+});
