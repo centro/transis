@@ -57,7 +57,22 @@ function _getPath(o, pathSegments) {
   if (o == null) { return undefined; }
 
   var head = pathSegments[0], tail = pathSegments.slice(1);
-  o = o[head];
+
+  if (Array.isArray(o) && !(head in o)) {
+    o = o.reduce(function(acc, x) {
+      if (!x) { return acc; }
+
+      var y = x[head];
+
+      if (Array.isArray(y)) { acc.push.apply(acc, y); }
+      else { acc.push(y); }
+
+      return acc;
+    }, []);
+  }
+  else {
+    o = o[head];
+  }
 
   if (!tail.length) { return o; }
   else { return o ? _getPath(o, tail) : undefined; }
@@ -245,6 +260,9 @@ export function capitalize(s) {
 }
 
 // Public: Resolves a path into a value. The path must be relative to the given object.
+//
+// If an array is encountered in the middle of a path and the next segment does not match a property
+// of the array, then the property is accessed from each item within the array.
 //
 // o    - The object to resolve the path from.
 // path - A string containing the dot separated path to resolve.

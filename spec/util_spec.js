@@ -432,4 +432,50 @@ describe('getPath', function() {
     expect(util.getPath(null, 'b.c.d.e')).toBeUndefined();
     expect(util.getPath(undefined, 'b.c.d.e')).toBeUndefined();
   });
+
+  describe('with an array in the path', function() {
+    beforeEach(function() {
+      this.foo = {bars: [{x: 2}, {x: 4}, {x: 6}]};
+    });
+
+    describe('when the property exists on the array', function() {
+      it('returns the property from the array', function() {
+        expect(util.getPath(this.foo, 'bars.length')).toBe(3);
+      });
+    });
+
+    describe('when the property does not exist on the array', function() {
+      it('returns an array containing the values extracted from each item in the array', function() {
+        expect(util.getPath(this.foo, 'bars.x')).toEqual([2, 4, 6]);
+      });
+    });
+
+    describe('with multiple arrays in the path', function() {
+      it('flattens the array', function() {
+        var o = {
+          foos: [
+            {bars: [{x: 1}, {x: 5}]},
+            {bars: [{x: 9}, {x: 3}, {x: 7}]},
+            {bars: []},
+            {bars: [{x: 2}]}
+          ]
+        };
+
+        expect(util.getPath(o, 'foos.bars.x')).toEqual([1,5,9,3,7,2]);
+      });
+
+      it('strips null and undefined values', function() {
+        var o = {
+          foos: [
+            {x: {bars: [{y: 9}, {y: 3}]}},
+            {x: null},
+            {},
+            {x: {bars: [{y: 1}, {y: 4}]}},
+          ]
+        };
+
+        expect(util.getPath(o, 'foos.x.bars.y')).toEqual([9,3,1,4]);
+      });
+    });
+  });
 });
