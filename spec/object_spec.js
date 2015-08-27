@@ -11,7 +11,6 @@ describe('Basis.Object', function() {
     });
 
     this.prop('ro', {
-      readonly: true,
       get: function() { return 4; }
     });
 
@@ -158,11 +157,11 @@ describe('Basis.Object', function() {
         this.prop('first');
         this.prop('last');
         this.prop('full', {
-          readonly: true, on: ['first', 'last'],
+          on: ['first', 'last'],
           get: function() { return `${this.first} ${this.last}`; }
         });
         this.prop('greeting', {
-          readonly: true, on: ['full'],
+          on: ['full'],
           get: function() { return `Hello ${this.full}`; }
         });
       });
@@ -250,7 +249,7 @@ describe('Basis.Object', function() {
         spy = jasmine.createSpy().and.callFake(function() { return this.a * 2; });
         Foo = BasisObject.extend(function() {
           this.prop('a');
-          this.prop('doubleA', {cache: true, readonly: true, on: ['a'], get: spy});
+          this.prop('doubleA', {cache: true, on: ['a'], get: spy});
         });
       });
 

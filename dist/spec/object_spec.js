@@ -22,7 +22,6 @@ describe("Basis.Object", function () {
     });
 
     this.prop("ro", {
-      readonly: true,
       get: function get() {
         return 4;
       }
@@ -174,13 +173,13 @@ describe("Basis.Object", function () {
         this.prop("first");
         this.prop("last");
         this.prop("full", {
-          readonly: true, on: ["first", "last"],
+          on: ["first", "last"],
           get: function get() {
             return "" + this.first + " " + this.last;
           }
         });
         this.prop("greeting", {
-          readonly: true, on: ["full"],
+          on: ["full"],
           get: function get() {
             return "Hello " + this.full;
           }
@@ -279,7 +278,7 @@ describe("Basis.Object", function () {
         });
         Foo = _object2["default"].extend(function () {
           this.prop("a");
-          this.prop("doubleA", { cache: true, readonly: true, on: ["a"], get: spy });
+          this.prop("doubleA", { cache: true, on: ["a"], get: spy });
         });
       });
 
