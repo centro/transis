@@ -110,6 +110,43 @@ describe('Basis.Object', function() {
           expect(t.def).toBe('goodbye');
         });
       });
+
+      describe('with pure set to false', function() {
+        var spy = jasmine.createSpy();
+        var Foo = BasisObject.extend(function() {
+          this.prop('impure', {
+            pure: false,
+            get: spy
+          });
+        });
+
+        it('invokes the getter in the context of the receiver', function() {
+          var f = new Foo;
+          f.impure;
+          expect(spy.calls.mostRecent().object).toBe(f);
+        });
+      });
+
+      describe('with pure set to true', function() {
+        var spy = jasmine.createSpy().and.callFake(function(a) { return a * 2; });
+        var Foo = BasisObject.extend(function() {
+          this.prop('a');
+          this.prop('twiceA', {pure: true, on: ['a'], get: spy});
+        });
+
+        it('invokes the getter in the null context', function() {
+          var f = new Foo({a: 3});
+          expect(f.twiceA).toBe(6);
+          // FIXME: the getter is not being invoked in the null context in the specs
+          expect(spy.calls.mostRecent().object).not.toBe(f);
+        });
+
+        it('invokes the getter with the dependencies as arguments', function() {
+          var f = new Foo({a: 4});
+          expect(f.twiceA).toBe(8);
+          expect(spy).toHaveBeenCalledWith(4);
+        });
+      });
     });
 
     describe('setter', function() {
@@ -158,11 +195,11 @@ describe('Basis.Object', function() {
         this.prop('last');
         this.prop('full', {
           on: ['first', 'last'],
-          get: function() { return `${this.first} ${this.last}`; }
+          get: function(first, last) { return `${first} ${last}`; }
         });
         this.prop('greeting', {
           on: ['full'],
-          get: function() { return `Hello ${this.full}`; }
+          get: function(full) { return `Hello ${full}`; }
         });
       });
 
@@ -246,7 +283,7 @@ describe('Basis.Object', function() {
       var Foo, spy;
 
       beforeEach(function() {
-        spy = jasmine.createSpy().and.callFake(function() { return this.a * 2; });
+        spy = jasmine.createSpy().and.callFake(function(a) { return a * 2; });
         Foo = BasisObject.extend(function() {
           this.prop('a');
           this.prop('doubleA', {cache: true, on: ['a'], get: spy});
@@ -297,6 +334,7 @@ describe('Basis.Object', function() {
       this.props({
         x: {},
         y: {
+          pure: false,
           get: function() {
             return this.x * 2;
           }

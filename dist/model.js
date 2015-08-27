@@ -822,29 +822,29 @@ var Model = _object2["default"].extend(function () {
 
   this.prop("isNew", {
     on: ["sourceState"],
-    get: function get() {
-      return this.sourceState === NEW;
+    get: function get(sourceState) {
+      return sourceState === NEW;
     }
   });
 
   this.prop("isEmpty", {
     on: ["sourceState"],
-    get: function get() {
-      return this.sourceState === EMPTY;
+    get: function get(sourceState) {
+      return sourceState === EMPTY;
     }
   });
 
   this.prop("isLoaded", {
     on: ["sourceState"],
-    get: function get() {
-      return this.sourceState === LOADED;
+    get: function get(sourceState) {
+      return sourceState === LOADED;
     }
   });
 
   this.prop("isDeleted", {
     on: ["sourceState"],
-    get: function get() {
-      return this.sourceState === DELETED;
+    get: function get(sourceState) {
+      return sourceState === DELETED;
     }
   });
 
@@ -863,8 +863,8 @@ var Model = _object2["default"].extend(function () {
   // owned `hasMany` associations that have been mutated.
   this.prop("hasOwnChanges", {
     on: ["changes"],
-    get: function get() {
-      return Object.keys(this.changes).length > 0;
+    get: function get(changes) {
+      return Object.keys(changes).length > 0;
     }
   });
 
@@ -872,6 +872,7 @@ var Model = _object2["default"].extend(function () {
   // associated models have changes.
   this.prop("hasChanges", {
     on: ["changes"],
+    pure: false,
     get: function get() {
       if (this.hasOwnChanges) {
         return true;
@@ -916,8 +917,8 @@ var Model = _object2["default"].extend(function () {
   // this property to return `false` regardless of whether there are validation errors.
   this.prop("hasOwnErrors", {
     on: ["errors", "_destroy"],
-    get: function get() {
-      return !this._destroy && Object.keys(this.errors).length > 0;
+    get: function get(errors, _destroy) {
+      return !_destroy && Object.keys(errors).length > 0;
     }
   });
 
@@ -925,6 +926,7 @@ var Model = _object2["default"].extend(function () {
   // its owned associated models have validation errors.
   this.prop("hasErrors", {
     on: ["hasOwnErrors"],
+    pure: false,
     get: function get() {
       if (this.hasOwnErrors) {
         return true;

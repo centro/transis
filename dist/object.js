@@ -131,8 +131,8 @@ function defineProp(object, name) {
     set: null,
     'default': undefined,
     on: [],
-    cache: false
-  }, opts, { readonly: opts.get && !opts.set });
+    cache: false,
+    pure: !!(opts.get && opts.on && !opts.set) }, opts, { readonly: opts.get && !opts.set });
 
   if (!object.hasOwnProperty('__props__')) {
     object.__props__ = Object.create(object.__props__ || null);
@@ -217,8 +217,12 @@ BasisObject.extend = function (f) {
 //   get       - A custom property getter function.
 //   set       - A custom property setter function.
 //   default   - Specify a default value for the property.
-//   on        - An array of dependent prop names. Observers of the prop are notified when any of
-//               these props change.
+//   on        - An array of dependent path names. Observers of the prop are notified when any of
+//               these props change. Paths may be at most two segments long.
+//   pure      - Boolean indicating whether the computed prop's `get` function is pure or not. When
+//               accessed, a pure prop's `get` function has its dependencies passed in and is called
+//               with `this` set to null. If you have a computed prop with dependencies and need to
+//               access `this`, then `pure` must be set to `false`.
 //   cache     - Set this to true to enable property caching. This is useful with computed
 //               properties that have their dependent events defined. If dependent events aren't
 //               defined, then the initially cached value will never be cleared.
@@ -398,22 +402,32 @@ BasisObject.prototype.getPath = function (path) {
 // Returns the value of the property.
 // Throws `Error` if there is no property with the given name.
 BasisObject.prototype._getProp = function (name) {
-  var descriptor = this.__props__ && this.__props__[name],
-      key = '__' + name,
+  var _this = this;
+
+  var desc = this.__props__ && this.__props__[name],
       value;
 
-  if (!descriptor) {
+  if (!desc) {
     throw new Error('Basis.Object#_getProp: unknown prop name `' + name + '`');
   }
 
-  if (descriptor.cache && isCached.call(this, name)) {
+  if (desc.cache && isCached.call(this, name)) {
     return getCached.call(this, name);
   }
 
-  value = descriptor.get ? descriptor.get.call(this) : this[key];
-  value = value === undefined ? descriptor['default'] : value;
+  if (desc.get && desc.pure) {
+    value = desc.get.apply(null, desc.on.map(function (path) {
+      return _this.getPath(path);
+    }));
+  } else if (desc.get) {
+    value = desc.get.call(this);
+  } else {
+    value = this['__' + name];
+  }
 
-  if (descriptor.cache) {
+  value = value === undefined ? desc['default'] : value;
+
+  if (desc.cache) {
     cache.call(this, name, value);
   }
 
