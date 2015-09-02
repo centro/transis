@@ -90,6 +90,8 @@ describe("Model validations", function () {
       this.attr("bar", "number");
       this.validatesNumber("foo");
       this.validatesNumber("bar", { nonnegative: true });
+      this.validatesNumber("baz", { maximum: 500 });
+      this.validatesNumber("quux", { minimum: 12 });
     });
 
     beforeEach(function () {
@@ -121,6 +123,38 @@ describe("Model validations", function () {
       this.m.bar = -1;
       expect(this.m.validateAttr("bar")).toBe(false);
       expect(this.m.errors.bar).toEqual(["must not be negative"]);
+    });
+
+    it("ensures the value is less than or equal to the maximum option", function () {
+      this.m.baz = 499;
+      expect(this.m.validateAttr("baz")).toBe(true);
+      this.m.baz = 500;
+      expect(this.m.validateAttr("baz")).toBe(true);
+      this.m.baz = 500.01;
+      expect(this.m.validateAttr("baz")).toBe(false);
+      expect(this.m.errors.baz).toEqual(["may not be greater than 500"]);
+      this.m.baz = 501;
+      expect(this.m.validateAttr("baz")).toBe(false);
+      expect(this.m.errors.baz).toEqual(["may not be greater than 500"]);
+      this.m.baz = Infinity;
+      expect(this.m.validateAttr("baz")).toBe(false);
+      expect(this.m.errors.baz).toEqual(["may not be greater than 500"]);
+    });
+
+    it("ensures the value is greater than or equal to the minimum option", function () {
+      this.m.quux = 13;
+      expect(this.m.validateAttr("quux")).toBe(true);
+      this.m.quux = 12;
+      expect(this.m.validateAttr("quux")).toBe(true);
+      this.m.quux = 11;
+      expect(this.m.validateAttr("quux")).toBe(false);
+      expect(this.m.errors.quux).toEqual(["may not be less than 12"]);
+      this.m.quux = -100;
+      expect(this.m.validateAttr("quux")).toBe(false);
+      expect(this.m.errors.quux).toEqual(["may not be less than 12"]);
+      this.m.quux = -Infinity;
+      expect(this.m.validateAttr("quux")).toBe(false);
+      expect(this.m.errors.quux).toEqual(["may not be less than 12"]);
     });
   });
 
