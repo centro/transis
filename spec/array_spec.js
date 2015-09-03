@@ -821,4 +821,24 @@ describe('Array', function() {
       expect(slices).toEqual([[1,2,3], [4,5,6], [7]]);
     });
   });
+
+  describe('.remove', function() {
+    it('removes element from array and returns removed element', function() {
+      var a1 = A(1,2,3);
+      expect(a1.remove(1)).toBe(1);
+      expect(a1).toEqual([2,3]);
+    });
+
+    it('returns null if element is not in array', function() {
+      var a1 = A(1,2,3);
+      expect(a1.remove(4)).toBe(null);
+      expect(a1).toEqual([1,2,3]);
+    });
+
+    it('returns null if no element provided', function() {
+      var a1 = A(1,2,3);
+      expect(a1.remove()).toBe(null);
+      expect(a1).toEqual([1,2,3]);
+    });
+  });
 });
