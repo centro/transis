@@ -4,8 +4,8 @@ var Person = Basis.Model.extend('Person', function() {
 
   this.prop('fullName', {
     on: ['firstName', 'lastName'],
-    get: function() {
-      return Basis.A(this.firstName, this.lastName).compact().join(' ').trim();
+    get: function(firstName, lastName) {
+      return Basis.A(firstName, lastName).compact().join(' ').trim();
     }
   });
 });
