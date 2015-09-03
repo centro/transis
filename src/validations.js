@@ -36,6 +36,8 @@ var Validations = {
     // ...names - One or more attribute names.
     // opts     - An optional object containing zero or more of the following options:
     //   nonnegative - Ensure that the number is not negative.
+    //   maximum     - Ensure that the number is not greater than this value.
+    //   minimum     - Ensure that the number is not less than this value.
     //
     // Returns the receiver.
     validatesNumber: function() {
@@ -115,6 +117,14 @@ var Validations = {
       if (util.type(this[name]) === 'number') {
         if (opts.nonnegative && this[name] < 0) {
           this.addError(name, 'must not be negative');
+        }
+
+        if (opts.maximum && this[name] > opts.maximum) {
+          this.addError(name, 'may not be greater than ' + opts.maximum);
+        }
+
+        if (opts.minimum && this[name] < opts.minimum) {
+          this.addError(name, 'may not be less than ' + opts.minimum);
         }
       }
       else if (!isBlank(this[`${name}BeforeCoercion`])) {
