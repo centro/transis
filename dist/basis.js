@@ -992,7 +992,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }).join(", ") + "]";
 	  };
 
-	  // Public: Removes element from array and returns remove element
+	  // Public: Removes element from array and returns the removed element.
 	  this.prototype.remove = function (el) {
 	    var index = this.indexOf(el);
 	    return index !== -1 ? this.splice(index, 1)[0] : null;
