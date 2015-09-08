@@ -439,6 +439,12 @@ BasisArray.from = function (a) {
       return String(x);
     }).join(", ") + "]";
   };
+
+  // Public: Removes element from array and returns the removed element.
+  this.prototype.remove = function (el) {
+    var index = this.indexOf(el);
+    return index !== -1 ? this.splice(index, 1)[0] : null;
+  };
 }).call(BasisArray);
 
 exports["default"] = BasisArray;
