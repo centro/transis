@@ -1005,6 +1005,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return String(x);
 	    }).join(", ") + "]";
 	  };
+
+	  // Public: Removes element from array and returns the removed element.
+	  this.prototype.remove = function (el) {
+	    var index = this.indexOf(el);
+	    return index !== -1 ? this.splice(index, 1)[0] : null;
+	  };
 	}).call(BasisArray);
 
 	module.exports = BasisArray;
@@ -3646,6 +3652,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // ...names - One or more attribute names.
 	    // opts     - An optional object containing zero or more of the following options:
 	    //   nonnegative - Ensure that the number is not negative.
+	    //   maximum     - Ensure that the number is not greater than this value.
+	    //   minimum     - Ensure that the number is not less than this value.
 	    //
 	    // Returns the receiver.
 	    validatesNumber: function validatesNumber() {
@@ -3743,6 +3751,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (util.type(this[name]) === "number") {
 	        if (opts.nonnegative && this[name] < 0) {
 	          this.addError(name, "must not be negative");
+	        }
+
+	        if (opts.maximum && this[name] > opts.maximum) {
+	          this.addError(name, "may not be greater than " + opts.maximum);
+	        }
+
+	        if (opts.minimum && this[name] < opts.minimum) {
+	          this.addError(name, "may not be less than " + opts.minimum);
 	        }
 	      } else if (!isBlank(this["" + name + "BeforeCoercion"])) {
 	        this.addError(name, "is not a number");
