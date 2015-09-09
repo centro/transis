@@ -918,7 +918,7 @@ describe("Array", function () {
     });
   });
 
-  describe(".remove", function () {
+  describe("#remove", function () {
     it("removes element from array and returns removed element", function () {
       var a1 = A(1, 2, 3);
       expect(a1.remove(1)).toBe(1);
