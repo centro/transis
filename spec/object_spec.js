@@ -11,7 +11,6 @@ describe('Basis.Object', function() {
     });
 
     this.prop('ro', {
-      readonly: true,
       get: function() { return 4; }
     });
 
@@ -111,6 +110,50 @@ describe('Basis.Object', function() {
           expect(t.def).toBe('goodbye');
         });
       });
+
+      describe('with pure set to false', function() {
+        var spy = jasmine.createSpy();
+        var Foo = BasisObject.extend(function() {
+          this.prop('impure', {
+            pure: false,
+            get: spy
+          });
+        });
+
+        it('invokes the getter in the context of the receiver', function() {
+          var f = new Foo;
+          f.impure;
+          expect(spy.calls.mostRecent().object).toBe(f);
+        });
+      });
+
+      describe('with pure set to true', function() {
+        var calls;
+
+        var spy = function(a) {
+          calls.push({_this: this, args: [].slice.call(arguments)});
+          return a * 2;
+        };
+
+        var Foo = BasisObject.extend(function() {
+          this.prop('a');
+          this.prop('twiceA', {pure: true, on: ['a'], get: spy});
+        });
+
+        beforeEach(function() { calls = []; });
+
+        it('invokes the getter in the null context', function() {
+          var f = new Foo({a: 3});
+          expect(f.twiceA).toBe(6);
+          expect(calls[0]._this).toBe(null);
+        });
+
+        it('invokes the getter with the dependencies as arguments', function() {
+          var f = new Foo({a: 4});
+          expect(f.twiceA).toBe(8);
+          expect(calls[0].args).toEqual([4]);
+        });
+      });
     });
 
     describe('setter', function() {
@@ -158,12 +201,12 @@ describe('Basis.Object', function() {
         this.prop('first');
         this.prop('last');
         this.prop('full', {
-          readonly: true, on: ['first', 'last'],
-          get: function() { return `${this.first} ${this.last}`; }
+          on: ['first', 'last'],
+          get: function(first, last) { return `${first} ${last}`; }
         });
         this.prop('greeting', {
-          readonly: true, on: ['full'],
-          get: function() { return `Hello ${this.full}`; }
+          on: ['full'],
+          get: function(full) { return `Hello ${full}`; }
         });
       });
 
@@ -247,10 +290,10 @@ describe('Basis.Object', function() {
       var Foo, spy;
 
       beforeEach(function() {
-        spy = jasmine.createSpy().and.callFake(function() { return this.a * 2; });
+        spy = jasmine.createSpy().and.callFake(function(a) { return a * 2; });
         Foo = BasisObject.extend(function() {
           this.prop('a');
-          this.prop('doubleA', {cache: true, readonly: true, on: ['a'], get: spy});
+          this.prop('doubleA', {cache: true, on: ['a'], get: spy});
         });
       });
 
@@ -298,6 +341,7 @@ describe('Basis.Object', function() {
       this.props({
         x: {},
         y: {
+          pure: false,
           get: function() {
             return this.x * 2;
           }

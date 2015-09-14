@@ -213,8 +213,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    set: null,
 	    "default": undefined,
 	    on: [],
-	    cache: false
-	  }, opts, { readonly: opts.get && !opts.set });
+	    cache: false,
+	    pure: !!(opts.get && opts.on && !opts.set) }, opts, { readonly: opts.get && !opts.set });
 
 	  if (!object.hasOwnProperty("__props__")) {
 	    object.__props__ = Object.create(object.__props__ || null);
@@ -299,8 +299,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	//   get       - A custom property getter function.
 	//   set       - A custom property setter function.
 	//   default   - Specify a default value for the property.
-	//   on        - An array of dependent prop names. Observers of the prop are notified when any of
-	//               these props change.
+	//   on        - An array of dependent path names. Observers of the prop are notified when any of
+	//               these props change. Paths may be at most two segments long.
+	//   pure      - Boolean indicating whether the computed prop's `get` function is pure or not. When
+	//               accessed, a pure prop's `get` function has its dependencies passed in and is called
+	//               with `this` set to null. If you have a computed prop with dependencies and need to
+	//               access `this`, then `pure` must be set to `false`.
 	//   cache     - Set this to true to enable property caching. This is useful with computed
 	//               properties that have their dependent events defined. If dependent events aren't
 	//               defined, then the initially cached value will never be cleared.
@@ -480,22 +484,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Returns the value of the property.
 	// Throws `Error` if there is no property with the given name.
 	BasisObject.prototype._getProp = function (name) {
-	  var descriptor = this.__props__ && this.__props__[name],
-	      key = "__" + name,
+	  var _this = this;
+
+	  var desc = this.__props__ && this.__props__[name],
 	      value;
 
-	  if (!descriptor) {
+	  if (!desc) {
 	    throw new Error("Basis.Object#_getProp: unknown prop name `" + name + "`");
 	  }
 
-	  if (descriptor.cache && isCached.call(this, name)) {
+	  if (desc.cache && isCached.call(this, name)) {
 	    return getCached.call(this, name);
 	  }
 
-	  value = descriptor.get ? descriptor.get.call(this) : this[key];
-	  value = value === undefined ? descriptor["default"] : value;
+	  if (desc.get && desc.pure) {
+	    value = desc.get.apply(null, desc.on.map(function (path) {
+	      return _this.getPath(path);
+	    }));
+	  } else if (desc.get) {
+	    value = desc.get.call(this);
+	  } else {
+	    value = this["__" + name];
+	  }
 
-	  if (descriptor.cache) {
+	  value = value === undefined ? desc["default"] : value;
+
+	  if (desc.cache) {
 	    cache.call(this, name, value);
 	  }
 
@@ -1807,29 +1821,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  this.prop("isNew", {
 	    on: ["sourceState"],
-	    get: function get() {
-	      return this.sourceState === NEW;
+	    get: function get(sourceState) {
+	      return sourceState === NEW;
 	    }
 	  });
 
 	  this.prop("isEmpty", {
 	    on: ["sourceState"],
-	    get: function get() {
-	      return this.sourceState === EMPTY;
+	    get: function get(sourceState) {
+	      return sourceState === EMPTY;
 	    }
 	  });
 
 	  this.prop("isLoaded", {
 	    on: ["sourceState"],
-	    get: function get() {
-	      return this.sourceState === LOADED;
+	    get: function get(sourceState) {
+	      return sourceState === LOADED;
 	    }
 	  });
 
 	  this.prop("isDeleted", {
 	    on: ["sourceState"],
-	    get: function get() {
-	      return this.sourceState === DELETED;
+	    get: function get(sourceState) {
+	      return sourceState === DELETED;
 	    }
 	  });
 
@@ -1848,8 +1862,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // owned `hasMany` associations that have been mutated.
 	  this.prop("hasOwnChanges", {
 	    on: ["changes"],
-	    get: function get() {
-	      return Object.keys(this.changes).length > 0;
+	    get: function get(changes) {
+	      return Object.keys(changes).length > 0;
 	    }
 	  });
 
@@ -1857,6 +1871,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // associated models have changes.
 	  this.prop("hasChanges", {
 	    on: ["changes"],
+	    pure: false,
 	    get: function get() {
 	      if (this.hasOwnChanges) {
 	        return true;
@@ -1901,8 +1916,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // this property to return `false` regardless of whether there are validation errors.
 	  this.prop("hasOwnErrors", {
 	    on: ["errors", "_destroy"],
-	    get: function get() {
-	      return !this._destroy && Object.keys(this.errors).length > 0;
+	    get: function get(errors, _destroy) {
+	      return !_destroy && Object.keys(errors).length > 0;
 	    }
 	  });
 
@@ -1910,6 +1925,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // its owned associated models have validation errors.
 	  this.prop("hasErrors", {
 	    on: ["hasOwnErrors"],
+	    pure: false,
 	    get: function get() {
 	      if (this.hasOwnErrors) {
 	        return true;
@@ -2670,6 +2686,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// Public: Resolves a path into a value. The path must be relative to the given object.
 	//
+	// If an array is encountered in the middle of a path and the next segment does not match a property
+	// of the array, then the property is accessed from each item within the array.
+	//
 	// o    - The object to resolve the path from.
 	// path - A string containing the dot separated path to resolve.
 	//
@@ -2747,7 +2766,26 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var head = pathSegments[0],
 	        tail = pathSegments.slice(1);
-	    o = o[head];
+
+	    if (Array.isArray(o) && !(head in o)) {
+	      o = o.reduce(function (acc, x) {
+	        if (!x) {
+	          return acc;
+	        }
+
+	        var y = x[head];
+
+	        if (Array.isArray(y)) {
+	          acc.push.apply(acc, y);
+	        } else {
+	          acc.push(y);
+	        }
+
+	        return acc;
+	      }, []);
+	    } else {
+	      o = o[head];
+	    }
 
 	    if (!tail.length) {
 	      return o;

@@ -85,3 +85,17 @@ book.author; //=> undefined
 As you can see above, the associations are two-way, meaning that if you update one side of the
 association, the other side will be automatically updated as well. This will be the case as long
 as you specify the `inverse` option on both sides of the association.
+
+## Example Apps
+
+A couple of simple example apps are available in the `examples` directory. To run them, simply serve
+the `examples` directory using an HTTP server and load the `index.html` files.
+
+Here is an easy way to serve the directory:
+
+```
+$ ruby -run -e httpd ./examples -p 9090
+```
+
+Then load http://localhost:9090/basic/index.html.
+

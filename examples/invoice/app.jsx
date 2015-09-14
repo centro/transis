@@ -6,31 +6,28 @@ var Invoice = Basis.Model.extend('Invoice', function() {
   this.hasMany('lineItems', 'LineItem', {owner: true, inverse: 'invoice'});
 
   this.prop('quantity', {
-    cache: true, on: ['lineItems', 'lineItems.quantity'],
-    get: function() {
-      return this.lineItems.map(function(li) { return li.quantity; })
-        .compact()
-        .reduce(function(sum, q) { return sum + q; }, null);
+    cache: true,
+    on: ['lineItems.quantity'],
+    get: function(lineItemQuantities) {
+      return Basis.Array.from(lineItemQuantities)
+        .compact().reduce(function(sum, q) { return sum + q; }, null);
     }
   });
 
   this.prop('cost', {
-    cache: true, on: ['lineItems', 'lineItems.cost'],
-    get: function() {
-      return this.lineItems.map(function(li) { return li.cost; })
-        .compact()
-        .reduce(function(sum, q) { return sum + q; }, null);
+    cache: true,
+    on: ['lineItems.cost'],
+    get: function(lineItemCosts) {
+      return Basis.Array.from(lineItemCosts)
+        .compact().reduce(function(sum, c) { return sum + c; }, null);
     }
   });
 
   this.prop('avgRate', {
     on: ['quantity', 'cost'],
-    get: function() {
-      if (typeof this.quantity !== 'number' || typeof this.cost !== 'number') {
-        return null;
-      }
-
-      return this.cost / this.quantity;
+    get: function(quantity, cost) {
+      if (typeof quantity !== 'number' || typeof cost !== 'number') { return null; }
+      return cost / quantity;
     }
   });
 });
@@ -44,9 +41,9 @@ var LineItem = Basis.Model.extend('LineItem', function() {
 
   this.prop('cost', {
     on: ['quantity', 'rate'],
-    get: function() {
-      if (typeof this.quantity !== 'number' || typeof this.rate !== 'number') { return null; }
-      return this.quantity * this.rate;
+    get: function(quantity, rate) {
+      if (typeof quantity !== 'number' || typeof rate !== 'number') { return null; }
+      return quantity * rate;
     }
   });
 });

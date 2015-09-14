@@ -688,22 +688,22 @@ var Model = BasisObject.extend(function() {
 
   this.prop('isNew', {
     on: ['sourceState'],
-    get: function() { return this.sourceState === NEW; }
+    get: function(sourceState) { return sourceState === NEW; }
   });
 
   this.prop('isEmpty', {
     on: ['sourceState'],
-    get: function() { return this.sourceState === EMPTY; }
+    get: function(sourceState) { return sourceState === EMPTY; }
   });
 
   this.prop('isLoaded', {
     on: ['sourceState'],
-    get: function() { return this.sourceState === LOADED; }
+    get: function(sourceState) { return sourceState === LOADED; }
   });
 
   this.prop('isDeleted', {
     on: ['sourceState'],
-    get: function() { return this.sourceState === DELETED; }
+    get: function(sourceState) { return sourceState === DELETED; }
   });
 
   this.prop('isBusy');
@@ -719,13 +719,14 @@ var Model = BasisObject.extend(function() {
   // owned `hasMany` associations that have been mutated.
   this.prop('hasOwnChanges', {
     on: ['changes'],
-    get: function() { return Object.keys(this.changes).length > 0; }
+    get: function(changes) { return Object.keys(changes).length > 0; }
   });
 
   // Public: Returns a boolean indicating whether the model has any changes or if any of its owned
   // associated models have changes.
   this.prop('hasChanges', {
     on: ['changes'],
+    pure: false,
     get: function() {
       if (this.hasOwnChanges) { return true; }
 
@@ -759,13 +760,14 @@ var Model = BasisObject.extend(function() {
   // this property to return `false` regardless of whether there are validation errors.
   this.prop('hasOwnErrors', {
     on: ['errors', '_destroy'],
-    get: function() { return !this._destroy && Object.keys(this.errors).length > 0; }
+    get: function(errors, _destroy) { return !_destroy && Object.keys(errors).length > 0; }
   });
 
   // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
   // its owned associated models have validation errors.
   this.prop('hasErrors', {
     on: ['hasOwnErrors'],
+    pure: false,
     get: function() {
       if (this.hasOwnErrors) { return true; }
 
