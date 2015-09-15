@@ -293,8 +293,8 @@ var Model = BasisObject.extend(function() {
 
       (this.prototype.__deps__[`${name}.hasErrors`] =
         this.prototype.__deps__[`${name}.hasErrors`] || []).push('hasErrors');
-      (this.prototype.__deps__[`${name}.hasChanges`] =
-        this.prototype.__deps__[`${name}.hasChanges`] || []).push('hasChanges');
+      (this.prototype.__deps__[`${name}.changes`] =
+        this.prototype.__deps__[`${name}.changes`] || []).push('changes');
     }
 
     this.prop(name, {
@@ -344,8 +344,8 @@ var Model = BasisObject.extend(function() {
 
       (this.prototype.__deps__[`${name}.hasErrors`] =
         this.prototype.__deps__[`${name}.hasErrors`] || []).push('hasErrors');
-      (this.prototype.__deps__[`${name}.hasChanges`] =
-        this.prototype.__deps__[`${name}.hasChanges`] || []).push('hasChanges');
+      (this.prototype.__deps__[`${name}.changes`] =
+        this.prototype.__deps__[`${name}.changes`] || []).push('changes');
     }
 
     this.prop(name, {
@@ -708,7 +708,7 @@ var Model = BasisObject.extend(function() {
 
   this.prop('isBusy');
 
-  // Public: Returns an object of changes made for properties on the receiver. For simple properties
+  // Public: Returns an object of changes made to properties on the receiver. For simple properties
   // and `hasOne` associations, the original value is stored. For `hasMany` associations, the added
   // and removed models are stored.
   this.prop('ownChanges', {
@@ -722,31 +722,47 @@ var Model = BasisObject.extend(function() {
     get: function(ownChanges) { return Object.keys(ownChanges).length > 0; }
   });
 
-  // Public: Returns a boolean indicating whether the model has any changes or if any of its owned
-  // associated models have changes.
-  this.prop('hasChanges', {
+  // Public: Returns an object of changes made to properties on the receiver as well as for changes
+  // made to owned associated models. The keys for owned associated model changes are prefixed with
+  // the association name. The keys for changes on models within an owned hasMany association are
+  // prefixed with the association name and index in the array.
+  //
+  // Examples
+  //
+  //   person.changes;
+  //   // {'firstName': 'Bob', 'address.street': 'maple', 'pets.1.name': 'Spike'}
+  this.prop('changes', {
     on: ['hasOwnChanges'],
     pure: false,
     get: function() {
-      if (this.hasOwnChanges) { return true; }
-
-      var r = false;
+      var changes = Object.assign({}, this.ownChanges);
 
       util.detectRecursion(this, function() {
         for (let name in this.associations) {
           if (!this.associations[name].owner) { continue; }
 
-          if (this.associations[name].type === 'hasOne') {
-            if (this[name] && this[name].hasChanges) { r = true; }
+          if (this.associations[name].type === 'hasOne' && this[name].hasChanges) {
+            let cs = this[name].changes;
+            for (let k in cs) { changes[`${name}.${k}`] = cs[k]; }
           }
           else if (this.associations[name].type === 'hasMany') {
-            if (this[name].some((m) => m.hasChanges)) { r = true; }
+            this[name].forEach((item, i) => {
+              let cs = item.changes;
+              for (let k in cs) { changes[`${name}.${i}.${k}`] = cs[k]; }
+            });
           }
         }
       }.bind(this));
 
-      return r;
+      return changes;
     }
+  });
+
+  // Public: Returns a boolean indicating whether the model has any changes or if any of its owned
+  // associated models have changes.
+  this.prop('hasChanges', {
+    on: ['changes'],
+    get: function(changes) { return !!Object.keys(changes).length; }
   });
 
   // Public: Object containing any validation errors on the model. The keys of the object are the

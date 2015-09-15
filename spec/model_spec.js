@@ -2182,6 +2182,56 @@ describe('Model', function () {
       });
     });
 
+    describe('#changes', function() {
+      it('returns an object containing changes to the receiver', function() {
+        this.company.name = 'Foobar';
+        expect(this.company.changes).toEqual({name: 'Acme, Inc.'});
+      });
+
+      it('includes changes on owned hasOne associations', function() {
+        this.invoice.billingAddress.address = '321 Maple Ave.';
+        expect(this.invoice.changes).toEqual({'billingAddress.address': '123 Fake St.'});
+      });
+
+      it('includes changes on owned hasMany associations', function() {
+        this.invoice.lineItems[0].name = 'FOO';
+        this.invoice.lineItems[2].name = 'BAZ';
+        expect(this.invoice.changes).toEqual({
+          'lineItems.0.name': 'foo',
+          'lineItems.2.name': 'baz'
+        });
+      });
+
+      it('does not include changes on non-owned associations', function() {
+        this.invoice.company.name = 'Blah';
+        expect(this.invoice.changes).toEqual({});
+      });
+
+      describe('with with circular owner associations', function() {
+        beforeEach(function() {
+          this.a = CircularA.load({id: 1, name: 'a1', bs: [{id: 2, name: 'b1'}]});
+          this.b = this.a.bs.first;
+
+          this.a.name = 'a2';
+          this.b.name = 'b2';
+        });
+
+        it('includes changes on both sides', function() {
+          expect(this.a.changes).toEqual({
+            'name': 'a1',
+            'bs.0.name': 'b1',
+            'bs.0.as.0.name': 'a1'
+          });
+
+          expect(this.b.changes).toEqual({
+            'name': 'b1',
+            'as.0.name': 'a1',
+            'as.0.bs.0.name': 'b1'
+          });
+        });
+      });
+    });
+
     describe('#hasChanges', function() {
       it('returns false for a NEW model with no attrs set', function() {
         expect((new BasicModel).hasChanges).toBe(false);
@@ -2229,9 +2279,6 @@ describe('Model', function () {
         beforeEach(function() {
           this.a = CircularA.load({id: 1, name: 'a1', bs: [{id: 2, name: 'b1'}]});
           this.b = this.a.bs.first;
-
-          // FIXME
-          this.b._clearChanges();
         });
 
         it('returns false when neither side has changes', function() {
@@ -2239,48 +2286,55 @@ describe('Model', function () {
           expect(this.b.hasChanges).toBe(false);
         });
 
-        it('returns true for both sides when either has an error', function() {
+        it('returns true for both sides when either has changes', function() {
           this.a.name = 'a2';
           expect(this.a.hasChanges).toBe(true);
           expect(this.b.hasChanges).toBe(true);
         });
       });
+    });
 
-      describe('observers', function() {
-        beforeEach(function() {
-          this.spy = jasmine.createSpy();
-          this.invoice.on('hasChanges', this.spy);
-        });
+    describe('observers for changes and hasChanges', function() {
+      beforeEach(function() {
+        this.changesSpy = jasmine.createSpy('changesSpy');
+        this.hasChangesSpy = jasmine.createSpy('hasChanges');
+        this.invoice.on('changes', this.changesSpy);
+        this.invoice.on('hasChanges', this.hasChangesSpy);
+      });
 
-        it('are fired when an attribute changes', function() {
-          this.invoice.name = 'B';
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when an attribute changes', function() {
+        this.invoice.name = 'B';
+        BasisObject.flush();
+        expect(this.changesSpy).toHaveBeenCalled();
+        expect(this.hasChangesSpy).toHaveBeenCalled();
+      });
 
-        it('are fired when an owned hasMany association is mutated', function() {
-          this.invoice.lineItems.pop();
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when an owned hasMany association is mutated', function() {
+        this.invoice.lineItems.pop();
+        BasisObject.flush();
+        expect(this.changesSpy).toHaveBeenCalled();
+        expect(this.hasChangesSpy).toHaveBeenCalled();
+      });
 
-        it('are fired when an owned hasOne associated model changes', function() {
-          this.invoice.billingAddress.name = 'Bob Smith';
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when an owned hasOne associated model changes', function() {
+        this.invoice.billingAddress.name = 'Bob Smith';
+        BasisObject.flush();
+        expect(this.changesSpy).toHaveBeenCalled();
+        expect(this.hasChangesSpy).toHaveBeenCalled();
+      });
 
-        it('are fired when an owned hasMany associated model changes', function() {
-          this.invoice.lineItems.at(0).name = 'xyz';
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when an owned hasMany associated model changes', function() {
+        this.invoice.lineItems.at(0).name = 'xyz';
+        BasisObject.flush();
+        expect(this.changesSpy).toHaveBeenCalled();
+        expect(this.hasChangesSpy).toHaveBeenCalled();
+      });
 
-        it('are not fired when an unowned associated model changes', function() {
-          this.invoice.company.name = 'Foo';
-          BasisObject.flush();
-          expect(this.spy).not.toHaveBeenCalled();
-        });
+      it('are not fired when an unowned associated model changes', function() {
+        this.invoice.company.name = 'Foo';
+        BasisObject.flush();
+        expect(this.changesSpy).not.toHaveBeenCalled();
+        expect(this.hasChangesSpy).not.toHaveBeenCalled();
       });
     });
 
