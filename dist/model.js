@@ -106,7 +106,7 @@ function hasManySplice(i, n, added) {
   }
 
   if (desc.owner && !loads.length) {
-    changes = owner.changes[name] = owner.changes[name] || { added: [], removed: [] };
+    changes = owner.ownChanges[name] = owner.ownChanges[name] || { added: [], removed: [] };
 
     removed.forEach(function (m) {
       if ((i = changes.added.indexOf(m)) !== -1) {
@@ -853,25 +853,25 @@ var Model = _object2["default"].extend(function () {
   // Public: Returns an object of changes made for properties on the receiver. For simple properties
   // and `hasOne` associations, the original value is stored. For `hasMany` associations, the added
   // and removed models are stored.
-  this.prop("changes", {
+  this.prop("ownChanges", {
     get: function get() {
-      return this.__changes = this.__changes || {};
+      return this.__ownChanges = this.__ownChanges || {};
     }
   });
 
   // Public: Returns a boolean indicating whether the model has any property changes or any
   // owned `hasMany` associations that have been mutated.
   this.prop("hasOwnChanges", {
-    on: ["changes"],
-    get: function get(changes) {
-      return Object.keys(changes).length > 0;
+    on: ["ownChanges"],
+    get: function get(ownChanges) {
+      return Object.keys(ownChanges).length > 0;
     }
   });
 
   // Public: Returns a boolean indicating whether the model has any changes or if any of its owned
   // associated models have changes.
   this.prop("hasChanges", {
-    on: ["changes"],
+    on: ["hasOwnChanges"],
     pure: false,
     get: function get() {
       if (this.hasOwnChanges) {
@@ -1136,7 +1136,7 @@ var Model = _object2["default"].extend(function () {
   this.prototype.previousValueFor = function (name) {
     var _this8 = this;
 
-    var change = this.changes[name];
+    var change = this.ownChanges[name];
 
     if (change && this.associations[name] && this.associations[name].type === "hasMany") {
       var _ret4 = (function () {
@@ -1179,8 +1179,8 @@ var Model = _object2["default"].extend(function () {
 
     var _loop3 = function (prop) {
       if (associations[prop] && associations[prop].type === "hasMany") {
-        var removed = _this9.changes[prop].removed.slice();
-        var added = _this9.changes[prop].added.slice();
+        var removed = _this9.ownChanges[prop].removed.slice();
+        var added = _this9.ownChanges[prop].added.slice();
 
         removed.reverse().forEach(function (m) {
           _this9[prop].push(m);
@@ -1189,11 +1189,11 @@ var Model = _object2["default"].extend(function () {
           _this9[prop].splice(_this9[prop].indexOf(m), 1);
         });
       } else {
-        _this9[prop] = _this9.changes[prop];
+        _this9[prop] = _this9.ownChanges[prop];
       }
     };
 
-    for (var prop in this.changes) {
+    for (var prop in this.ownChanges) {
       _loop3(prop);
     }
 
@@ -1425,11 +1425,11 @@ var Model = _object2["default"].extend(function () {
       return;
     }
 
-    if (!(name in this.changes)) {
+    if (!(name in this.ownChanges)) {
       if (!util.eq(this[name], oldValue)) {
         this._setChange(name, oldValue);
       }
-    } else if (util.eq(this[name], this.changes[name])) {
+    } else if (util.eq(this[name], this.ownChanges[name])) {
       this._clearChange(name);
     }
   };
@@ -1439,20 +1439,20 @@ var Model = _object2["default"].extend(function () {
     if (loads.length) {
       return;
     }
-    this.changes[name] = oldValue;
-    this.didChange("changes");
+    this.ownChanges[name] = oldValue;
+    this.didChange("ownChanges");
   };
 
   // Internal: Clears the change record for the property of the given name.
   this.prototype._clearChange = function (name) {
-    delete this.changes[name];
-    this.didChange("changes");
+    delete this.ownChanges[name];
+    this.didChange("ownChanges");
   };
 
   // Internal: Clears all change records.
   this.prototype._clearChanges = function () {
-    this.__changes = {};
-    this.didChange("changes");
+    this.__ownChanges = {};
+    this.didChange("ownChanges");
   };
 });
 

@@ -2025,9 +2025,9 @@ describe("Model", function () {
     });
 
     it("keeps track of changes to attributes in the `changes` property", function () {
-      expect(this.invoice.changes).toEqual({});
+      expect(this.invoice.ownChanges).toEqual({});
       this.invoice.name = "B";
-      expect(this.invoice.changes).toEqual({ name: "A" });
+      expect(this.invoice.ownChanges).toEqual({ name: "A" });
     });
 
     it("does not keep track of regular prop changes", function () {
@@ -2037,80 +2037,80 @@ describe("Model", function () {
 
       var x = new X();
 
-      expect(x.changes).toEqual({});
+      expect(x.ownChanges).toEqual({});
       x.foo = 9;
-      expect(x.changes).toEqual({});
+      expect(x.ownChanges).toEqual({});
     });
 
-    it("notifies `changes` observers when an attribute changes", function () {
+    it("notifies `ownChanges` observers when an attribute changes", function () {
       var spy = jasmine.createSpy();
 
-      this.invoice.on("changes", spy);
+      this.invoice.on("ownChanges", spy);
       this.invoice.name = "B";
       _object2["default"].flush();
-      expect(spy).toHaveBeenCalledWith("changes");
+      expect(spy).toHaveBeenCalledWith("ownChanges");
     });
 
     it("does not keep track of intermediate changes", function () {
       this.invoice.name = "B";
-      expect(this.invoice.changes.name).toBe("A");
+      expect(this.invoice.ownChanges.name).toBe("A");
       this.invoice.name = "C";
-      expect(this.invoice.changes.name).toBe("A");
+      expect(this.invoice.ownChanges.name).toBe("A");
     });
 
     it("does not add a change record if the attribute is set to an equal value", function () {
       this.invoice.name = "A";
-      expect(this.invoice.changes).toEqual({});
+      expect(this.invoice.ownChanges).toEqual({});
     });
 
     it("clears the change when an attribute is set back to its original value", function () {
       this.invoice.name = "B";
-      expect(this.invoice.changes.name).toBe("A");
+      expect(this.invoice.ownChanges.name).toBe("A");
       this.invoice.name = "A";
-      expect(this.invoice.changes.name).toBeUndefined();
+      expect(this.invoice.ownChanges.name).toBeUndefined();
     });
 
     it("keeps track of changes to owned hasOne associations", function () {
       var address = this.invoice.billingAddress;
 
       this.invoice.billingAddress = new Address();
-      expect(this.invoice.changes.billingAddress).toBe(address);
+      expect(this.invoice.ownChanges.billingAddress).toBe(address);
     });
 
     it("does not keep track of changes to unowned hasOne associations", function () {
       expect(this.invoice.company).toBe(this.company);
       this.invoice.company = null;
-      expect(this.invoice.changes.company).toBeUndefined();
+      expect(this.invoice.ownChanges.company).toBeUndefined();
     });
 
-    it("notifies `changes` observers when an owned hasOne association changes", function () {
+    it("notifies `ownChanges` observers when an owned hasOne association changes", function () {
       var spy = jasmine.createSpy();
 
-      this.invoice.on("changes", spy);
+      this.invoice.on("ownChanges", spy);
       this.invoice.billingAddress = new Address();
       _object2["default"].flush();
-      expect(spy).toHaveBeenCalledWith("changes");
+      expect(spy).toHaveBeenCalledWith("ownChanges");
     });
 
     it("keeps track of changes to owned hasMany associations when models are added", function () {
       var li1 = new LineItem(),
           li2 = new LineItem();
 
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
       this.invoice.lineItems.push(li1);
-      expect(this.invoice.changes.lineItems).toEqual({ added: [li1], removed: [] });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ added: [li1], removed: [] });
       this.invoice.lineItems.push(li2);
-      expect(this.invoice.changes.lineItems).toEqual({ added: [li1, li2], removed: [] });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ added: [li1, li2], removed: [] });
     });
 
     it("keeps track of changes to owned hasMany associations when elements are removed", function () {
       var li1, li2;
 
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
       li1 = this.invoice.lineItems.pop();
-      expect(this.invoice.changes.lineItems).toEqual({ removed: [li1], added: [] });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ removed: [li1], added: [] });
       li2 = this.invoice.lineItems.pop();
-      expect(this.invoice.changes.lineItems).toEqual({ removed: [li1, li2], added: [] });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ removed: [li1, li2], added: [] });
     });
 
     it("keeps track of changes to owned hasMany associations when there are additions and removals", function () {
@@ -2119,16 +2119,16 @@ describe("Model", function () {
 
       removed = this.invoice.lineItems.shift();
       this.invoice.lineItems.push(added);
-      expect(this.invoice.changes.lineItems).toEqual({ removed: [removed], added: [added] });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ removed: [removed], added: [added] });
     });
 
-    it("notifies `changes` observers when an owned hasMany association is mutated", function () {
+    it("notifies `ownChanges` observers when an owned hasMany association is mutated", function () {
       var spy = jasmine.createSpy();
 
-      this.invoice.on("changes", spy);
+      this.invoice.on("ownChanges", spy);
       this.invoice.lineItems.pop();
       _object2["default"].flush();
-      expect(spy).toHaveBeenCalledWith("changes");
+      expect(spy).toHaveBeenCalledWith("ownChanges");
     });
 
     it("keeps track of changes to owned hasMany associations when they are set", function () {
@@ -2137,31 +2137,31 @@ describe("Model", function () {
           li3 = new LineItem(),
           old = this.invoice.lineItems.slice();
 
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
       this.invoice.lineItems = [li1, li2];
-      expect(this.invoice.changes.lineItems).toEqual({ added: [li1, li2], removed: old });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ added: [li1, li2], removed: old });
       this.invoice.lineItems = [li1, li2, li3];
-      expect(this.invoice.changes.lineItems).toEqual({ added: [li1, li2, li3], removed: old });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ added: [li1, li2, li3], removed: old });
       this.invoice.lineItems = [li1];
-      expect(this.invoice.changes.lineItems).toEqual({ added: [li1], removed: old });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ added: [li1], removed: old });
     });
 
     it("handles when a model is added and then removed from an owned hasMany association", function () {
       var li = new LineItem();
 
       this.invoice.lineItems.push(li);
-      expect(this.invoice.changes.lineItems).toEqual({ added: [li], removed: [] });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ added: [li], removed: [] });
       this.invoice.lineItems.pop();
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
     });
 
     it("handles when a model is removed and then added to an owned hasMany association", function () {
       var li;
 
       li = this.invoice.lineItems.pop();
-      expect(this.invoice.changes.lineItems).toEqual({ added: [], removed: [li] });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ added: [], removed: [li] });
       this.invoice.lineItems.push(li);
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
     });
 
     it("clears the changes on an owned hasMany assocation when changes are manually undone", function () {
@@ -2170,15 +2170,15 @@ describe("Model", function () {
 
       removed = this.invoice.lineItems.pop();
       this.invoice.lineItems.push(added);
-      expect(this.invoice.changes.lineItems).toEqual({ added: [added], removed: [removed] });
+      expect(this.invoice.ownChanges.lineItems).toEqual({ added: [added], removed: [removed] });
       this.invoice.lineItems.pop();
       this.invoice.lineItems.push(removed);
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
     });
 
     it("does not keep track of changes to unowned hasMany associations", function () {
       this.company.invoices.push(new Invoice());
-      expect(this.company.changes.invoices).toBeUndefined();
+      expect(this.company.ownChanges.invoices).toBeUndefined();
     });
 
     describe("#undoChanges", function () {
@@ -2218,9 +2218,9 @@ describe("Model", function () {
         this.invoice.lineItems.pop();
         this.invoice.lineItems.push(new LineItem());
 
-        expect(Object.keys(this.invoice.changes).length > 0).toBe(true);
+        expect(Object.keys(this.invoice.ownChanges).length > 0).toBe(true);
         this.invoice.undoChanges();
-        expect(this.invoice.changes).toEqual({});
+        expect(this.invoice.ownChanges).toEqual({});
       });
 
       it("undoes changes on owned associations", function () {
@@ -2228,20 +2228,20 @@ describe("Model", function () {
 
         li.quantity = 11;
         this.invoice.billingAddress.name = "Bob Smith";
-        expect(li.changes).toEqual({ quantity: 10 });
-        expect(this.invoice.billingAddress.changes).toEqual({ name: "Joe Blow" });
+        expect(li.ownChanges).toEqual({ quantity: 10 });
+        expect(this.invoice.billingAddress.ownChanges).toEqual({ name: "Joe Blow" });
         this.invoice.undoChanges();
         expect(li.quantity).toBe(10);
         expect(this.invoice.billingAddress.name).toBe("Joe Blow");
-        expect(li.changes).toEqual({});
-        expect(this.invoice.billingAddress.changes).toEqual({});
+        expect(li.ownChanges).toEqual({});
+        expect(this.invoice.billingAddress.ownChanges).toEqual({});
       });
 
       it("does not undo changes to unowned associations", function () {
         this.invoice.company.name = "Foobar";
-        expect(this.invoice.company.changes).toEqual({ name: "Acme, Inc." });
+        expect(this.invoice.company.ownChanges).toEqual({ name: "Acme, Inc." });
         this.invoice.undoChanges();
-        expect(this.invoice.company.changes).toEqual({ name: "Acme, Inc." });
+        expect(this.invoice.company.ownChanges).toEqual({ name: "Acme, Inc." });
       });
 
       it("does not undo changes to the owned association specified in the except option as a string", function () {

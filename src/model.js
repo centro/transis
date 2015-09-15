@@ -61,7 +61,7 @@ function hasManySplice(i, n, added) {
   }
 
   if (desc.owner && !loads.length) {
-    changes = owner.changes[name] = owner.changes[name] || {added: [], removed: []};
+    changes = owner.ownChanges[name] = owner.ownChanges[name] || {added: [], removed: []};
 
     removed.forEach((m) => {
       if ((i = changes.added.indexOf(m)) !== -1) { changes.added.splice(i, 1); }
@@ -711,21 +711,21 @@ var Model = BasisObject.extend(function() {
   // Public: Returns an object of changes made for properties on the receiver. For simple properties
   // and `hasOne` associations, the original value is stored. For `hasMany` associations, the added
   // and removed models are stored.
-  this.prop('changes', {
-    get: function() { return this.__changes = this.__changes || {}; }
+  this.prop('ownChanges', {
+    get: function() { return this.__ownChanges = this.__ownChanges || {}; }
   });
 
   // Public: Returns a boolean indicating whether the model has any property changes or any
   // owned `hasMany` associations that have been mutated.
   this.prop('hasOwnChanges', {
-    on: ['changes'],
-    get: function(changes) { return Object.keys(changes).length > 0; }
+    on: ['ownChanges'],
+    get: function(ownChanges) { return Object.keys(ownChanges).length > 0; }
   });
 
   // Public: Returns a boolean indicating whether the model has any changes or if any of its owned
   // associated models have changes.
   this.prop('hasChanges', {
-    on: ['changes'],
+    on: ['hasOwnChanges'],
     pure: false,
     get: function() {
       if (this.hasOwnChanges) { return true; }
@@ -946,7 +946,7 @@ var Model = BasisObject.extend(function() {
   //
   // name - A string containing the name of an attribute or association.
   this.prototype.previousValueFor = function(name) {
-    var change = this.changes[name];
+    var change = this.ownChanges[name];
 
     if (change && this.associations[name] && this.associations[name].type === 'hasMany') {
       let previous = this[name].slice();
@@ -974,16 +974,16 @@ var Model = BasisObject.extend(function() {
   this.prototype.undoChanges = function(opts = {}) {
     var associations = this.associations;
 
-    for (let prop in this.changes) {
+    for (let prop in this.ownChanges) {
       if (associations[prop] && associations[prop].type === 'hasMany') {
-        let removed = this.changes[prop].removed.slice();
-        let added   = this.changes[prop].added.slice();
+        let removed = this.ownChanges[prop].removed.slice();
+        let added   = this.ownChanges[prop].added.slice();
 
         removed.reverse().forEach((m) => { this[prop].push(m); });
         added.forEach((m) => { this[prop].splice(this[prop].indexOf(m), 1); });
       }
       else {
-        this[prop] = this.changes[prop];
+        this[prop] = this.ownChanges[prop];
       }
     }
 
@@ -1186,12 +1186,12 @@ var Model = BasisObject.extend(function() {
     if (!this.__props__[name].attr && !this.associations[name]) { return; }
     if (this.associations[name] && !this.associations[name].owner) { return; }
 
-    if (!(name in this.changes)) {
+    if (!(name in this.ownChanges)) {
       if (!util.eq(this[name], oldValue)) {
         this._setChange(name, oldValue);
       }
     }
-    else if (util.eq(this[name], this.changes[name])) {
+    else if (util.eq(this[name], this.ownChanges[name])) {
       this._clearChange(name);
     }
   };
@@ -1199,20 +1199,20 @@ var Model = BasisObject.extend(function() {
   // Internal: Sets the old value for the changed property of the given name.
   this.prototype._setChange = function(name, oldValue) {
     if (loads.length) { return; }
-    this.changes[name] = oldValue;
-    this.didChange('changes');
+    this.ownChanges[name] = oldValue;
+    this.didChange('ownChanges');
   };
 
   // Internal: Clears the change record for the property of the given name.
   this.prototype._clearChange = function(name) {
-    delete this.changes[name];
-    this.didChange('changes');
+    delete this.ownChanges[name];
+    this.didChange('ownChanges');
   };
 
   // Internal: Clears all change records.
   this.prototype._clearChanges = function() {
-    this.__changes = {};
-    this.didChange('changes');
+    this.__ownChanges = {};
+    this.didChange('ownChanges');
   };
 });
 
