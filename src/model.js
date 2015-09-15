@@ -291,8 +291,8 @@ var Model = BasisObject.extend(function() {
         this.prototype.__deps__ = Object.create(this.prototype.__deps__);
       }
 
-      (this.prototype.__deps__[`${name}.hasErrors`] =
-        this.prototype.__deps__[`${name}.hasErrors`] || []).push('hasErrors');
+      (this.prototype.__deps__[`${name}.errors`] =
+        this.prototype.__deps__[`${name}.errors`] || []).push('errors');
       (this.prototype.__deps__[`${name}.changes`] =
         this.prototype.__deps__[`${name}.changes`] || []).push('changes');
     }
@@ -342,8 +342,8 @@ var Model = BasisObject.extend(function() {
         this.prototype.__deps__ = Object.create(this.prototype.__deps__);
       }
 
-      (this.prototype.__deps__[`${name}.hasErrors`] =
-        this.prototype.__deps__[`${name}.hasErrors`] || []).push('hasErrors');
+      (this.prototype.__deps__[`${name}.errors`] =
+        this.prototype.__deps__[`${name}.errors`] || []).push('errors');
       (this.prototype.__deps__[`${name}.changes`] =
         this.prototype.__deps__[`${name}.changes`] || []).push('changes');
     }
@@ -732,7 +732,7 @@ var Model = BasisObject.extend(function() {
   //   person.changes;
   //   // {'firstName': 'Bob', 'address.street': 'maple', 'pets.1.name': 'Spike'}
   this.prop('changes', {
-    on: ['hasOwnChanges'],
+    on: ['ownChanges'],
     pure: false,
     get: function() {
       var changes = Object.assign({}, this.ownChanges);
@@ -741,7 +741,7 @@ var Model = BasisObject.extend(function() {
         for (let name in this.associations) {
           if (!this.associations[name].owner) { continue; }
 
-          if (this.associations[name].type === 'hasOne' && this[name].hasChanges) {
+          if (this.associations[name].type === 'hasOne' && this[name]) {
             let cs = this[name].changes;
             for (let k in cs) { changes[`${name}.${k}`] = cs[k]; }
           }
@@ -779,30 +779,42 @@ var Model = BasisObject.extend(function() {
     get: function(ownErrors, _destroy) { return !_destroy && Object.keys(ownErrors).length > 0; }
   });
 
-  // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
-  // its owned associated models have validation errors.
-  this.prop('hasErrors', {
-    on: ['hasOwnErrors'],
+  // Public: Returns an object of validation errors that exist on the receiver as well as any
+  // validation errors on owned associated models. The keys used for errors on owned associated
+  // models are similar to those returned by the `#changes` prop.
+  this.prop('errors', {
+    on: ['ownErrors'],
     pure: false,
     get: function() {
-      if (this.hasOwnErrors) { return true; }
-
-      var r = false;
+      var errors = Object.assign({}, this.ownErrors);
 
       util.detectRecursion(this, function() {
         for (let name in this.associations) {
           if (!this.associations[name].owner) { continue; }
 
-          if (this.associations[name].type === 'hasOne') {
-            if (this[name] && this[name].hasErrors) { r = true; }
+          if (this.associations[name].type === 'hasOne' && this[name]) {
+            let es = this[name].errors;
+            for (let k in es) { errors[`${name}.${k}`] = es[k]; }
           }
           else if (this.associations[name].type === 'hasMany') {
-            if (this[name].some((m) => m.hasErrors)) { r = true; }
+            this[name].forEach((item, i) => {
+              let es = item.errors;
+              for (let k in es) { errors[`${name}.${i}.${k}`] = es[k]; }
+            });
           }
         }
       }.bind(this));
 
-      return r;
+      return errors;
+    }
+  });
+
+  // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
+  // its owned associated models have validation errors.
+  this.prop('hasErrors', {
+    on: ['errors'],
+    get: function(errors) {
+      return !!Object.keys(errors).length;
     }
   });
 

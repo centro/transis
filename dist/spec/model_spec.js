@@ -2664,6 +2664,56 @@ describe("Model", function () {
       });
     });
 
+    describe("#errors", function () {
+      it("returns an object with the receivers own errors", function () {
+        this.invoice.addError("name", "foo");
+        expect(this.invoice.errors).toEqual({ name: ["foo"] });
+      });
+
+      it("includes errors on owned hasOne associations", function () {
+        this.invoice.billingAddress.addError("address", "bar");
+        expect(this.invoice.errors).toEqual({ "billingAddress.address": ["bar"] });
+      });
+
+      it("includes errors on owned hasMany associations", function () {
+        this.invoice.lineItems[0].addError("name", "a");
+        this.invoice.lineItems[2].addError("name", "b");
+        expect(this.invoice.errors).toEqual({
+          "lineItems.0.name": ["a"],
+          "lineItems.2.name": ["b"]
+        });
+      });
+
+      it("does not include errors on non-owned associations", function () {
+        this.invoice.company.addError("name", "blah");
+        expect(this.invoice.errors).toEqual({});
+      });
+
+      describe("with with circular owner associations", function () {
+        beforeEach(function () {
+          this.a = CircularA.load({ id: 1, name: "a1", bs: [{ id: 2, name: "b1" }] });
+          this.b = this.a.bs.first;
+
+          this.a.addError("name", "foo");
+          this.b.addError("name", "bar");
+        });
+
+        it("includes errors on both sides", function () {
+          expect(this.a.errors).toEqual({
+            "name": ["foo"],
+            "bs.0.name": ["bar"],
+            "bs.0.as.0.name": ["foo"]
+          });
+
+          expect(this.b.errors).toEqual({
+            "name": ["bar"],
+            "as.0.name": ["foo"],
+            "as.0.bs.0.name": ["bar"]
+          });
+        });
+      });
+    });
+
     describe("#hasErrors", function () {
       it("returns true when the receiver has a validation error on one of its properties", function () {
         expect(this.invoice.hasErrors).toBe(false);
@@ -2710,30 +2760,35 @@ describe("Model", function () {
           expect(this.b.hasErrors).toBe(true);
         });
       });
+    });
 
-      describe("observers", function () {
-        beforeEach(function () {
-          this.spy = jasmine.createSpy();
-          this.invoice.on("hasErrors", this.spy);
-        });
+    describe("observers for errors and hasError", function () {
+      beforeEach(function () {
+        this.errorsSpy = jasmine.createSpy("errors");
+        this.hasErrorsSpy = jasmine.createSpy("hasErrors");
+        this.invoice.on("errors", this.errorsSpy);
+        this.invoice.on("hasErrors", this.hasErrorsSpy);
+      });
 
-        it("are fired when a validation error is added", function () {
-          this.invoice.addError("name", "x");
-          _object2["default"].flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it("are fired when a validation error is added", function () {
+        this.invoice.addError("name", "x");
+        _object2["default"].flush();
+        expect(this.errorsSpy).toHaveBeenCalled();
+        expect(this.hasErrorsSpy).toHaveBeenCalled();
+      });
 
-        it("are fired when an owned associated model has a validation error added", function () {
-          this.invoice.billingAddress.addError("name", "y");
-          _object2["default"].flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it("are fired when an owned associated model has a validation error added", function () {
+        this.invoice.billingAddress.addError("name", "y");
+        _object2["default"].flush();
+        expect(this.errorsSpy).toHaveBeenCalled();
+        expect(this.hasErrorsSpy).toHaveBeenCalled();
+      });
 
-        it("are not fired when an unowned associated model has a validation error added", function () {
-          this.invoice.company.addError("name", "z");
-          _object2["default"].flush();
-          expect(this.spy).not.toHaveBeenCalled();
-        });
+      it("are not fired when an unowned associated model has a validation error added", function () {
+        this.invoice.company.addError("name", "z");
+        _object2["default"].flush();
+        expect(this.errorsSpy).not.toHaveBeenCalled();
+        expect(this.hasErrorsSpy).not.toHaveBeenCalled();
       });
     });
 

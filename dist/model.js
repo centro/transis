@@ -377,7 +377,7 @@ var Model = _object2["default"].extend(function () {
         this.prototype.__deps__ = Object.create(this.prototype.__deps__);
       }
 
-      (this.prototype.__deps__["" + name + ".hasErrors"] = this.prototype.__deps__["" + name + ".hasErrors"] || []).push("hasErrors");
+      (this.prototype.__deps__["" + name + ".errors"] = this.prototype.__deps__["" + name + ".errors"] || []).push("errors");
       (this.prototype.__deps__["" + name + ".changes"] = this.prototype.__deps__["" + name + ".changes"] || []).push("changes");
     }
 
@@ -433,7 +433,7 @@ var Model = _object2["default"].extend(function () {
         this.prototype.__deps__ = Object.create(this.prototype.__deps__);
       }
 
-      (this.prototype.__deps__["" + name + ".hasErrors"] = this.prototype.__deps__["" + name + ".hasErrors"] || []).push("hasErrors");
+      (this.prototype.__deps__["" + name + ".errors"] = this.prototype.__deps__["" + name + ".errors"] || []).push("errors");
       (this.prototype.__deps__["" + name + ".changes"] = this.prototype.__deps__["" + name + ".changes"] || []).push("changes");
     }
 
@@ -878,7 +878,7 @@ var Model = _object2["default"].extend(function () {
   //   person.changes;
   //   // {'firstName': 'Bob', 'address.street': 'maple', 'pets.1.name': 'Spike'}
   this.prop("changes", {
-    on: ["hasOwnChanges"],
+    on: ["ownChanges"],
     pure: false,
     get: function get() {
       var changes = Object.assign({}, this.ownChanges);
@@ -891,7 +891,7 @@ var Model = _object2["default"].extend(function () {
             return "continue";
           }
 
-          if (_this6.associations[_name4].type === "hasOne" && _this6[_name4].hasChanges) {
+          if (_this6.associations[_name4].type === "hasOne" && _this6[_name4]) {
             var cs = _this6[_name4].changes;
             for (var k in cs) {
               changes["" + _name4 + "." + k] = cs[k];
@@ -944,39 +944,55 @@ var Model = _object2["default"].extend(function () {
     }
   });
 
-  // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
-  // its owned associated models have validation errors.
-  this.prop("hasErrors", {
-    on: ["hasOwnErrors"],
+  // Public: Returns an object of validation errors that exist on the receiver as well as any
+  // validation errors on owned associated models. The keys used for errors on owned associated
+  // models are similar to those returned by the `#changes` prop.
+  this.prop("errors", {
+    on: ["ownErrors"],
     pure: false,
     get: function get() {
-      if (this.hasOwnErrors) {
-        return true;
-      }
-
-      var r = false;
+      var errors = Object.assign({}, this.ownErrors);
 
       util.detectRecursion(this, (function () {
-        for (var _name5 in this.associations) {
-          if (!this.associations[_name5].owner) {
-            continue;
+        var _this7 = this;
+
+        var _loop4 = function (_name5) {
+          if (!_this7.associations[_name5].owner) {
+            return "continue";
           }
 
-          if (this.associations[_name5].type === "hasOne") {
-            if (this[_name5] && this[_name5].hasErrors) {
-              r = true;
+          if (_this7.associations[_name5].type === "hasOne" && _this7[_name5]) {
+            var es = _this7[_name5].errors;
+            for (var k in es) {
+              errors["" + _name5 + "." + k] = es[k];
             }
-          } else if (this.associations[_name5].type === "hasMany") {
-            if (this[_name5].some(function (m) {
-              return m.hasErrors;
-            })) {
-              r = true;
-            }
+          } else if (_this7.associations[_name5].type === "hasMany") {
+            _this7[_name5].forEach(function (item, i) {
+              var es = item.errors;
+              for (var k in es) {
+                errors["" + _name5 + "." + i + "." + k] = es[k];
+              }
+            });
           }
+        };
+
+        for (var _name5 in this.associations) {
+          var _ret5 = _loop4(_name5);
+
+          if (_ret5 === "continue") continue;
         }
       }).bind(this));
 
-      return r;
+      return errors;
+    }
+  });
+
+  // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
+  // its owned associated models have validation errors.
+  this.prop("hasErrors", {
+    on: ["errors"],
+    get: function get(errors) {
+      return !!Object.keys(errors).length;
     }
   });
 
@@ -1030,7 +1046,7 @@ var Model = _object2["default"].extend(function () {
   // Returns the receiver.
   // Throws `Error` if the receiver is not NEW or LOADED or is currently busy.
   this.prototype.save = function () {
-    var _this7 = this;
+    var _this8 = this;
 
     var opts = arguments[0] === undefined ? {} : arguments[0];
 
@@ -1041,15 +1057,15 @@ var Model = _object2["default"].extend(function () {
     this.isBusy = true;
 
     this.__promise__ = this.constructor._callMapper(this.isNew ? "create" : "update", [this, opts]).then(function (attrs) {
-      _this7.isBusy = false;
+      _this8.isBusy = false;
       try {
-        _this7.load(attrs);
+        _this8.load(attrs);
       } catch (e) {
         console.error(e);throw e;
       }
     }, function (errors) {
-      _this7.isBusy = false;
-      _this7._loadErrors(errors);
+      _this8.isBusy = false;
+      _this8._loadErrors(errors);
       return Promise.reject(errors);
     });
 
@@ -1063,7 +1079,7 @@ var Model = _object2["default"].extend(function () {
   // Returns the receiver.
   // Throws `Error` if the model is currently busy.
   this.prototype["delete"] = function () {
-    var _this8 = this;
+    var _this9 = this;
 
     var opts = arguments[0] === undefined ? {} : arguments[0];
 
@@ -1081,10 +1097,10 @@ var Model = _object2["default"].extend(function () {
       this.isBusy = true;
 
       this.__promise__ = this.constructor._callMapper("delete", [this, opts]).then(function () {
-        mapperDeleteSuccess.call(_this8);
+        mapperDeleteSuccess.call(_this9);
       }, function (errors) {
-        _this8.isBusy = false;
-        _this8._loadErrors(errors);
+        _this9.isBusy = false;
+        _this9._loadErrors(errors);
         return Promise.reject(errors);
       });
     }
@@ -1156,13 +1172,13 @@ var Model = _object2["default"].extend(function () {
   //
   // name - A string containing the name of an attribute or association.
   this.prototype.previousValueFor = function (name) {
-    var _this9 = this;
+    var _this10 = this;
 
     var change = this.ownChanges[name];
 
     if (change && this.associations[name] && this.associations[name].type === "hasMany") {
-      var _ret5 = (function () {
-        var previous = _this9[name].slice();
+      var _ret6 = (function () {
+        var previous = _this10[name].slice();
         var removed = change.removed.slice();
         var added = change.added.slice();
 
@@ -1178,7 +1194,7 @@ var Model = _object2["default"].extend(function () {
         };
       })();
 
-      if (typeof _ret5 === "object") return _ret5.v;
+      if (typeof _ret6 === "object") return _ret6.v;
     } else {
       return change;
     }
@@ -1193,30 +1209,30 @@ var Model = _object2["default"].extend(function () {
   //
   // Returns the receiver.
   this.prototype.undoChanges = function () {
-    var _this10 = this;
+    var _this11 = this;
 
     var opts = arguments[0] === undefined ? {} : arguments[0];
 
     var associations = this.associations;
 
-    var _loop4 = function (prop) {
+    var _loop5 = function (prop) {
       if (associations[prop] && associations[prop].type === "hasMany") {
-        var removed = _this10.ownChanges[prop].removed.slice();
-        var added = _this10.ownChanges[prop].added.slice();
+        var removed = _this11.ownChanges[prop].removed.slice();
+        var added = _this11.ownChanges[prop].added.slice();
 
         removed.reverse().forEach(function (m) {
-          _this10[prop].push(m);
+          _this11[prop].push(m);
         });
         added.forEach(function (m) {
-          _this10[prop].splice(_this10[prop].indexOf(m), 1);
+          _this11[prop].splice(_this11[prop].indexOf(m), 1);
         });
       } else {
-        _this10[prop] = _this10.ownChanges[prop];
+        _this11[prop] = _this11.ownChanges[prop];
       }
     };
 
     for (var prop in this.ownChanges) {
-      _loop4(prop);
+      _loop5(prop);
     }
 
     util.detectRecursion(this, (function () {
@@ -1357,21 +1373,21 @@ var Model = _object2["default"].extend(function () {
   //
   // Returns the receiver.
   this.prototype._loadErrors = function (errors) {
-    var _this11 = this;
+    var _this12 = this;
 
     if (typeof errors === "object") {
-      var _loop5 = function (k) {
+      var _loop6 = function (k) {
         if (Array.isArray(errors[k])) {
           errors[k].forEach(function (error) {
             this.addError(k, error);
-          }, _this11);
+          }, _this12);
         } else {
-          _this11.addError(k, String(errors[k]));
+          _this12.addError(k, String(errors[k]));
         }
       };
 
       for (var k in errors) {
-        _loop5(k);
+        _loop6(k);
       }
     } else {
       this.addError("base", String(errors));
