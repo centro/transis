@@ -904,11 +904,11 @@ var Model = _object2["default"].extend(function () {
     }
   });
 
-  // Public: Object containing any validation errors on the model. The keys of the object are theo
+  // Public: Object containing any validation errors on the model. The keys of the object are the
   // properties that have errors and the values are an array of error messages.
-  this.prop("errors", {
+  this.prop("ownErrors", {
     get: function get() {
-      return this.__errors = this.__errors || {};
+      return this.__ownErrors = this.__ownErrors || {};
     }
   });
 
@@ -916,9 +916,9 @@ var Model = _object2["default"].extend(function () {
   // properties. Marking the model for destruction by setting the `_destroy` attribute will cause
   // this property to return `false` regardless of whether there are validation errors.
   this.prop("hasOwnErrors", {
-    on: ["errors", "_destroy"],
-    get: function get(errors, _destroy) {
-      return !_destroy && Object.keys(errors).length > 0;
+    on: ["ownErrors", "_destroy"],
+    get: function get(ownErrors, _destroy) {
+      return !_destroy && Object.keys(ownErrors).length > 0;
     }
   });
 
@@ -1234,11 +1234,11 @@ var Model = _object2["default"].extend(function () {
   //
   // Returns the receiver.
   this.prototype.addError = function (name, message) {
-    this.errors[name] = this.errors[name] || [];
+    this.ownErrors[name] = this.ownErrors[name] || [];
 
-    if (this.errors[name].indexOf(message) === -1) {
-      this.errors[name].push(message);
-      this.didChange("errors");
+    if (this.ownErrors[name].indexOf(message) === -1) {
+      this.ownErrors[name].push(message);
+      this.didChange("ownErrors");
     }
 
     return this;
@@ -1268,7 +1268,7 @@ var Model = _object2["default"].extend(function () {
       }
     }
 
-    return !(name in this.errors);
+    return !(name in this.ownErrors);
   };
 
   // Public: Runs all registered validators for all properties and also validates owned
@@ -1362,11 +1362,11 @@ var Model = _object2["default"].extend(function () {
   // for the property of that name are cleared, otherwise all errors are cleared.
   this.prototype._clearErrors = function (name) {
     if (name) {
-      delete this.errors[name];
+      delete this.ownErrors[name];
     } else {
-      this.__errors = {};
+      this.__ownErrors = {};
     }
-    this.didChange("errors");
+    this.didChange("ownErrors");
     return this;
   };
 

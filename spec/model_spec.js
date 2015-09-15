@@ -1259,7 +1259,7 @@ describe('Model', function () {
         var m = BasicModel.get(708);
         this.reject({str: ['error 1', 'error 2'], num: 'error 3'});
         this.delay(function() {
-          expect(m.errors).toEqual({str: ['error 1', 'error 2'], num: ['error 3']});
+          expect(m.ownErrors).toEqual({str: ['error 1', 'error 2'], num: ['error 3']});
           done();
         });
       });
@@ -1268,11 +1268,11 @@ describe('Model', function () {
         var m = BasicModel.get(708);
         this.reject('blah');
         this.delay(() => {
-          expect(m.errors.base).toEqual(['blah']);
+          expect(m.ownErrors.base).toEqual(['blah']);
           BasicModel.get(708);
           this.resolve({id: 708, str: 'asdf'});
           this.delay(() => {
-            expect(m.errors).toEqual({});
+            expect(m.ownErrors).toEqual({});
             done();
           });
         });
@@ -1443,20 +1443,20 @@ describe('Model', function () {
         this.model.save();
         this.reject('failed');
         this.delay(() => {
-          expect(this.model.errors.base).toEqual(['failed']);
+          expect(this.model.ownErrors.base).toEqual(['failed']);
           done();
         });
       });
 
-      it('clears the errors when the mapper resolves the promise', function(done) {
+      it('clears the ownErrors when the mapper resolves the promise', function(done) {
         this.model.save();
         this.reject('failed');
         this.delay(() => {
-          expect(this.model.errors.base).toEqual(['failed']);
+          expect(this.model.ownErrors.base).toEqual(['failed']);
           this.model.save();
           this.resolve({id: 123});
           this.delay(() => {
-            expect(this.model.errors).toEqual({});
+            expect(this.model.ownErrors).toEqual({});
             done();
           });
         });
@@ -1537,24 +1537,24 @@ describe('Model', function () {
 
       it('adds an error when the mapper rejects the promise', function(done) {
         this.model.save();
-        expect(this.model.errors.base).toBeUndefined();
+        expect(this.model.ownErrors.base).toBeUndefined();
         this.reject({str: 'no'});
         this.delay(() => {
-          expect(this.model.errors.str).toEqual(['no']);
+          expect(this.model.ownErrors.str).toEqual(['no']);
           done();
         });
       });
 
-      it('clears the errors when the mapper resolves the promise', function(done) {
+      it('clears the ownErrors when the mapper resolves the promise', function(done) {
         this.model.save();
-        expect(this.model.errors.base).toBeUndefined();
+        expect(this.model.ownErrors.base).toBeUndefined();
         this.reject('no');
         this.delay(() => {
-          expect(this.model.errors.base).toEqual(['no']);
+          expect(this.model.ownErrors.base).toEqual(['no']);
           this.model.save();
           this.resolve({id: 800});
           this.delay(() => {
-            expect(this.model.errors.base).toBeUndefined();
+            expect(this.model.ownErrors.base).toBeUndefined();
             done();
           });
         });
@@ -2116,7 +2116,7 @@ describe('Model', function () {
       it('re-runs validations', function() {
         this.invoice.addError('name', 'foo');
         this.invoice.undoChanges();
-        expect(this.invoice.errors.name).toBeUndefined();
+        expect(this.invoice.ownErrors.name).toBeUndefined();
       });
 
       it('handles circular owner associations', function() {
@@ -2372,32 +2372,32 @@ describe('Model', function () {
         this.m = new BasicModel;
       });
 
-      it('adds the given mesage to the `errors` hash for the given name', function() {
-        expect(this.m.errors.str).toBeUndefined();
+      it('adds the given mesage to the `ownErrors` hash for the given name', function() {
+        expect(this.m.ownErrors.str).toBeUndefined();
         this.m.addError('str', 'foo');
-        expect(this.m.errors.str).toEqual(['foo']);
+        expect(this.m.ownErrors.str).toEqual(['foo']);
       });
 
-      it('adds to the errors array when a validation error already exists for the given name', function() {
+      it('adds to the ownErrors array when a validation error already exists for the given name', function() {
         this.m.addError('str', 'foo');
-        expect(this.m.errors.str).toEqual(['foo']);
+        expect(this.m.ownErrors.str).toEqual(['foo']);
         this.m.addError('str', 'bar');
-        expect(this.m.errors.str).toEqual(['foo', 'bar']);
+        expect(this.m.ownErrors.str).toEqual(['foo', 'bar']);
       });
 
       it('does not add identical error messages', function() {
         this.m.addError('str', 'foo');
-        expect(this.m.errors.str).toEqual(['foo']);
+        expect(this.m.ownErrors.str).toEqual(['foo']);
         this.m.addError('str', 'foo');
-        expect(this.m.errors.str).toEqual(['foo']);
+        expect(this.m.ownErrors.str).toEqual(['foo']);
       });
 
-      it('notifies `errors` observers', function() {
+      it('notifies `ownErrors` observers', function() {
         var spy = jasmine.createSpy();
-        this.m.on('errors', spy);
+        this.m.on('ownErrors', spy);
         this.m.addError('str', 'foo');
         BasisObject.flush();
-        expect(spy).toHaveBeenCalledWith('errors');
+        expect(spy).toHaveBeenCalledWith('ownErrors');
       });
     });
 
@@ -2544,15 +2544,15 @@ describe('Model', function () {
       it('runs all registered validators for the given property name', function() {
         var m = new ValidatedFoo({name: 'FooBarBazQuux'});
         m.validateAttr('name');
-        expect(m.errors.name).toEqual(['must be lower case', 'must be less than 10 characters']);
+        expect(m.ownErrors.name).toEqual(['must be lower case', 'must be less than 10 characters']);
       });
 
       it('clears existing validation errors on the given property name', function() {
         var m = new ValidatedFoo({name: 'Foo'});
         m.addError('name', 'abc');
-        expect(m.errors.name).toEqual(['abc']);
+        expect(m.ownErrors.name).toEqual(['abc']);
         m.validateAttr('name');
-        expect(m.errors.name).toEqual(['must be lower case']);
+        expect(m.ownErrors.name).toEqual(['must be lower case']);
       });
 
       it('clears existing validation errors for the given property name even when there are no registered validators', function() {
@@ -2560,15 +2560,15 @@ describe('Model', function () {
 
         m.addError('notValidated', 'foobar');
         m.validateAttr('notValidated');
-        expect(m.errors.notValidated).toBeUndefined();
+        expect(m.ownErrors.notValidated).toBeUndefined();
       });
 
       it('does not clear existing validation errors on other properties', function() {
         var m = new ValidatedFoo({name: 'Foo'});
         m.addError('num', 'xyz');
-        expect(m.errors.num).toEqual(['xyz']);
+        expect(m.ownErrors.num).toEqual(['xyz']);
         m.validateAttr('name');
-        expect(m.errors.num).toEqual(['xyz']);
+        expect(m.ownErrors.num).toEqual(['xyz']);
       });
 
       it('returns true when all validations pass', function() {
@@ -2586,17 +2586,17 @@ describe('Model', function () {
       it('runs validators for all properties', function() {
         var m = new ValidatedFoo({name: 'Foo', num: 3.14});
 
-        expect(m.errors).toEqual({});
+        expect(m.ownErrors).toEqual({});
         m.validate();
-        expect(m.errors).toEqual({name: ['must be lower case'], num: ['is not an integer']});
+        expect(m.ownErrors).toEqual({name: ['must be lower case'], num: ['is not an integer']});
       });
 
       it('runs validate on owned associated models', function() {
         var m = new ValidatedFoo({name: 'foo', num: 10, bars: [new ValidatedBar({x: 3})]});
 
-        expect(m.bars.at(0).errors).toEqual({});
+        expect(m.bars.at(0).ownErrors).toEqual({});
         m.validate();
-        expect(m.bars.at(0).errors).toEqual({x: ['must be even']});
+        expect(m.bars.at(0).ownErrors).toEqual({x: ['must be even']});
       });
 
       it('does not run validate on owned associated models that are marked for destruction', function() {
@@ -2629,7 +2629,7 @@ describe('Model', function () {
 
         m.addError('notValidated', 'foobar');
         m.validate();
-        expect(m.errors.notValidated).toBeUndefined();
+        expect(m.ownErrors.notValidated).toBeUndefined();
       });
 
       it('handles circular owner associations', function() {

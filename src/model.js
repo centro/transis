@@ -749,18 +749,18 @@ var Model = BasisObject.extend(function() {
     }
   });
 
-  // Public: Object containing any validation errors on the model. The keys of the object are theo
+  // Public: Object containing any validation errors on the model. The keys of the object are the
   // properties that have errors and the values are an array of error messages.
-  this.prop('errors', {
-    get: function() { return this.__errors = this.__errors || {}; }
+  this.prop('ownErrors', {
+    get: function() { return this.__ownErrors = this.__ownErrors || {}; }
   });
 
   // Public: Returns a boolean indicating whether the model has any validation errors on its own
   // properties. Marking the model for destruction by setting the `_destroy` attribute will cause
   // this property to return `false` regardless of whether there are validation errors.
   this.prop('hasOwnErrors', {
-    on: ['errors', '_destroy'],
-    get: function(errors, _destroy) { return !_destroy && Object.keys(errors).length > 0; }
+    on: ['ownErrors', '_destroy'],
+    get: function(ownErrors, _destroy) { return !_destroy && Object.keys(ownErrors).length > 0; }
   });
 
   // Public: Returns a boolean indicating whether the model has any validattion errors or if any of
@@ -1017,11 +1017,11 @@ var Model = BasisObject.extend(function() {
   //
   // Returns the receiver.
   this.prototype.addError = function(name, message) {
-    this.errors[name] = this.errors[name] || [];
+    this.ownErrors[name] = this.ownErrors[name] || [];
 
-    if (this.errors[name].indexOf(message) === -1) {
-      this.errors[name].push(message);
-      this.didChange('errors');
+    if (this.ownErrors[name].indexOf(message) === -1) {
+      this.ownErrors[name].push(message);
+      this.didChange('ownErrors');
     }
 
     return this;
@@ -1045,7 +1045,7 @@ var Model = BasisObject.extend(function() {
       else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
     }
 
-    return !(name in this.errors);
+    return !(name in this.ownErrors);
   };
 
   // Public: Runs all registered validators for all properties and also validates owned
@@ -1128,8 +1128,8 @@ var Model = BasisObject.extend(function() {
   // Internal: Clears validation errors from the `errors` hash. If a name is given, only the errors
   // for the property of that name are cleared, otherwise all errors are cleared.
   this.prototype._clearErrors = function(name) {
-    if (name) { delete this.errors[name]; } else { this.__errors = {}; }
-    this.didChange('errors');
+    if (name) { delete this.ownErrors[name]; } else { this.__ownErrors = {}; }
+    this.didChange('ownErrors');
     return this;
   };
 
