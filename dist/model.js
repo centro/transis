@@ -1314,12 +1314,15 @@ var Model = _object2["default"].extend(function () {
   //
   // Returns `true` if no validation errors are found and `false` otherwise.
   this.prototype.validate = function () {
-    var associations = this.associations;
+    var associations = this.associations,
+        failed = false;
 
     this._clearErrors();
 
     for (var _name7 in this.validators) {
-      this.validateAttr(_name7);
+      if (!this.validateAttr(_name7)) {
+        failed = true;
+      }
     }
 
     util.detectRecursion(this, (function () {
@@ -1331,16 +1334,25 @@ var Model = _object2["default"].extend(function () {
         }
 
         if (desc.type === "hasOne") {
-          this[_name8] && !this[_name8]._destroy && this[_name8].validate();
+          if (this[_name8] && !this[_name8]._destroy) {
+            if (!this[_name8].validate()) {
+              failed = true;
+            }
+          }
         } else if (desc.type === "hasMany") {
           this[_name8].forEach(function (m) {
-            return !m._destroy && m.validate();
+            if (m._destroy) {
+              return;
+            }
+            if (!m.validate()) {
+              failed = true;
+            }
           });
         }
       }
     }).bind(this));
 
-    return !this.hasErrors;
+    return !failed;
   };
 
   // Public: Returns a string representation of the model.

@@ -1081,11 +1081,13 @@ var Model = BasisObject.extend(function() {
   //
   // Returns `true` if no validation errors are found and `false` otherwise.
   this.prototype.validate = function() {
-    var associations = this.associations;
+    var associations = this.associations, failed = false;
 
     this._clearErrors();
 
-    for (let name in this.validators) { this.validateAttr(name); }
+    for (let name in this.validators) {
+      if (!this.validateAttr(name)) { failed = true; }
+    }
 
     util.detectRecursion(this, function() {
       for (let name in associations) {
@@ -1094,15 +1096,20 @@ var Model = BasisObject.extend(function() {
         if (!desc.owner) { continue; }
 
         if (desc.type === 'hasOne') {
-          this[name] && !this[name]._destroy && this[name].validate();
+          if (this[name] && !this[name]._destroy) {
+            if (!this[name].validate()) { failed = true; }
+          }
         }
         else if (desc.type === 'hasMany') {
-          this[name].forEach(m => !m._destroy && m.validate());
+          this[name].forEach((m) => {
+            if (m._destroy) { return; }
+            if (!m.validate()) { failed = true; }
+          });
         }
       }
     }.bind(this));
 
-    return !this.hasErrors;
+    return !failed;
   };
 
   // Public: Returns a string representation of the model.
