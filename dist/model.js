@@ -1341,10 +1341,7 @@ var Model = _object2["default"].extend(function () {
           }
         } else if (desc.type === "hasMany") {
           this[_name8].forEach(function (m) {
-            if (m._destroy) {
-              return;
-            }
-            if (!m.validate()) {
+            if (!m._destroy && !m.validate()) {
               failed = true;
             }
           });

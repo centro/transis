@@ -1102,8 +1102,7 @@ var Model = BasisObject.extend(function() {
         }
         else if (desc.type === 'hasMany') {
           this[name].forEach((m) => {
-            if (m._destroy) { return; }
-            if (!m.validate()) { failed = true; }
+            if (!m._destroy && !m.validate()) { failed = true; }
           });
         }
       }

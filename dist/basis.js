@@ -2334,10 +2334,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	        } else if (desc.type === "hasMany") {
 	          this[_name2].forEach(function (m) {
-	            if (m._destroy) {
-	              return;
-	            }
-	            if (!m.validate()) {
+	            if (!m._destroy && !m.validate()) {
 	              failed = true;
 	            }
 	          });
