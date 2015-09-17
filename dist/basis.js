@@ -445,13 +445,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  (this.__changedProps__ = this.__changedProps__ || {})[name] = true;
 	  changedObjects[this.objectId] = this;
 
-	  // FIXME: The double setTimeout here is to work around an issue we've been seeing in Firefox
-	  // with promises. In Chrome the flush is getting run after promises callbacks are invoked but
-	  // in firefox its running before which is causing some timing issues. The double setTimeout
-	  // ensures that the flush gets run after promise callbacks.
+	  // ensure that observers get triggered after promise callbacks
 	  if (!flushTimer) {
 	    flushTimer = setTimeout(function () {
-	      setTimeout(flush);
+	      Promise.resolve().then(flush);
 	    });
 	  }
 

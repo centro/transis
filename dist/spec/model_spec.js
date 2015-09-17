@@ -2784,6 +2784,33 @@ describe("Model", function () {
       });
     });
   });
+
+  describe("promise/observer callback ordering", function () {
+    it("executes promise callbacks before observer callbacks", function (done) {
+      spyOn(BasicModel.mapper, "get").and.callFake(function () {
+        return new Promise(function (resolve) {
+          setTimeout(function () {
+            resolve({ id: 1, str: "a" });
+          }, 1);
+        });
+      });
+
+      var calls = [];
+      var m = BasicModel.get(1);
+
+      m.on("str", function () {
+        calls.push("observer");
+      });
+      m.then(function () {
+        calls.push("promise");
+      });
+
+      setTimeout(function () {
+        expect(calls).toEqual(["promise", "observer"]);
+        done();
+      }, 100);
+    });
+  });
 });
 
 // FIXME
