@@ -389,6 +389,7 @@ BasisObject.prototype.eq = function (other) {
   return this === other;
 };
 
+// Public: Resolves the given path into a value, relative to the receiver. See `util.getPath`.
 BasisObject.prototype.getPath = function (path) {
   return util.getPath(this, path);
 };

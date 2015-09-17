@@ -23,8 +23,8 @@ var Person = Basis.Model.extend('Person', function() {
 
   this.prop('fullName', {
     cache: true, on: ['firstName', 'lastName'],
-    get: function() {
-      return this.firstName + ' ' + this.lastName;
+    get: function(firstName, lastName) {
+      return firstName + ' ' + lastName;
     }
   });
 });
