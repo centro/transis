@@ -1259,7 +1259,7 @@ describe('Model', function () {
         var m = BasicModel.get(708);
         this.reject({str: ['error 1', 'error 2'], num: 'error 3'});
         this.delay(function() {
-          expect(m.errors).toEqual({str: ['error 1', 'error 2'], num: ['error 3']});
+          expect(m.ownErrors).toEqual({str: ['error 1', 'error 2'], num: ['error 3']});
           done();
         });
       });
@@ -1268,11 +1268,11 @@ describe('Model', function () {
         var m = BasicModel.get(708);
         this.reject('blah');
         this.delay(() => {
-          expect(m.errors.base).toEqual(['blah']);
+          expect(m.ownErrors.base).toEqual(['blah']);
           BasicModel.get(708);
           this.resolve({id: 708, str: 'asdf'});
           this.delay(() => {
-            expect(m.errors).toEqual({});
+            expect(m.ownErrors).toEqual({});
             done();
           });
         });
@@ -1443,20 +1443,20 @@ describe('Model', function () {
         this.model.save();
         this.reject('failed');
         this.delay(() => {
-          expect(this.model.errors.base).toEqual(['failed']);
+          expect(this.model.ownErrors.base).toEqual(['failed']);
           done();
         });
       });
 
-      it('clears the errors when the mapper resolves the promise', function(done) {
+      it('clears the ownErrors when the mapper resolves the promise', function(done) {
         this.model.save();
         this.reject('failed');
         this.delay(() => {
-          expect(this.model.errors.base).toEqual(['failed']);
+          expect(this.model.ownErrors.base).toEqual(['failed']);
           this.model.save();
           this.resolve({id: 123});
           this.delay(() => {
-            expect(this.model.errors).toEqual({});
+            expect(this.model.ownErrors).toEqual({});
             done();
           });
         });
@@ -1537,24 +1537,24 @@ describe('Model', function () {
 
       it('adds an error when the mapper rejects the promise', function(done) {
         this.model.save();
-        expect(this.model.errors.base).toBeUndefined();
+        expect(this.model.ownErrors.base).toBeUndefined();
         this.reject({str: 'no'});
         this.delay(() => {
-          expect(this.model.errors.str).toEqual(['no']);
+          expect(this.model.ownErrors.str).toEqual(['no']);
           done();
         });
       });
 
-      it('clears the errors when the mapper resolves the promise', function(done) {
+      it('clears the ownErrors when the mapper resolves the promise', function(done) {
         this.model.save();
-        expect(this.model.errors.base).toBeUndefined();
+        expect(this.model.ownErrors.base).toBeUndefined();
         this.reject('no');
         this.delay(() => {
-          expect(this.model.errors.base).toEqual(['no']);
+          expect(this.model.ownErrors.base).toEqual(['no']);
           this.model.save();
           this.resolve({id: 800});
           this.delay(() => {
-            expect(this.model.errors.base).toBeUndefined();
+            expect(this.model.ownErrors.base).toBeUndefined();
             done();
           });
         });
@@ -1883,9 +1883,9 @@ describe('Model', function () {
     });
 
     it('keeps track of changes to attributes in the `changes` property', function() {
-      expect(this.invoice.changes).toEqual({});
+      expect(this.invoice.ownChanges).toEqual({});
       this.invoice.name = 'B';
-      expect(this.invoice.changes).toEqual({name: 'A'});
+      expect(this.invoice.ownChanges).toEqual({name: 'A'});
     });
 
     it('does not keep track of regular prop changes', function() {
@@ -1895,79 +1895,79 @@ describe('Model', function () {
 
       var x = new X;
 
-      expect(x.changes).toEqual({});
+      expect(x.ownChanges).toEqual({});
       x.foo = 9;
-      expect(x.changes).toEqual({});
+      expect(x.ownChanges).toEqual({});
     });
 
-    it('notifies `changes` observers when an attribute changes', function() {
+    it('notifies `ownChanges` observers when an attribute changes', function() {
       var spy = jasmine.createSpy();
 
-      this.invoice.on('changes', spy);
+      this.invoice.on('ownChanges', spy);
       this.invoice.name = 'B';
       BasisObject.flush();
-      expect(spy).toHaveBeenCalledWith('changes');
+      expect(spy).toHaveBeenCalledWith('ownChanges');
     });
 
     it('does not keep track of intermediate changes', function() {
       this.invoice.name = 'B';
-      expect(this.invoice.changes.name).toBe('A');
+      expect(this.invoice.ownChanges.name).toBe('A');
       this.invoice.name = 'C';
-      expect(this.invoice.changes.name).toBe('A');
+      expect(this.invoice.ownChanges.name).toBe('A');
     });
 
     it('does not add a change record if the attribute is set to an equal value', function() {
       this.invoice.name = 'A';
-      expect(this.invoice.changes).toEqual({});
+      expect(this.invoice.ownChanges).toEqual({});
     });
 
     it('clears the change when an attribute is set back to its original value', function() {
       this.invoice.name = 'B';
-      expect(this.invoice.changes.name).toBe('A');
+      expect(this.invoice.ownChanges.name).toBe('A');
       this.invoice.name = 'A';
-      expect(this.invoice.changes.name).toBeUndefined();
+      expect(this.invoice.ownChanges.name).toBeUndefined();
     });
 
     it('keeps track of changes to owned hasOne associations', function() {
       var address = this.invoice.billingAddress;
 
       this.invoice.billingAddress = new Address;
-      expect(this.invoice.changes.billingAddress).toBe(address);
+      expect(this.invoice.ownChanges.billingAddress).toBe(address);
     });
 
     it('does not keep track of changes to unowned hasOne associations', function() {
       expect(this.invoice.company).toBe(this.company);
       this.invoice.company = null;
-      expect(this.invoice.changes.company).toBeUndefined();
+      expect(this.invoice.ownChanges.company).toBeUndefined();
     });
 
-    it('notifies `changes` observers when an owned hasOne association changes', function() {
+    it('notifies `ownChanges` observers when an owned hasOne association changes', function() {
       var spy = jasmine.createSpy();
 
-      this.invoice.on('changes', spy);
+      this.invoice.on('ownChanges', spy);
       this.invoice.billingAddress = new Address;
       BasisObject.flush();
-      expect(spy).toHaveBeenCalledWith('changes');
+      expect(spy).toHaveBeenCalledWith('ownChanges');
     });
 
     it('keeps track of changes to owned hasMany associations when models are added', function() {
       var li1 = new LineItem, li2 = new LineItem;
 
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
       this.invoice.lineItems.push(li1);
-      expect(this.invoice.changes.lineItems).toEqual({added: [li1], removed: []});
+      expect(this.invoice.ownChanges.lineItems).toEqual({added: [li1], removed: []});
       this.invoice.lineItems.push(li2);
-      expect(this.invoice.changes.lineItems).toEqual({added: [li1, li2], removed: []});
+      expect(this.invoice.ownChanges.lineItems).toEqual({added: [li1, li2], removed: []});
     });
 
     it('keeps track of changes to owned hasMany associations when elements are removed', function() {
       var li1, li2;
 
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
       li1 = this.invoice.lineItems.pop();
-      expect(this.invoice.changes.lineItems).toEqual({removed: [li1], added: []});
+      expect(this.invoice.ownChanges.lineItems).toEqual({removed: [li1], added: []});
       li2 = this.invoice.lineItems.pop();
-      expect(this.invoice.changes.lineItems).toEqual({removed: [li1, li2], added: []});
+      expect(this.invoice.ownChanges.lineItems).toEqual({removed: [li1, li2], added: []});
     });
 
     it('keeps track of changes to owned hasMany associations when there are additions and removals', function() {
@@ -1975,47 +1975,47 @@ describe('Model', function () {
 
       removed = this.invoice.lineItems.shift();
       this.invoice.lineItems.push(added);
-      expect(this.invoice.changes.lineItems).toEqual({removed: [removed], added: [added]});
+      expect(this.invoice.ownChanges.lineItems).toEqual({removed: [removed], added: [added]});
     });
 
-    it('notifies `changes` observers when an owned hasMany association is mutated', function() {
+    it('notifies `ownChanges` observers when an owned hasMany association is mutated', function() {
       var spy = jasmine.createSpy();
 
-      this.invoice.on('changes', spy);
+      this.invoice.on('ownChanges', spy);
       this.invoice.lineItems.pop();
       BasisObject.flush();
-      expect(spy).toHaveBeenCalledWith('changes');
+      expect(spy).toHaveBeenCalledWith('ownChanges');
     });
 
     it('keeps track of changes to owned hasMany associations when they are set', function() {
       var li1 = new LineItem, li2 = new LineItem, li3 = new LineItem,
           old = this.invoice.lineItems.slice();
 
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
       this.invoice.lineItems = [li1, li2];
-      expect(this.invoice.changes.lineItems).toEqual({added: [li1, li2], removed: old});
+      expect(this.invoice.ownChanges.lineItems).toEqual({added: [li1, li2], removed: old});
       this.invoice.lineItems = [li1, li2, li3];
-      expect(this.invoice.changes.lineItems).toEqual({added: [li1, li2, li3], removed: old});
+      expect(this.invoice.ownChanges.lineItems).toEqual({added: [li1, li2, li3], removed: old});
       this.invoice.lineItems = [li1];
-      expect(this.invoice.changes.lineItems).toEqual({added: [li1], removed: old});
+      expect(this.invoice.ownChanges.lineItems).toEqual({added: [li1], removed: old});
     });
 
     it('handles when a model is added and then removed from an owned hasMany association', function() {
       var li = new LineItem;
 
       this.invoice.lineItems.push(li);
-      expect(this.invoice.changes.lineItems).toEqual({added: [li], removed: []});
+      expect(this.invoice.ownChanges.lineItems).toEqual({added: [li], removed: []});
       this.invoice.lineItems.pop();
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
     })
 
     it('handles when a model is removed and then added to an owned hasMany association', function() {
       var li;
 
       li = this.invoice.lineItems.pop();
-      expect(this.invoice.changes.lineItems).toEqual({added: [], removed: [li]});
+      expect(this.invoice.ownChanges.lineItems).toEqual({added: [], removed: [li]});
       this.invoice.lineItems.push(li);
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
     })
 
     it('clears the changes on an owned hasMany assocation when changes are manually undone', function() {
@@ -2023,15 +2023,15 @@ describe('Model', function () {
 
       removed = this.invoice.lineItems.pop();
       this.invoice.lineItems.push(added);
-      expect(this.invoice.changes.lineItems).toEqual({added: [added], removed: [removed]});
+      expect(this.invoice.ownChanges.lineItems).toEqual({added: [added], removed: [removed]});
       this.invoice.lineItems.pop();
       this.invoice.lineItems.push(removed);
-      expect(this.invoice.changes.lineItems).toBeUndefined();
+      expect(this.invoice.ownChanges.lineItems).toBeUndefined();
     });
 
     it('does not keep track of changes to unowned hasMany associations', function() {
       this.company.invoices.push(new Invoice);
-      expect(this.company.changes.invoices).toBeUndefined();
+      expect(this.company.ownChanges.invoices).toBeUndefined();
     });
 
     describe('#undoChanges', function() {
@@ -2071,9 +2071,9 @@ describe('Model', function () {
         this.invoice.lineItems.pop();
         this.invoice.lineItems.push(new LineItem);
 
-        expect(Object.keys(this.invoice.changes).length > 0).toBe(true);
+        expect(Object.keys(this.invoice.ownChanges).length > 0).toBe(true);
         this.invoice.undoChanges();
-        expect(this.invoice.changes).toEqual({});
+        expect(this.invoice.ownChanges).toEqual({});
       });
 
       it('undoes changes on owned associations', function() {
@@ -2081,20 +2081,20 @@ describe('Model', function () {
 
         li.quantity = 11;
         this.invoice.billingAddress.name = 'Bob Smith';
-        expect(li.changes).toEqual({quantity: 10});
-        expect(this.invoice.billingAddress.changes).toEqual({name: 'Joe Blow'});
+        expect(li.ownChanges).toEqual({quantity: 10});
+        expect(this.invoice.billingAddress.ownChanges).toEqual({name: 'Joe Blow'});
         this.invoice.undoChanges()
         expect(li.quantity).toBe(10);
         expect(this.invoice.billingAddress.name).toBe('Joe Blow');
-        expect(li.changes).toEqual({});
-        expect(this.invoice.billingAddress.changes).toEqual({});
+        expect(li.ownChanges).toEqual({});
+        expect(this.invoice.billingAddress.ownChanges).toEqual({});
       });
 
       it('does not undo changes to unowned associations', function() {
         this.invoice.company.name = 'Foobar';
-        expect(this.invoice.company.changes).toEqual({name: 'Acme, Inc.'});
+        expect(this.invoice.company.ownChanges).toEqual({name: 'Acme, Inc.'});
         this.invoice.undoChanges();
-        expect(this.invoice.company.changes).toEqual({name: 'Acme, Inc.'});
+        expect(this.invoice.company.ownChanges).toEqual({name: 'Acme, Inc.'});
       });
 
       it('does not undo changes to the owned association specified in the except option as a string', function() {
@@ -2116,7 +2116,7 @@ describe('Model', function () {
       it('re-runs validations', function() {
         this.invoice.addError('name', 'foo');
         this.invoice.undoChanges();
-        expect(this.invoice.errors.name).toBeUndefined();
+        expect(this.invoice.ownErrors.name).toBeUndefined();
       });
 
       it('handles circular owner associations', function() {
@@ -2182,6 +2182,56 @@ describe('Model', function () {
       });
     });
 
+    describe('#changes', function() {
+      it('returns an object containing changes to the receiver', function() {
+        this.company.name = 'Foobar';
+        expect(this.company.changes).toEqual({name: 'Acme, Inc.'});
+      });
+
+      it('includes changes on owned hasOne associations', function() {
+        this.invoice.billingAddress.address = '321 Maple Ave.';
+        expect(this.invoice.changes).toEqual({'billingAddress.address': '123 Fake St.'});
+      });
+
+      it('includes changes on owned hasMany associations', function() {
+        this.invoice.lineItems[0].name = 'FOO';
+        this.invoice.lineItems[2].name = 'BAZ';
+        expect(this.invoice.changes).toEqual({
+          'lineItems.0.name': 'foo',
+          'lineItems.2.name': 'baz'
+        });
+      });
+
+      it('does not include changes on non-owned associations', function() {
+        this.invoice.company.name = 'Blah';
+        expect(this.invoice.changes).toEqual({});
+      });
+
+      describe('with with circular owner associations', function() {
+        beforeEach(function() {
+          this.a = CircularA.load({id: 1, name: 'a1', bs: [{id: 2, name: 'b1'}]});
+          this.b = this.a.bs.first;
+
+          this.a.name = 'a2';
+          this.b.name = 'b2';
+        });
+
+        it('includes changes on both sides', function() {
+          expect(this.a.changes).toEqual({
+            'name': 'a1',
+            'bs.0.name': 'b1',
+            'bs.0.as.0.name': 'a1'
+          });
+
+          expect(this.b.changes).toEqual({
+            'name': 'b1',
+            'as.0.name': 'a1',
+            'as.0.bs.0.name': 'b1'
+          });
+        });
+      });
+    });
+
     describe('#hasChanges', function() {
       it('returns false for a NEW model with no attrs set', function() {
         expect((new BasicModel).hasChanges).toBe(false);
@@ -2229,9 +2279,6 @@ describe('Model', function () {
         beforeEach(function() {
           this.a = CircularA.load({id: 1, name: 'a1', bs: [{id: 2, name: 'b1'}]});
           this.b = this.a.bs.first;
-
-          // FIXME
-          this.b._clearChanges();
         });
 
         it('returns false when neither side has changes', function() {
@@ -2239,48 +2286,55 @@ describe('Model', function () {
           expect(this.b.hasChanges).toBe(false);
         });
 
-        it('returns true for both sides when either has an error', function() {
+        it('returns true for both sides when either has changes', function() {
           this.a.name = 'a2';
           expect(this.a.hasChanges).toBe(true);
           expect(this.b.hasChanges).toBe(true);
         });
       });
+    });
 
-      describe('observers', function() {
-        beforeEach(function() {
-          this.spy = jasmine.createSpy();
-          this.invoice.on('hasChanges', this.spy);
-        });
+    describe('observers for changes and hasChanges', function() {
+      beforeEach(function() {
+        this.changesSpy = jasmine.createSpy('changesSpy');
+        this.hasChangesSpy = jasmine.createSpy('hasChanges');
+        this.invoice.on('changes', this.changesSpy);
+        this.invoice.on('hasChanges', this.hasChangesSpy);
+      });
 
-        it('are fired when an attribute changes', function() {
-          this.invoice.name = 'B';
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when an attribute changes', function() {
+        this.invoice.name = 'B';
+        BasisObject.flush();
+        expect(this.changesSpy).toHaveBeenCalled();
+        expect(this.hasChangesSpy).toHaveBeenCalled();
+      });
 
-        it('are fired when an owned hasMany association is mutated', function() {
-          this.invoice.lineItems.pop();
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when an owned hasMany association is mutated', function() {
+        this.invoice.lineItems.pop();
+        BasisObject.flush();
+        expect(this.changesSpy).toHaveBeenCalled();
+        expect(this.hasChangesSpy).toHaveBeenCalled();
+      });
 
-        it('are fired when an owned hasOne associated model changes', function() {
-          this.invoice.billingAddress.name = 'Bob Smith';
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when an owned hasOne associated model changes', function() {
+        this.invoice.billingAddress.name = 'Bob Smith';
+        BasisObject.flush();
+        expect(this.changesSpy).toHaveBeenCalled();
+        expect(this.hasChangesSpy).toHaveBeenCalled();
+      });
 
-        it('are fired when an owned hasMany associated model changes', function() {
-          this.invoice.lineItems.at(0).name = 'xyz';
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when an owned hasMany associated model changes', function() {
+        this.invoice.lineItems.at(0).name = 'xyz';
+        BasisObject.flush();
+        expect(this.changesSpy).toHaveBeenCalled();
+        expect(this.hasChangesSpy).toHaveBeenCalled();
+      });
 
-        it('are not fired when an unowned associated model changes', function() {
-          this.invoice.company.name = 'Foo';
-          BasisObject.flush();
-          expect(this.spy).not.toHaveBeenCalled();
-        });
+      it('are not fired when an unowned associated model changes', function() {
+        this.invoice.company.name = 'Foo';
+        BasisObject.flush();
+        expect(this.changesSpy).not.toHaveBeenCalled();
+        expect(this.hasChangesSpy).not.toHaveBeenCalled();
       });
     });
 
@@ -2372,32 +2426,32 @@ describe('Model', function () {
         this.m = new BasicModel;
       });
 
-      it('adds the given mesage to the `errors` hash for the given name', function() {
-        expect(this.m.errors.str).toBeUndefined();
+      it('adds the given mesage to the `ownErrors` hash for the given name', function() {
+        expect(this.m.ownErrors.str).toBeUndefined();
         this.m.addError('str', 'foo');
-        expect(this.m.errors.str).toEqual(['foo']);
+        expect(this.m.ownErrors.str).toEqual(['foo']);
       });
 
-      it('adds to the errors array when a validation error already exists for the given name', function() {
+      it('adds to the ownErrors array when a validation error already exists for the given name', function() {
         this.m.addError('str', 'foo');
-        expect(this.m.errors.str).toEqual(['foo']);
+        expect(this.m.ownErrors.str).toEqual(['foo']);
         this.m.addError('str', 'bar');
-        expect(this.m.errors.str).toEqual(['foo', 'bar']);
+        expect(this.m.ownErrors.str).toEqual(['foo', 'bar']);
       });
 
       it('does not add identical error messages', function() {
         this.m.addError('str', 'foo');
-        expect(this.m.errors.str).toEqual(['foo']);
+        expect(this.m.ownErrors.str).toEqual(['foo']);
         this.m.addError('str', 'foo');
-        expect(this.m.errors.str).toEqual(['foo']);
+        expect(this.m.ownErrors.str).toEqual(['foo']);
       });
 
-      it('notifies `errors` observers', function() {
+      it('notifies `ownErrors` observers', function() {
         var spy = jasmine.createSpy();
-        this.m.on('errors', spy);
+        this.m.on('ownErrors', spy);
         this.m.addError('str', 'foo');
         BasisObject.flush();
-        expect(spy).toHaveBeenCalledWith('errors');
+        expect(spy).toHaveBeenCalledWith('ownErrors');
       });
     });
 
@@ -2467,6 +2521,56 @@ describe('Model', function () {
       });
     });
 
+    describe('#errors', function() {
+      it('returns an object with the receivers own errors', function() {
+        this.invoice.addError('name', 'foo');
+        expect(this.invoice.errors).toEqual({name: ['foo']});
+      });
+
+      it('includes errors on owned hasOne associations', function() {
+        this.invoice.billingAddress.addError('address', 'bar');
+        expect(this.invoice.errors).toEqual({'billingAddress.address': ['bar']});
+      });
+
+      it('includes errors on owned hasMany associations', function() {
+        this.invoice.lineItems[0].addError('name', 'a');
+        this.invoice.lineItems[2].addError('name', 'b');
+        expect(this.invoice.errors).toEqual({
+          'lineItems.0.name': ['a'],
+          'lineItems.2.name': ['b']
+        });
+      });
+
+      it('does not include errors on non-owned associations', function() {
+        this.invoice.company.addError('name', 'blah');
+        expect(this.invoice.errors).toEqual({});
+      });
+
+      describe('with with circular owner associations', function() {
+        beforeEach(function() {
+          this.a = CircularA.load({id: 1, name: 'a1', bs: [{id: 2, name: 'b1'}]});
+          this.b = this.a.bs.first;
+
+          this.a.addError('name', 'foo');
+          this.b.addError('name', 'bar');
+        });
+
+        it('includes errors on both sides', function() {
+          expect(this.a.errors).toEqual({
+            'name': ['foo'],
+            'bs.0.name': ['bar'],
+            'bs.0.as.0.name': ['foo']
+          });
+
+          expect(this.b.errors).toEqual({
+            'name': ['bar'],
+            'as.0.name': ['foo'],
+            'as.0.bs.0.name': ['bar']
+          });
+        });
+      });
+    });
+
     describe('#hasErrors', function() {
       it('returns true when the receiver has a validation error on one of its properties', function() {
         expect(this.invoice.hasErrors).toBe(false);
@@ -2513,30 +2617,35 @@ describe('Model', function () {
           expect(this.b.hasErrors).toBe(true);
         });
       });
+    });
 
-      describe('observers', function() {
-        beforeEach(function() {
-          this.spy = jasmine.createSpy();
-          this.invoice.on('hasErrors', this.spy);
-        });
+    describe('observers for errors and hasError', function() {
+      beforeEach(function() {
+        this.errorsSpy = jasmine.createSpy('errors');
+        this.hasErrorsSpy = jasmine.createSpy('hasErrors');
+        this.invoice.on('errors', this.errorsSpy);
+        this.invoice.on('hasErrors', this.hasErrorsSpy);
+      });
 
-        it('are fired when a validation error is added', function() {
-          this.invoice.addError('name', 'x');
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when a validation error is added', function() {
+        this.invoice.addError('name', 'x');
+        BasisObject.flush();
+        expect(this.errorsSpy).toHaveBeenCalled();
+        expect(this.hasErrorsSpy).toHaveBeenCalled();
+      });
 
-        it('are fired when an owned associated model has a validation error added', function() {
-          this.invoice.billingAddress.addError('name', 'y');
-          BasisObject.flush();
-          expect(this.spy).toHaveBeenCalled();
-        });
+      it('are fired when an owned associated model has a validation error added', function() {
+        this.invoice.billingAddress.addError('name', 'y');
+        BasisObject.flush();
+        expect(this.errorsSpy).toHaveBeenCalled();
+        expect(this.hasErrorsSpy).toHaveBeenCalled();
+      });
 
-        it('are not fired when an unowned associated model has a validation error added', function() {
-          this.invoice.company.addError('name', 'z');
-          BasisObject.flush();
-          expect(this.spy).not.toHaveBeenCalled();
-        });
+      it('are not fired when an unowned associated model has a validation error added', function() {
+        this.invoice.company.addError('name', 'z');
+        BasisObject.flush();
+        expect(this.errorsSpy).not.toHaveBeenCalled();
+        expect(this.hasErrorsSpy).not.toHaveBeenCalled();
       });
     });
 
@@ -2544,15 +2653,15 @@ describe('Model', function () {
       it('runs all registered validators for the given property name', function() {
         var m = new ValidatedFoo({name: 'FooBarBazQuux'});
         m.validateAttr('name');
-        expect(m.errors.name).toEqual(['must be lower case', 'must be less than 10 characters']);
+        expect(m.ownErrors.name).toEqual(['must be lower case', 'must be less than 10 characters']);
       });
 
       it('clears existing validation errors on the given property name', function() {
         var m = new ValidatedFoo({name: 'Foo'});
         m.addError('name', 'abc');
-        expect(m.errors.name).toEqual(['abc']);
+        expect(m.ownErrors.name).toEqual(['abc']);
         m.validateAttr('name');
-        expect(m.errors.name).toEqual(['must be lower case']);
+        expect(m.ownErrors.name).toEqual(['must be lower case']);
       });
 
       it('clears existing validation errors for the given property name even when there are no registered validators', function() {
@@ -2560,15 +2669,15 @@ describe('Model', function () {
 
         m.addError('notValidated', 'foobar');
         m.validateAttr('notValidated');
-        expect(m.errors.notValidated).toBeUndefined();
+        expect(m.ownErrors.notValidated).toBeUndefined();
       });
 
       it('does not clear existing validation errors on other properties', function() {
         var m = new ValidatedFoo({name: 'Foo'});
         m.addError('num', 'xyz');
-        expect(m.errors.num).toEqual(['xyz']);
+        expect(m.ownErrors.num).toEqual(['xyz']);
         m.validateAttr('name');
-        expect(m.errors.num).toEqual(['xyz']);
+        expect(m.ownErrors.num).toEqual(['xyz']);
       });
 
       it('returns true when all validations pass', function() {
@@ -2586,17 +2695,17 @@ describe('Model', function () {
       it('runs validators for all properties', function() {
         var m = new ValidatedFoo({name: 'Foo', num: 3.14});
 
-        expect(m.errors).toEqual({});
+        expect(m.ownErrors).toEqual({});
         m.validate();
-        expect(m.errors).toEqual({name: ['must be lower case'], num: ['is not an integer']});
+        expect(m.ownErrors).toEqual({name: ['must be lower case'], num: ['is not an integer']});
       });
 
       it('runs validate on owned associated models', function() {
         var m = new ValidatedFoo({name: 'foo', num: 10, bars: [new ValidatedBar({x: 3})]});
 
-        expect(m.bars.at(0).errors).toEqual({});
+        expect(m.bars.at(0).ownErrors).toEqual({});
         m.validate();
-        expect(m.bars.at(0).errors).toEqual({x: ['must be even']});
+        expect(m.bars.at(0).ownErrors).toEqual({x: ['must be even']});
       });
 
       it('does not run validate on owned associated models that are marked for destruction', function() {
@@ -2629,7 +2738,7 @@ describe('Model', function () {
 
         m.addError('notValidated', 'foobar');
         m.validate();
-        expect(m.errors.notValidated).toBeUndefined();
+        expect(m.ownErrors.notValidated).toBeUndefined();
       });
 
       it('handles circular owner associations', function() {
