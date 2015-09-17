@@ -19,7 +19,7 @@ dist/spec/%.js: spec/%.js
 	@mkdir -p dist/spec
 	./node_modules/.bin/babel $< -o $@
 
-dist: basis dist/basis.js
+package: dist/basis.js
 
 SPEC ?=
 spec_node: basis $(ES5_SPECS)
