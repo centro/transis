@@ -723,9 +723,9 @@ var Model = BasisObject.extend(function() {
   });
 
   // Public: Returns an object of changes made to properties on the receiver as well as for changes
-  // made to owned associated models. The keys for owned associated model changes are prefixed with
-  // the association name. The keys for changes on models within an owned hasMany association are
-  // prefixed with the association name and index in the array.
+  // made to owned associated models not marked for destruction. The keys for owned associated model
+  // changes are prefixed with the association name. The keys for changes on models within an owned
+  // hasMany association are prefixed with the association name and index in the array.
   //
   // Examples
   //
@@ -781,8 +781,8 @@ var Model = BasisObject.extend(function() {
   });
 
   // Public: Returns an object of validation errors that exist on the receiver as well as any
-  // validation errors on owned associated models. The keys used for errors on owned associated
-  // models are similar to those returned by the `#changes` prop.
+  // validation errors on owned associated models not marked for destruction. The keys used for
+  // errors on owned associated models are similar to those returned by the `#changes` prop.
   this.prop('errors', {
     on: ['ownErrors'],
     pure: false,
