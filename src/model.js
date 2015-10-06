@@ -723,9 +723,9 @@ var Model = BasisObject.extend(function() {
   });
 
   // Public: Returns an object of changes made to properties on the receiver as well as for changes
-  // made to owned associated models. The keys for owned associated model changes are prefixed with
-  // the association name. The keys for changes on models within an owned hasMany association are
-  // prefixed with the association name and index in the array.
+  // made to owned associated models not marked for destruction. The keys for owned associated model
+  // changes are prefixed with the association name. The keys for changes on models within an owned
+  // hasMany association are prefixed with the association name and index in the array.
   //
   // Examples
   //
@@ -741,12 +741,13 @@ var Model = BasisObject.extend(function() {
         for (let name in this.associations) {
           if (!this.associations[name].owner) { continue; }
 
-          if (this.associations[name].type === 'hasOne' && this[name]) {
+          if (this.associations[name].type === 'hasOne' && this[name] && !this[name]._destroy) {
             let cs = this[name].changes;
             for (let k in cs) { changes[`${name}.${k}`] = cs[k]; }
           }
           else if (this.associations[name].type === 'hasMany') {
             this[name].forEach((item, i) => {
+              if (item._destroy) return;
               let cs = item.changes;
               for (let k in cs) { changes[`${name}.${i}.${k}`] = cs[k]; }
             });
@@ -780,8 +781,8 @@ var Model = BasisObject.extend(function() {
   });
 
   // Public: Returns an object of validation errors that exist on the receiver as well as any
-  // validation errors on owned associated models. The keys used for errors on owned associated
-  // models are similar to those returned by the `#changes` prop.
+  // validation errors on owned associated models not marked for destruction. The keys used for
+  // errors on owned associated models are similar to those returned by the `#changes` prop.
   this.prop('errors', {
     on: ['ownErrors'],
     pure: false,
@@ -792,12 +793,13 @@ var Model = BasisObject.extend(function() {
         for (let name in this.associations) {
           if (!this.associations[name].owner) { continue; }
 
-          if (this.associations[name].type === 'hasOne' && this[name]) {
+          if (this.associations[name].type === 'hasOne' && this[name] && !this[name]._destroy) {
             let es = this[name].errors;
             for (let k in es) { errors[`${name}.${k}`] = es[k]; }
           }
           else if (this.associations[name].type === 'hasMany') {
             this[name].forEach((item, i) => {
+              if (item._destroy) return;
               let es = item.errors;
               for (let k in es) { errors[`${name}.${i}.${k}`] = es[k]; }
             });
