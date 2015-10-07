@@ -2,12 +2,12 @@ import * as util from "./util";
 
 var objectId = 0, changedObjects = {}, delayCallbacks = [], flushTimer;
 
-function BasisObject() {
+function TransisObject() {
   Object.defineProperty(this, 'objectId', {value: ++objectId});
   this.init.apply(this, arguments);
 };
 
-BasisObject.displayName = 'Basis.Object';
+TransisObject.displayName = 'Transis.Object';
 
 // Internal: Processes a property change by traversing the property dependency graph and forwarding
 // changes to proxy objects.
@@ -85,7 +85,7 @@ function isCached(name) { return this.__cache__ ? this.__cache__.hasOwnProperty(
 // Internal: Returns the cached value for the given name.
 function getCached(name) { return this.__cache__ ? this.__cache__[name] : undefined; }
 
-// Internal: Defines a property on the given object. See the docs for `Basis.prop`.
+// Internal: Defines a property on the given object. See the docs for `Transis.prop`.
 //
 // Returns nothing.
 function defineProp(object, name, opts = {}) {
@@ -115,7 +115,7 @@ function defineProp(object, name, opts = {}) {
     if (prop.indexOf('.') !== -1) {
       let segments = prop.split('.'), first = segments[0];
       if (segments.length > 2) {
-        throw new Error(`Basis.Object.defineProp: dependent property paths of more than two segments are not allowed: \`${prop}\``);
+        throw new Error(`Transis.Object.defineProp: dependent property paths of more than two segments are not allowed: \`${prop}\``);
       }
       (object.__deps__[first] = object.__deps__[first] || []).push(name);
     }
@@ -130,7 +130,7 @@ function defineProp(object, name, opts = {}) {
 }
 
 // Public: Flush the pending change queue. This should only be used in specs.
-BasisObject.flush = function() {
+TransisObject.flush = function() {
   clearTimeout(flushTimer);
   flush();
   return this;
@@ -141,14 +141,14 @@ BasisObject.flush = function() {
 // f - A function.
 //
 // Returns the receiver;
-BasisObject.delay = function(f) {
+TransisObject.delay = function(f) {
   delayCallbacks.push(f);
   return this;
 };
 
-// Public: Creates a subclass of `Basis.Object`.
-BasisObject.extend = function(f) {
-  var subclass = function() { BasisObject.apply(this, arguments); };
+// Public: Creates a subclass of `Transis.Object`.
+TransisObject.extend = function(f) {
+  var subclass = function() { TransisObject.apply(this, arguments); };
 
   for (let k in this) { if (this.hasOwnProperty(k)) { subclass[k] = this[k]; } }
 
@@ -162,7 +162,7 @@ BasisObject.extend = function(f) {
 };
 
 // Public: Defines a property on the class's prototype. Properties defined with this method are
-// observable using the `Basis.Object#on` method.
+// observable using the `Transis.Object#on` method.
 //
 // name - A string containing the name of the property.
 // opts - An object containing one or more of the following keys:
@@ -180,50 +180,50 @@ BasisObject.extend = function(f) {
 //               defined, then the initially cached value will never be cleared.
 //
 // Returns the receiver.
-BasisObject.prop = function(name, opts = {}) {
+TransisObject.prop = function(name, opts = {}) {
   defineProp(this.prototype, name, opts);
   return this;
 };
 
 // Public: Creates multiple props at once from the given object.
 //
-// props - An object mapping prop names to their options. See `Basis.Object#prop` for the available
-//         options.
+// props - An object mapping prop names to their options. See `Transis.Object#prop` for the
+//         available options.
 //
 // Returns the receiver.
-BasisObject.props = function(props) {
+TransisObject.props = function(props) {
   for (let name in props) { this.prop(name, props[name]); }
   return this;
 };
 
 // Public: Returns a string containing the class's name.
-BasisObject.toString = function() { return this.displayName || this.name || '(Unknown)'; };
+TransisObject.toString = function() { return this.displayName || this.name || '(Unknown)'; };
 
-// Public: The `Basis.Object` initializer. Sets the given props and begins observing dependent
-// property events. This method should never be called directly, its called by the `Basis.Object`
+// Public: The `Transis.Object` initializer. Sets the given props and begins observing dependent
+// property events. This method should never be called directly, its called by the `Transis.Object`
 // constructor function.
 //
-// props - An object containing properties to set. Only properties defined via `Basis.Object.prop`
+// props - An object containing properties to set. Only properties defined via `Transis.Object.prop`
 //         are settable.
-BasisObject.prototype.init = function(props) { if (props) { this.set(props); } };
+TransisObject.prototype.init = function(props) { if (props) { this.set(props); } };
 
-// Public: Defines an observable property directly on the receiver. See the `Basis.Object.prop`
+// Public: Defines an observable property directly on the receiver. See the `Transis.Object.prop`
 // method for available options.
-BasisObject.prototype.prop = function(name, opts = {}) {
+TransisObject.prototype.prop = function(name, opts = {}) {
   defineProp(this, name, opts);
   return this;
 };
 
 // Public: Creates multiple props at once from the given object directly on the receiver.
-BasisObject.prototype.props = BasisObject.props;
+TransisObject.prototype.props = TransisObject.props;
 
 // Public: Set multiple props at once. This method take special care to only set props that are
-// defined with `Basis.Object.prop` and are not readonly.
+// defined with `Transis.Object.prop` and are not readonly.
 //
 // props - An object containing props to set.
 //
 // Returns nothing.
-BasisObject.prototype.set = function(props) {
+TransisObject.prototype.set = function(props) {
   for (let k in props) {
     if (this.__props__ && this.__props__[k] && !this.__props__[k].readonly) {
       this[k] = props[k];
@@ -239,7 +239,7 @@ BasisObject.prototype.set = function(props) {
 // callback - A function to invoke when the prop changes.
 //
 // Returns the receiver.
-BasisObject.prototype.on = function(prop, callback) {
+TransisObject.prototype.on = function(prop, callback) {
   this.__observers__ = this.__observers__ || {};
   this.__observers__[prop] = this.__observers__[prop] || [];
   this.__observers__[prop].push(callback);
@@ -249,10 +249,10 @@ BasisObject.prototype.on = function(prop, callback) {
 // Public: Remove a prop observer.
 //
 // prop     - The name of the property to stop observing.
-// callback - The function passed to `Basis.Object#on`.
+// callback - The function passed to `Transis.Object#on`.
 //
 // Returns the receiver.
-BasisObject.prototype.off = function(prop, callback) {
+TransisObject.prototype.off = function(prop, callback) {
   if (this.__observers__ && this.__observers__[prop]) {
     for (let i = this.__observers__[prop].length - 1; i >= 0; i--) {
       if (this.__observers__[prop][i] === callback) {
@@ -270,7 +270,7 @@ BasisObject.prototype.off = function(prop, callback) {
 // ...args - Zero or more additional arguments to pass along to observers.
 //
 // Returns the receiver.
-BasisObject.prototype.notify = function(event, ...args) {
+TransisObject.prototype.notify = function(event, ...args) {
   if (this.__observers__ && this.__observers__[event]) {
     for (let i = 0, n = this.__observers__[event].length; i < n; i++) {
       if (this.__observers__[event][i]) {
@@ -278,7 +278,7 @@ BasisObject.prototype.notify = function(event, ...args) {
           this.__observers__[event][i](event, ...args);
         }
         catch (e) {
-          console.error('Basis.Object#notify: exception caught in observer:', e);
+          console.error('Transis.Object#notify: exception caught in observer:', e);
         }
       }
     }
@@ -294,7 +294,7 @@ BasisObject.prototype.notify = function(event, ...args) {
 // name - The name of the prop that has changed.
 //
 // Returns the receiver.
-BasisObject.prototype.didChange = function(name) {
+TransisObject.prototype.didChange = function(name) {
   (this.__changedProps__ = this.__changedProps__ || {})[name] = true;
   changedObjects[this.objectId] = this;
 
@@ -305,7 +305,7 @@ BasisObject.prototype.didChange = function(name) {
 };
 
 // Public: Returns a string representation of the object.
-BasisObject.prototype.toString = function() {
+TransisObject.prototype.toString = function() {
   return `#<${this.constructor}:${this.objectId}>`;
 };
 
@@ -316,21 +316,21 @@ BasisObject.prototype.toString = function() {
 // o - An object to compare against the receiver.
 //
 // Returns a `true` if the objects are equal and `false` otherwise.
-BasisObject.prototype.eq = function(other) { return this === other; };
+TransisObject.prototype.eq = function(other) { return this === other; };
 
 // Public: Resolves the given path into a value, relative to the receiver. See `util.getPath`.
-BasisObject.prototype.getPath = function(path) { return util.getPath(this, path); };
+TransisObject.prototype.getPath = function(path) { return util.getPath(this, path); };
 
 // Internal: Returns the current value of the given property or the default value if it is not
 // defined.
 //
 // Returns the value of the property.
 // Throws `Error` if there is no property with the given name.
-BasisObject.prototype._getProp = function(name) {
+TransisObject.prototype._getProp = function(name) {
   var desc = this.__props__ && this.__props__[name], value;
 
   if (!desc) {
-    throw new Error(`Basis.Object#_getProp: unknown prop name \`${name}\``);
+    throw new Error(`Transis.Object#_getProp: unknown prop name \`${name}\``);
   }
 
   if (desc.cache && isCached.call(this, name)) { return getCached.call(this, name); }
@@ -360,17 +360,17 @@ BasisObject.prototype._getProp = function(name) {
 // Returns the previous value.
 // Throws `Error` if there is no property with the given name.
 // Throws `TypeError` if the property is readonly.
-BasisObject.prototype._setProp = function(name, value) {
+TransisObject.prototype._setProp = function(name, value) {
   var descriptor = this.__props__ && this.__props__[name],
       key        = `__${name}`,
       old        = this._getProp(name);
 
   if (!descriptor) {
-    throw new Error(`Basis.Object#_setProp: unknown prop name \`${name}\``);
+    throw new Error(`Transis.Object#_setProp: unknown prop name \`${name}\``);
   }
 
   if (descriptor.readonly) {
-    throw new TypeError(`Basis.Object#_setProp: cannot set readonly property \`${name}\` of ${this}`);
+    throw new TypeError(`Transis.Object#_setProp: cannot set readonly property \`${name}\` of ${this}`);
   }
 
   if (descriptor.set) { descriptor.set.call(this, value); }
@@ -383,18 +383,18 @@ BasisObject.prototype._setProp = function(name, value) {
 
 // Internal: Registers a proxy object. All prop changes on the receiver will be proxied to the
 // given proxy object with the given name as a prefix for the property name.
-BasisObject.prototype._registerProxy = function(object, name) {
+TransisObject.prototype._registerProxy = function(object, name) {
   this.__proxies__ = this.__proxies__ || {};
   this.__proxies__[`${object.objectId},${name}`] = {object, name};
   return this;
 };
 
 // Internal: Deregisters a proxy object previously registered with `#_registerProxy`.
-BasisObject.prototype._deregisterProxy = function(object, name) {
+TransisObject.prototype._deregisterProxy = function(object, name) {
   if (this.__proxies__) { delete this.__proxies__[`${object.objectId},${name}`]; }
   return this;
 };
 
-BasisObject.displayName = 'Basis.Object';
+TransisObject.displayName = 'Transis.Object';
 
-export default BasisObject;
+export default TransisObject;

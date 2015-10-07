@@ -1,10 +1,10 @@
 import "es6-shim";
-import BasisObject from "../object";
+import TransisObject from "../object";
 import Model from "../model";
 import IdMap from "../id_map";
-import BasisArray from "../array";
+import TransisArray from "../array";
 
-var A = BasisArray.of;
+var A = TransisArray.of;
 
 describe('Model', function () {
   var TestMapper = {
@@ -99,7 +99,7 @@ describe('Model', function () {
       it('throws an exception', function() {
         expect(function() {
           Model.extend();
-        }).toThrow(new Error('Basis.Model.extend: a name is required'));
+        }).toThrow(new Error('Transis.Model.extend: a name is required'));
       });
     });
   });
@@ -116,7 +116,7 @@ describe('Model', function () {
     it('throws an exception when an attribute with the given name has already been defined', function() {
       expect(function() {
         Model.registerAttr('string');
-      }).toThrow(new Error('Basis.Model.registerAttr: an attribute with the name `string` has already been defined'));
+      }).toThrow(new Error('Transis.Model.registerAttr: an attribute with the name `string` has already been defined'));
     });
   });
 
@@ -211,10 +211,10 @@ describe('Model', function () {
 
         f.on('bar', spy);
         f.bar = b;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('bar');
         f.bar = undefined;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy.calls.count()).toBe(2);
       });
 
@@ -223,7 +223,7 @@ describe('Model', function () {
 
         f.on('bar.x', spy);
         b.x = 2;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('bar.x');
       });
 
@@ -232,7 +232,7 @@ describe('Model', function () {
 
         f.on('bar.bazs', spy);
         b.bazs.push(baz);
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('bar.bazs');
       });
     });
@@ -267,7 +267,7 @@ describe('Model', function () {
         b.on('foo', spy);
 
         f.bar = b;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalled();
       });
     });
@@ -304,7 +304,7 @@ describe('Model', function () {
 
         b.on('foos', spy);
         f.bar = b;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalled();
       });
     });
@@ -351,7 +351,7 @@ describe('Model', function () {
 
         f.on('bars', spy);
         f.bars.push(b);
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('bars');
       });
 
@@ -361,7 +361,7 @@ describe('Model', function () {
         f.bars.push(b);
         f.on('bars', spy);
         f.bars.pop();
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('bars');
       });
 
@@ -371,7 +371,7 @@ describe('Model', function () {
         f.bars = [b];
         f.on('bars.x', spy);
         b.x = 2;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('bars.x');
       });
 
@@ -380,7 +380,7 @@ describe('Model', function () {
 
         f.on('bars.bazs', spy);
         b.bazs.push(baz);
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('bars.bazs');
       });
     });
@@ -452,7 +452,7 @@ describe('Model', function () {
 
         b.on('foo', spy);
         f.bars.push(b);
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalled();
       });
     });
@@ -523,7 +523,7 @@ describe('Model', function () {
 
         b.on('foos', spy);
         f.bars.push(b);
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalled();
       });
     });
@@ -877,9 +877,9 @@ describe('Model', function () {
       this.a = BasicModel.buildQuery();
     });
 
-    it('returns an empty Basis.Array', function() {
+    it('returns an empty Transis.Array', function() {
       expect(this.a).toEqual([]);
-      expect(this.a instanceof BasisArray).toBe(true);
+      expect(this.a instanceof TransisArray).toBe(true);
     });
 
     it("does not invoke the mapper's query method", function() {
@@ -1879,7 +1879,7 @@ describe('Model', function () {
         ]
       });
 
-      BasisObject.flush();
+      TransisObject.flush();
     });
 
     it('keeps track of changes to attributes in the `changes` property', function() {
@@ -1905,7 +1905,7 @@ describe('Model', function () {
 
       this.invoice.on('ownChanges', spy);
       this.invoice.name = 'B';
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('ownChanges');
     });
 
@@ -1946,7 +1946,7 @@ describe('Model', function () {
 
       this.invoice.on('ownChanges', spy);
       this.invoice.billingAddress = new Address;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('ownChanges');
     });
 
@@ -1983,7 +1983,7 @@ describe('Model', function () {
 
       this.invoice.on('ownChanges', spy);
       this.invoice.lineItems.pop();
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('ownChanges');
     });
 
@@ -2158,25 +2158,25 @@ describe('Model', function () {
 
         it('are fired when an attribute changes', function() {
           this.invoice.name = 'B';
-          BasisObject.flush();
+          TransisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it('are fired when an owned hasMany association is mutated', function() {
           this.invoice.lineItems.pop();
-          BasisObject.flush();
+          TransisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it('are not fired when an owned associated model changes', function() {
           this.invoice.billingAddress.name = 'Bob Smith';
-          BasisObject.flush();
+          TransisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
 
         it('are not fired when an unowned associated model changes', function() {
           this.invoice.company.name = 'Foo';
-          BasisObject.flush();
+          TransisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });
@@ -2304,35 +2304,35 @@ describe('Model', function () {
 
       it('are fired when an attribute changes', function() {
         this.invoice.name = 'B';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.changesSpy).toHaveBeenCalled();
         expect(this.hasChangesSpy).toHaveBeenCalled();
       });
 
       it('are fired when an owned hasMany association is mutated', function() {
         this.invoice.lineItems.pop();
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.changesSpy).toHaveBeenCalled();
         expect(this.hasChangesSpy).toHaveBeenCalled();
       });
 
       it('are fired when an owned hasOne associated model changes', function() {
         this.invoice.billingAddress.name = 'Bob Smith';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.changesSpy).toHaveBeenCalled();
         expect(this.hasChangesSpy).toHaveBeenCalled();
       });
 
       it('are fired when an owned hasMany associated model changes', function() {
         this.invoice.lineItems.at(0).name = 'xyz';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.changesSpy).toHaveBeenCalled();
         expect(this.hasChangesSpy).toHaveBeenCalled();
       });
 
       it('are not fired when an unowned associated model changes', function() {
         this.invoice.company.name = 'Foo';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.changesSpy).not.toHaveBeenCalled();
         expect(this.hasChangesSpy).not.toHaveBeenCalled();
       });
@@ -2418,7 +2418,7 @@ describe('Model', function () {
         ]
       });
 
-      BasisObject.flush();
+      TransisObject.flush();
     });
 
     describe('#addError', function() {
@@ -2450,7 +2450,7 @@ describe('Model', function () {
         var spy = jasmine.createSpy();
         this.m.on('ownErrors', spy);
         this.m.addError('str', 'foo');
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('ownErrors');
       });
     });
@@ -2494,28 +2494,28 @@ describe('Model', function () {
 
         it('are fired when a validation error is added', function() {
           this.invoice.addError('name', 'x');
-          BasisObject.flush();
+          TransisObject.flush();
           expect(this.spy).toHaveBeenCalled();
         });
 
         it('are fired when _destroy is changed', function() {
           this.invoice.addError('name', 'x');
-          BasisObject.flush();
+          TransisObject.flush();
           expect(this.spy.calls.count()).toBe(1);
           this.invoice._destroy = true
-          BasisObject.flush();
+          TransisObject.flush();
           expect(this.spy.calls.count()).toBe(2);
         });
 
         it('are not fired when an owned associated model has a validation error added', function() {
           this.invoice.billingAddress.addError('name', 'y');
-          BasisObject.flush();
+          TransisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
 
         it('are not fired when an unowned associated model has a validation error added', function() {
           this.invoice.company.addError('name', 'z');
-          BasisObject.flush();
+          TransisObject.flush();
           expect(this.spy).not.toHaveBeenCalled();
         });
       });
@@ -2629,21 +2629,21 @@ describe('Model', function () {
 
       it('are fired when a validation error is added', function() {
         this.invoice.addError('name', 'x');
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.errorsSpy).toHaveBeenCalled();
         expect(this.hasErrorsSpy).toHaveBeenCalled();
       });
 
       it('are fired when an owned associated model has a validation error added', function() {
         this.invoice.billingAddress.addError('name', 'y');
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.errorsSpy).toHaveBeenCalled();
         expect(this.hasErrorsSpy).toHaveBeenCalled();
       });
 
       it('are not fired when an unowned associated model has a validation error added', function() {
         this.invoice.company.addError('name', 'z');
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.errorsSpy).not.toHaveBeenCalled();
         expect(this.hasErrorsSpy).not.toHaveBeenCalled();
       });

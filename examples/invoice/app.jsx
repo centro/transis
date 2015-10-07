@@ -1,6 +1,6 @@
 function formatCost(n) { return typeof n === 'number' ? n.toFixed(2) : ''; }
 
-var Invoice = Basis.Model.extend('Invoice', function() {
+var Invoice = Transis.Model.extend('Invoice', function() {
   this.attr('name', 'string');
 
   this.hasMany('lineItems', 'LineItem', {owner: true, inverse: 'invoice'});
@@ -9,7 +9,7 @@ var Invoice = Basis.Model.extend('Invoice', function() {
     cache: true,
     on: ['lineItems.quantity'],
     get: function(lineItemQuantities) {
-      return Basis.Array.from(lineItemQuantities)
+      return Transis.Array.from(lineItemQuantities)
         .compact().reduce(function(sum, q) { return sum + q; }, null);
     }
   });
@@ -18,7 +18,7 @@ var Invoice = Basis.Model.extend('Invoice', function() {
     cache: true,
     on: ['lineItems.cost'],
     get: function(lineItemCosts) {
-      return Basis.Array.from(lineItemCosts)
+      return Transis.Array.from(lineItemCosts)
         .compact().reduce(function(sum, c) { return sum + c; }, null);
     }
   });
@@ -32,7 +32,7 @@ var Invoice = Basis.Model.extend('Invoice', function() {
   });
 });
 
-var LineItem = Basis.Model.extend('LineItem', function() {
+var LineItem = Transis.Model.extend('LineItem', function() {
   this.attr('name', 'string');
   this.attr('quantity', 'number');
   this.attr('rate', 'number');
@@ -49,7 +49,7 @@ var LineItem = Basis.Model.extend('LineItem', function() {
 });
 
 var LineItemView = React.createClass({
-  mixins: [Basis.ReactPropsMixin({lineItem: ['*']})],
+  mixins: [Transis.ReactPropsMixin({lineItem: ['*']})],
 
   propTypes: {
     lineItem: React.PropTypes.instanceOf(LineItem)
@@ -127,7 +127,7 @@ var LineItemView = React.createClass({
 });
 
 var InvoiceTotalsView = React.createClass({
-  mixins: [Basis.ReactPropsMixin({invoice: ['quantity', 'avgRate', 'cost']})],
+  mixins: [Transis.ReactPropsMixin({invoice: ['quantity', 'avgRate', 'cost']})],
 
   propTypes: {
     invoice: React.PropTypes.instanceOf(Invoice)
@@ -147,7 +147,7 @@ var InvoiceTotalsView = React.createClass({
 });
 
 var InvoiceView = React.createClass({
-  mixins: [Basis.ReactPropsMixin({invoice: ['name', 'lineItems', 'hasChanges']})],
+  mixins: [Transis.ReactPropsMixin({invoice: ['name', 'lineItems', 'hasChanges']})],
 
   propTypes: {
     invoice: React.PropTypes.instanceOf(Invoice)

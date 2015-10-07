@@ -1,7 +1,7 @@
 import pluralize from "pluralize";
 import IdMap from "./id_map";
-import BasisObject from "./object";
-import BasisArray from "./array";
+import TransisObject from "./object";
+import TransisArray from "./array";
 import Validations from "./validations";
 import * as attrs from "./attrs";
 import * as util from "./util";
@@ -13,9 +13,9 @@ const EMPTY   = 'empty';
 const LOADED  = 'loaded';
 const DELETED = 'deleted';
 
-// Internal: Returns the `Basis.Model` subclass with the given name.
+// Internal: Returns the `Transis.Model` subclass with the given name.
 //
-// name  - A string representing the name of a `Basis.Model` subclass.
+// name  - A string representing the name of a `Transis.Model` subclass.
 // raise - A boolean indicating whether an exception should be raised if the name can't be
 //         resolved (default: `true`).
 //
@@ -26,7 +26,7 @@ function resolve(name, raise = true) {
   var klass = (typeof name === 'function') ? name : subclasses[name];
 
   if (!klass && raise) {
-    throw new Error(`Basis.Model.resolve: could not resolve subclass: \`${name}\``);
+    throw new Error(`Transis.Model.resolve: could not resolve subclass: \`${name}\``);
   }
 
   return klass;
@@ -53,7 +53,7 @@ function hasManySplice(i, n, added) {
 
   added.forEach((o) => checkAssociatedType(desc, o));
 
-  removed = BasisArray.prototype._splice.call(this, i, n, added);
+  removed = TransisArray.prototype._splice.call(this, i, n, added);
 
   if (inverse && !this.__handlingInverse__) {
     removed.forEach(function(model) { model._inverseRemoved(inverse, owner); }, this);
@@ -101,10 +101,10 @@ function hasManyInverseRemove(model) {
 }
 
 // Internal: Builds an array that manages a `hasMany` association. A hasMany array is a
-// `Basis.Array` that overrides the `_splice` method in order to handle syncing the inverse side
+// `Transis.Array` that overrides the `_splice` method in order to handle syncing the inverse side
 // of the association.
 function hasManyArray(owner, desc) {
-  var a = BasisArray.of();
+  var a = TransisArray.of();
   a.proxy(owner, desc.name);
   a.__owner__      = owner;
   a.__desc__       = desc;
@@ -161,15 +161,15 @@ function mapperDeleteSuccess() {
   }
 }
 
-var Model = BasisObject.extend(function() {
-  this.displayName = 'Basis.Model';
+var Model = TransisObject.extend(function() {
+  this.displayName = 'Transis.Model';
 
-  // Public: Creates a subclass of `Basis.Model`. This method overrides the `Basis.Object.extend`
+  // Public: Creates a subclass of `Transis.Model`. This method overrides the `Transis.Object.extend`
   // method in order to force `Model` subclasses to be named.
   this.extend = function(name, f) {
     if (typeof name !== 'string') { throw new Error(`${this}.extend: a name is required`); }
 
-    var subclass = BasisObject.extend.call(this);
+    var subclass = TransisObject.extend.call(this);
     subclass.displayName = name;
     subclasses[name] = subclass;
 
@@ -473,7 +473,7 @@ var Model = BasisObject.extend(function() {
   //
   // The array returned by this method is decorated with the following additional properties:
   //
-  //   modelClass - The `Basis.Model` subclass that `buildQuery` was invoked on.
+  //   modelClass - The `Transis.Model` subclass that `buildQuery` was invoked on.
   //   isBusy     - Boolean property indicating whether a query is in progress.
   //   error      - An error message set on the array when the mapper fails to fulfill its promise.
   //   meta       - Metadata provided by the mapper. May be used for paging results.
@@ -483,7 +483,7 @@ var Model = BasisObject.extend(function() {
   //   query: Execute a query by invoking the `query` method on the modelClass's mapper. This will
   //   put the array into a busy state (indicated by the `isBusy` property) until the mapper has
   //   fulfilled its promise. When the promise is successfully resolved, the returned data is loaded
-  //   via `Basis.Model.loadAll` and the materialized models are replaced into the array. When the
+  //   via `Transis.Model.loadAll` and the materialized models are replaced into the array. When the
   //   promise is rejected, the error message returned by the mapper is made available on the `error`
   //   property.
   //
@@ -513,9 +513,9 @@ var Model = BasisObject.extend(function() {
   //
   //   Returns a new `Promise` that is resolved to the return value of the callback if it is called.
   //
-  // Returns a new `Basis.Array` decorated with the properties and methods described above.
+  // Returns a new `Transis.Array` decorated with the properties and methods described above.
   this.buildQuery = function() {
-    var modelClass = this, promise = Promise.resolve(), a = BasisArray.of(), queued;
+    var modelClass = this, promise = Promise.resolve(), a = TransisArray.of(), queued;
 
     a.props({
       modelClass: {get: function() { return modelClass; }},
@@ -570,11 +570,12 @@ var Model = BasisObject.extend(function() {
     return a;
   };
 
-  // Public: Creates a new `Basis.QueryArray` and invokes its `query` method with the given options.
+  // Public: Creates a new `Transis.QueryArray` and invokes its `query` method with the given
+  // options.
   //
-  // opts - An options object to pass to the `Basis.QueryArray#query` method (default: `{}`).
+  // opts - An options object to pass to the `Transis.QueryArray#query` method (default: `{}`).
   //
-  // Returns a new `Basis.QueryArray`.
+  // Returns a new `Transis.QueryArray`.
   this.query = function(opts = {}) { return this.buildQuery().query(opts); };
 
   // Public: Retrieves a model from the identity map or creates a new empty model instance. If you
@@ -1213,7 +1214,7 @@ var Model = BasisObject.extend(function() {
     }
   };
 
-  // Internal: Overrides `Basis.Object#_setProp` in order to perform change tracking.
+  // Internal: Overrides `Transis.Object#_setProp` in order to perform change tracking.
   this.prototype._setProp = function(name, value) {
     var oldValue = Model.__super__._setProp.call(this, name, value);
 

@@ -1,22 +1,22 @@
-# Basis
+# Transis
 
-Basis is a javascript data modeling library for use in single page web applications. It provides
+Transis is a javascript data modeling library for use in single page web applications. It provides
 the following features:
 
 * two-way associations
 * identity map
 * separation of business logic from persistence logic via the data mapper pattern
-* ability to easily load nested models from a complex JSON object (see `Basis.Model.load`)
+* ability to easily load nested models from a complex JSON object (see `Transis.Model.load`)
 * typed attributes with coercion
 * model state management (empty, new, loaded, busy, etc.)
 * attribute change tracking with undo functionality
 * property observation of both simple and computed properties
 * automatic computed property caching
 
-Model classes can be created by extending the `Basis.Model` class:
+Model classes can be created by extending the `Transis.Model` class:
 
 ```javascript
-var Person = Basis.Model.extend('Person', function() {
+var Person = Transis.Model.extend('Person', function() {
   this.attr('firstName', 'string');
   this.attr('lastName', 'string');
   this.attr('birthday', 'date');
@@ -40,26 +40,26 @@ mj.fullName;  //=> 'Michael Jordan'
 
 ## Dependencies
 
-Basis has no dependencies other than some ES6 features that are not yet available in all browsers.
+Transis has no dependencies other than some ES6 features that are not yet available in all browsers.
 Its advised to use [es6-shim](https://github.com/paulmillr/es6-shim/) until browser support
 improves.
 
 ## Feature Breakdown
 
-Below is a walkthrough of the main `Basis` features.
+Below is a walkthrough of the main `Transis` features.
 
 ### Two-way associations
 
-Associations between models can be defined using the `Basis.Model.hasOne` and `Basis.Model.hasMany`
-methods:
+Associations between models can be defined using the `Transis.Model.hasOne` and
+`Transis.Model.hasMany` methods:
 
 ```javascript
-var Author = Basis.Model.extend('Author', function() {
+var Author = Transis.Model.extend('Author', function() {
   this.attr('name', 'string');
   this.hasMany('books', 'Book', {inverse: 'author'});
 });
 
-var Book = Basis.Model.extend('Book', function() {
+var Book = Transis.Model.extend('Book', function() {
   this.attr('title', 'string');
   this.hasOne('author', 'Author', {inverse: 'books'});
 });

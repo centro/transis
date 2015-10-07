@@ -1,8 +1,8 @@
 import "es6-shim";
-import BasisObject from "../object";
+import TransisObject from "../object";
 import {PropsMixin, StateMixin} from "../react";
 
-var Model = BasisObject.extend(function() {
+var Model = TransisObject.extend(function() {
   this.prop('foo');
   this.prop('bar');
   this.prop('baz');
@@ -25,17 +25,17 @@ describe('PropsMixin', function() {
 
     it('attaches observers according to the displayProps property that invoke forceUpdate on change', function() {
       this.model.foo = 1;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.component.forceUpdate).toHaveBeenCalled();
 
       this.component.forceUpdate.calls.reset();
       this.model.bar = 2;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.component.forceUpdate).toHaveBeenCalled();
 
       this.component.forceUpdate.calls.reset();
       this.model.baz = 3;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.component.forceUpdate).not.toHaveBeenCalled();
     });
   });
@@ -47,13 +47,13 @@ describe('PropsMixin', function() {
 
     it('detaches the observers according to the displayProps', function() {
       this.model.foo = 1;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.component.forceUpdate).toHaveBeenCalled();
       this.component.forceUpdate.calls.reset();
 
       this.component.componentWillUnmount();
       this.model.foo = 2;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.component.forceUpdate).not.toHaveBeenCalled();
     });
   });
@@ -66,14 +66,14 @@ describe('PropsMixin', function() {
 
     it('detaches observers from displayProps that are old', function() {
       this.model.foo = 1;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.component.forceUpdate).toHaveBeenCalled();
       this.component.forceUpdate.calls.reset();
 
       this.component.componentWillReceiveProps({model: this.newModel});
 
       this.model.foo = 2;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.component.forceUpdate).not.toHaveBeenCalled();
     });
 
@@ -81,14 +81,14 @@ describe('PropsMixin', function() {
       this.component.componentWillReceiveProps({model: this.newModel});
 
       this.newModel.foo = 2;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.component.forceUpdate).toHaveBeenCalled();
     });
   });
 });
 
 describe('StateMixin', function() {
-  var AppState = BasisObject.extend(function() {
+  var AppState = TransisObject.extend(function() {
     this.prop('a');
     this.prop('b');
     this.prop('c');
@@ -127,13 +127,13 @@ describe('StateMixin', function() {
 
       it("attaches observers to the given properties on the state object and syncs their values to the component's state", function() {
         this.appState.a = 10;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.setState).toHaveBeenCalledWith({a: 10});
       });
 
       it('attaches property observers to the value of the state properties that triggers a forceUpdate on change', function() {
         this.appState.b.foo = 9;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.forceUpdate).toHaveBeenCalled();
       });
 
@@ -141,16 +141,16 @@ describe('StateMixin', function() {
         var b1 = this.appState.b, b2 = new Model;
 
         this.appState.b.foo = 9;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.forceUpdate).toHaveBeenCalled();
         this.component.forceUpdate.calls.reset();
 
         this.appState.b = b2;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.forceUpdate).not.toHaveBeenCalled();
 
         b1.foo = 10;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.forceUpdate).not.toHaveBeenCalled();
       });
 
@@ -158,16 +158,16 @@ describe('StateMixin', function() {
         var b1 = this.appState.b, b2 = new Model;
 
         this.appState.b.foo = 9;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.forceUpdate).toHaveBeenCalled();
         this.component.forceUpdate.calls.reset();
 
         this.appState.b = b2;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.forceUpdate).not.toHaveBeenCalled();
 
         b2.foo = 10;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.forceUpdate).toHaveBeenCalled();
       });
     });
@@ -183,14 +183,14 @@ describe('StateMixin', function() {
       it('removes the observer from the state object', function() {
         this.component.componentWillUnmount();
         this.appState.a = 2;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.setState).not.toHaveBeenCalled();
       });
 
       it('removes property observers from state property objects', function() {
         this.component.componentWillUnmount();
         this.appState.b.foo = new Model;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.forceUpdate).not.toHaveBeenCalled();
       });
     });
@@ -211,7 +211,7 @@ describe('StateMixin', function() {
 
       it("attaches observers to the given properties on the state object and syncs their values to the component's state", function() {
         this.appState.b = 10;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(this.component.setState).toHaveBeenCalledWith({b: 10});
       });
     });

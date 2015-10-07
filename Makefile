@@ -6,9 +6,9 @@ ES5_SPECS   = $(SPECS:spec/%.js=dist/spec/%.js)
 
 default: spec
 
-basis: $(ES5_SOURCES)
+transis: $(ES5_SOURCES)
 
-dist/basis.js: $(SOURCES)
+dist/transis.js: $(SOURCES)
 	./node_modules/.bin/webpack --output-file $@
 
 dist/%.js: src/%.js
@@ -19,21 +19,21 @@ dist/spec/%.js: spec/%.js
 	@mkdir -p dist/spec
 	./node_modules/.bin/babel $< -o $@
 
-package: dist/basis.js
+package: dist/transis.js
 
 SPEC ?=
-spec_node: basis $(ES5_SPECS)
+spec_node: transis $(ES5_SPECS)
 	./node_modules/.bin/jasmine $(SPEC)
 
-spec_browser: basis $(ES5_SPECS)
+spec_browser: transis $(ES5_SPECS)
 	./node_modules/karma/bin/karma start ./karma.config.js
 
 spec: spec_node spec_browser
 
-repl: basis
+repl: transis
 	env NODE_NO_READLINE=1 rlwrap node ./util/repl.js
 
 clean:
 	rm -rf ./dist
 
-.PHONY: basis default clean spec spec_node spec_browser dist
+.PHONY: transis default clean spec spec_node spec_browser dist

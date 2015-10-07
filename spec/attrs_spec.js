@@ -181,7 +181,7 @@ describe('DateAttr#coerce', function() {
   it('throws an exception when given something other than a number or string', function() {
     expect(function() {
       attrs.DateAttr.coerce({});
-    }).toThrow(new Error("Basis.DateAttr#coerce: don't know how to coerce `[object Object]` to a Date"));
+    }).toThrow(new Error("Transis.DateAttr#coerce: don't know how to coerce `[object Object]` to a Date"));
   });
 });
 
@@ -221,7 +221,7 @@ describe('DateTimeAttr#coerce', function() {
   it('throws an exception when given something other than a number or string', function() {
     expect(function() {
       attrs.DateTimeAttr.coerce({});
-    }).toThrow(new Error("Basis.DateTimeAttr#coerce: don't know how to coerce `[object Object]` to a Date"));
+    }).toThrow(new Error("Transis.DateTimeAttr#coerce: don't know how to coerce `[object Object]` to a Date"));
   });
 });
 

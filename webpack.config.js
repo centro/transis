@@ -14,7 +14,7 @@ module.exports = {
   entry: './index.js',
 
   output:  {
-    library: 'Basis',
+    library: 'Transis',
     libraryTarget: 'umd'
   },
 

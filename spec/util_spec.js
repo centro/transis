@@ -1,6 +1,6 @@
 import "es6-shim";
 import * as util from "../util";
-import BasisObject from "../object";
+import TransisObject from "../object";
 
 describe('type', function() {
   it("returns the string 'null' when passed `null`", function() {
@@ -60,9 +60,9 @@ describe('type', function() {
 });
 
 describe('eq', function() {
-  describe('given a Basis.Object as the first argument', function() {
+  describe('given a Transis.Object as the first argument', function() {
     it('invokes `eq` on the first argument', function() {
-      var a = new BasisObject, b = new BasisObject;
+      var a = new TransisObject, b = new TransisObject;
 
       spyOn(a, 'eq');
       util.eq(a, b);
