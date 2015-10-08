@@ -2196,13 +2196,19 @@ describe('Model', function () {
       it('does not include changes on owned hasOne associations that are destroyed', function() {
         this.invoice.billingAddress.address = '321 Maple Ave.';
         this.invoice.billingAddress._destroy = true;
-        expect(this.invoice.changes).toEqual({});
+        expect(this.invoice.changes).toEqual({
+          'billingAddress.address': '123 Fake St.',
+          'billingAddress._destroy': undefined
+        });
       });
 
       it('does not includes changes on owned hasMany associations that are destroyed', function() {
         this.invoice.lineItems[0].name = 'FOO';
         this.invoice.lineItems[0]._destroy = true;
-        expect(this.invoice.changes).toEqual({});
+        expect(this.invoice.changes).toEqual({
+          'lineItems.0.name': 'foo',
+          'lineItems.0._destroy': undefined 
+        });
       });
 
       it('includes changes on owned hasMany associations', function() {
@@ -2796,4 +2802,3 @@ describe('Model', function () {
     });
   });
 });
-
