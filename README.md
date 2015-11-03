@@ -41,8 +41,7 @@ mj.fullName;  //=> 'Michael Jordan'
 ## Dependencies
 
 Basis has no dependencies other than some ES6 features that are not yet available in all browsers.
-Its advised to use [es6-shim](https://github.com/paulmillr/es6-shim/) until browser support
-improves.
+Its advised to use [es6-shim][es6-shim] until browser support improves.
 
 ## Feature Breakdown
 
@@ -121,6 +120,128 @@ console.log('c perimeter:', c.perimeter()); // c perimeter: 56.548667764616276
 
 ### Properties
 
+The other main feature of `Basis.Object` is observable properties. Properties, or "props" to
+distinguish them from normal javascript object properties, are defined with the `Basis.Object.prop`
+method. The simplest prop is just defined with a name and can be get and set just like any other
+javascript property:
+
+```javascript
+var Person = Basis.Object.extend(function() {
+  this.prop('firstName');
+  this.prop('lastName');
+});
+
+var p = new Person({firstName: 'John', lastName: 'Doe'});
+console.log(p.firstName);
+// John
+console.log(p.lastName);
+// Doe
+p.firstName = 'Jane';
+console.log(p.firstName);
+// Jane
+console.log(p.lastName);
+// Doe
+```
+
+As you can see above, the default `Basis.Object` constructor takes an object mapping prop keys to
+values. Any key in the given object that matches a defined prop will be set by the constructor.
+
+What sets props apart from normal javascript properties is their ability to be observed. Observers
+can be attached using the `Basis.Object#on` method:
+
+```javascript
+console.log(p.firstName);
+// Jane
+p.on('firstName', function() { console.log('firstName changed'); });
+p.firstName = 'Bob';
+// firstName changed
+```
+
+The `#on` method is very simple, it just takes a prop name and a callback function. To remove an
+observer, use the `Basis.Object#off` method and pass it the same arguments passed to `#on`.
+
+Basis props can be much more sophisticated than the example above - you can specify custom getter
+and setter functions to be invoked whenever the prop is read or written. Under the hood the `prop`
+method is using [`Object.defineProperty`][Object.defineProperty].
+
+```javascript
+var Doubler = Basis.Object.extend(function() {
+  this.prop('value');
+  this.prop('doubledValue', {
+    get: function() {
+      return this.value * 2;
+    },
+    set: function(doubledValue) {
+      this.value = doubledValue / 2;
+    }
+  });
+});
+
+var doubler = new Doubler({value: 3});
+console.log(doubler.value);
+// 3
+console.log(doubler.doubledValue);
+// 6
+doubler.doubledValue = 18;
+console.log(doubler.value);
+// 9
+console.log(doubler.doubledValue);
+// 18
+```
+
+And even with a custom getter function, the prop is still observable:
+
+```javascript
+doubler.on('doubledValue', function() { console.log('doubledValue changed:', doubler.doubledValue); });
+doubler.doubledValue = 22;
+// doubledValue changed: 22
+```
+
+There is a problem with the above `Doubler` example however. If we set the `value` prop, that
+effectively updates the `doubledValue` prop, but any observers on `doubledValue` won't get notified.
+This is because we haven't informed Basis that the `doubledValue` prop actually depends on the
+`value` prop. We can do that by using the `on` option to the `prop` method. Simply pass it a list of
+prop names that the prop you are defining depends on:
+
+```javascript
+var Doubler2 = Basis.Object.extend(function() {
+  this.prop('value');
+  this.prop('doubledValue', {
+    on: ['value'],
+    get: function(value) {
+      return value * 2;
+    }
+  });
+});
+
+var doubler2 = new Doubler2({value: 4});
+console.log(doubler2.value);
+// 4
+console.log(doubler2.doubledValue);
+// 8
+doubler2.on('doubledValue', function() { console.log('doubledValue changed:', doubler2.doubledValue); });
+doubler2.value = 5;
+// doubledValue changed: 10
+```
+
+Now, our observer on the `doubledValue` prop gets notified when we change the `value` prop. This is
+how you define observable computed properties in Basis.
+
+One thing you may have noticed in the `Doubler2` example is that the `doubledValue` getter function
+takes an argument and does not access `this`. This is what is known as a "pure" prop and is the
+default when you define a custom getter function on your prop without also defining a custom setter.
+A pure prop is called as such because its getter function must be a pure function, meaning it has no
+side effects. This is enforced by Basis by invoking the getter function in the `null` context,
+meaning `this` will be `null` inside the body of the function. So if you can't access `this`, how do
+you access the dependent props? This is where the `on` option comes in. You must declare all
+dependencies using the `on` option and Basis will take care of accessing them and passing them to
+your getter function in the same order they are named in the `on` option.
+
+If you must access `this` inside your getter, you can make your prop "impure" by setting the `pure`
+option to false. In this case, no arguments will be passed to your getter function, even if you have
+declared dependencies with the `on` option.
+
+
 ### Two-way associations
 
 Associations between models can be defined using the `Basis.Model.hasOne` and `Basis.Model.hasMany`
@@ -172,3 +293,6 @@ $ ruby -run -e httpd ./examples -p 9090
 
 Then load http://localhost:9090/basic/index.html.
 
+
+[es6-shim]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty
+[Object.defineProperty]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty
