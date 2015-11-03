@@ -13,31 +13,6 @@ the following features:
 * property observation of both simple and computed properties
 * automatic computed property caching
 
-Model classes can be created by extending the `Basis.Model` class:
-
-```javascript
-var Person = Basis.Model.extend('Person', function() {
-  this.attr('firstName', 'string');
-  this.attr('lastName', 'string');
-  this.attr('birthday', 'date');
-
-  this.prop('fullName', {
-    cache: true, on: ['firstName', 'lastName'],
-    get: function(firstName, lastName) {
-      return firstName + ' ' + lastName;
-    }
-  });
-});
-
-var mj = Person.load({
-  id: 23, firstName: 'Michael', lastName: 'Jordan', birthday: '1963-02-17'
-});
-mj.firstName; //=> 'Michael'
-mj.lastName;  //=> 'Jordan'
-mj.birthday;  //=> Sun Feb 17 1963 00:00:00 GMT-0600 (CST)
-mj.fullName;  //=> 'Michael Jordan'
-```
-
 ## Dependencies
 
 Basis has no dependencies other than some ES6 features that are not yet available in all browsers.
@@ -241,6 +216,77 @@ If you must access `this` inside your getter, you can make your prop "impure" by
 option to false. In this case, no arguments will be passed to your getter function, even if you have
 declared dependencies with the `on` option.
 
+### Model layer
+
+The `Basis.Object` class is the foundation of Basis, but you will likely rarely use it directly in
+a user interface application to define your model objects. Instead you will use `Basis.Model` which
+is a subclass of `Basis.Object` and therefore inherits its ability to define observable props.
+
+`Basis.Model` builds on `Basis.Object` by adding an identity map, typed attributes, two-way
+associations, a thin persistence layer, state management, change tracking, and validations. Each of
+these features will be explored next.
+
+### Identity map
+
+`Basis.Model` makes use of an [identity map][identity map] to ensure that each model instance gets
+loaded only once into memory. A model instance is uniquely identified by its class and `id` prop.
+
+This is important for user interface applications because things can quickly get out of hand if we
+allow for having multiple objects that all represent the same thing. If you update one object but
+have another object that represents the same thing bound to a view, the view won't update because
+its version of the object wasn't actually changed.
+
+### Typed attributes
+
+`Basis.Model` introduces a new way to define typed props, otherwise known as attributes with the
+`Basis.Model.attr` method. Attributes are special Basis props that ensure their value is of a
+particular type. This is really helpful when dealing with JSON APIs where the amount of data types
+is fairly limited. For example, JSON doesn't support a Date data type, but Basis provides a date
+attribute type that will automatically parse [ISO 8601][ISO 8601] formatted date strings and turn
+them into javascript [`Date`][Date] objects.
+
+Basis supports the following attribute types:
+
+* identity (no coercion is performed)
+* string
+* integer
+* number
+* boolean
+* date
+* datetime
+
+Additionally, you can register your own custom attribute types using the `Basis.Model.registerAttr`
+method.
+
+Here is an example of attributes in action:
+
+```javascript
+var Person = Basis.Model.extend('Person', function() {
+  this.attr('firstName', 'string');
+  this.attr('lastName', 'string');
+  this.attr('birthday', 'date');
+  this.attr('numberOfPets', 'integer');
+});
+
+var p = new Person({firstName: 'Joe', lastName: 'Blow', birthday: '1970-01-01', numberOfPets: '3'});
+console.log(p.firstName);
+// Joe
+console.log(p.lastName);
+// Blow
+console.log(p.birthday);
+// Thu Jan 01 1970 00:00:00 GMT-0600 (CST)
+console.log(p.numberOfPets);
+// 3
+console.log(p.birthday instanceof Date);
+// true
+console.log(typeof p.numberOfPets);
+// number
+```
+
+The `firstName` and `lastName` attrs are pretty straightforward, but you can see the attribute
+coercion in action with the `birthday` and `numberOfPets` props. We set both of those values to
+strings but the `birthday` attr is parsed into a `Date` object and the `numberOfPets` attr is parsed
+into a number.
 
 ### Two-way associations
 
@@ -296,3 +342,6 @@ Then load http://localhost:9090/basic/index.html.
 
 [es6-shim]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty
 [Object.defineProperty]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty
+[identity map]: http://martinfowler.com/eaaCatalog/identityMap.html
+[ISO 8601]: https://en.wikipedia.org/wiki/ISO_8601
+[Date]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
