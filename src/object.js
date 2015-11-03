@@ -2,6 +2,38 @@ import * as util from "./util";
 
 var objectId = 0, changedObjects = {}, delayCallbacks = [], flushTimer;
 
+// Public: `Basis.Object` is the foundation of the `Basis` library. It implements a basic object
+// system and observable properties.
+//
+// To create a subclass of `Basis.Object` use the `extend` method and pass it a function. Inside of
+// the function is the "class body" where you can define both static and dynamic properties:
+//
+//   var Person = Basis.Object.extend(function() {
+//     // `this` refers to `MyClass`
+//
+//     // define static/class properties by attaching them to `this`.
+//     this.classMethod = function() {};
+//
+//     // create an intializer by defining the `init` method.
+//     this.prototype.init = function(firstName, lastName) {
+//       this.firstName = firstName;
+//       this.lastName = lastName;
+//     };
+//
+//     // define instance properties by adding them to the `prototype`
+//     this.prototype.fullName = function() {
+//       return this.firstName + ' ' + this.lastName;
+//     };
+//   });
+//
+//   Person.classMethod();
+//
+//   // instantiate an object using the `new` operator, any arguments will get passed to the `init`
+//   // method
+//   var joe = new Person('joe', 'blow');
+//   joe.fullName(); // 'Joe Blow'
+//
+// See `Basis.Object.prop` for defining observable properties.
 function BasisObject() {
   Object.defineProperty(this, 'objectId', {value: ++objectId});
   this.init.apply(this, arguments);
@@ -178,6 +210,33 @@ BasisObject.extend = function(f) {
 //   cache     - Set this to true to enable property caching. This is useful with computed
 //               properties that have their dependent events defined. If dependent events aren't
 //               defined, then the initially cached value will never be cleared.
+//
+// Examples
+//
+//   var Person = Basis.Object.extend(function() {
+//     this.prop('firstName');
+//     this.prop('lastName');
+//     this.prop('fullName', {
+//       on: ['firstName', 'lastName'],
+//       get: function(firstName, lastName) {
+//         return firstName + ' ' + lastName;
+//       }
+//     });
+//   });
+//
+//   var p = new Person({firstName: 'John', lastName: 'Doe'});
+//
+//   console.log(p.firstName);
+//   // John
+//   console.log(p.lastName);
+//   // Doe
+//   console.log(p.fullName);
+//   // John Doe
+//   p.on('firstName', function() { console.log('firstName changed:', p.firstName); });
+//   p.on('fullName', function() { console.log('fullName changed:', p.fullName); });
+//   p.firstName = 'Jane';
+//   // firstName changed: Jane
+//   // fullName changed: Jane Doe
 //
 // Returns the receiver.
 BasisObject.prop = function(name, opts = {}) {

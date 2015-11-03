@@ -48,6 +48,79 @@ improves.
 
 Below is a walkthrough of the main `Basis` features.
 
+### Object system
+
+`Basis` provides a basic object system that works on top of constructor functions and the `new`
+operator. New classes are created by calling the `extend` method on `Basis.Object` and passing it a
+function that represents the "class body". The `extend` method returns a regular constructor
+function that can be instantiated with the `new` operator. Inside the class body function you can
+define both static and instance properties and methods. To add an initializer, simply define the
+`init` method, any arguments passed to the constructor function will be forwarded on to it.
+
+The `extend` method sets up the prototype chain so that instance level inheritance works as
+expected. It also copies static properties from the superclass to the subclass.
+
+```javascript
+var Shape = Basis.Object.extend(function() {
+  this.prototype.area = function() {
+    return 0;
+  };
+
+  this.prototype.perimeter = function() {
+    return 0;
+  };
+});
+
+var Rectangle = Shape.extend(function() {
+  this.prototype.init = function(length, width) {
+    this.length = length;
+    this.width = width;
+  };
+
+  this.prototype.area = function() {
+    return this.length * this.width;
+  };
+
+  this.prototype.perimeter = function() {
+    return 2 * (this.length + this.width);
+  };
+});
+
+var Circle = Shape.extend(function() {
+  this.PI = Math.PI;
+
+  this.prototype.init = function(radius = 0) {
+    this.radius = radius;
+  };
+
+  this.prototype.area = function() {
+    return this.constructor.PI * this.radius * this.radius;
+  };
+
+  this.prototype.perimeter = function() {
+    return 2 * this.constructor.PI * this.radius;
+  };
+});
+
+var Square = Rectangle.extend(function() {
+  this.prototype.init = function(side) {
+    return Square.__super__.init.call(this, side, side);
+  };
+});
+
+var r = new Rectangle(4, 3);
+var s = new Square(5);
+var c = new Circle(9);
+console.log('r area:', r.area()); // r area: 12
+console.log('r perimeter:', r.perimeter()); // r perimeter: 14
+console.log('s area:', s.area()); // s area: 25
+console.log('s perimeter:', s.perimeter()); // s perimeter: 20
+console.log('c area:', c.area()); // c area: 254.46900494077323
+console.log('c perimeter:', c.perimeter()); // c perimeter: 56.548667764616276
+```
+
+### Properties
+
 ### Two-way associations
 
 Associations between models can be defined using the `Basis.Model.hasOne` and `Basis.Model.hasMany`
