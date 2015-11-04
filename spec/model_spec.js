@@ -813,6 +813,12 @@ describe('Model', function () {
       });
     });
 
+    it('handles 0 ids', function() {
+      expect(() => {
+        Post.load({id: 0});
+      }).not.toThrow();
+    });
+
     it('returns an instance with no changes', function() {
       var t = Tag.load({id: 49, name: 'foobar'});
       expect(t.hasChanges).toBe(false);
@@ -2193,6 +2199,24 @@ describe('Model', function () {
         expect(this.invoice.changes).toEqual({'billingAddress.address': '123 Fake St.'});
       });
 
+      it('does not include changes on owned hasOne associations that are destroyed', function() {
+        this.invoice.billingAddress.address = '321 Maple Ave.';
+        this.invoice.billingAddress._destroy = true;
+        expect(this.invoice.changes).toEqual({
+          'billingAddress.address': '123 Fake St.',
+          'billingAddress._destroy': undefined
+        });
+      });
+
+      it('does not includes changes on owned hasMany associations that are destroyed', function() {
+        this.invoice.lineItems[0].name = 'FOO';
+        this.invoice.lineItems[0]._destroy = true;
+        expect(this.invoice.changes).toEqual({
+          'lineItems.0.name': 'foo',
+          'lineItems.0._destroy': undefined
+        });
+      });
+
       it('includes changes on owned hasMany associations', function() {
         this.invoice.lineItems[0].name = 'FOO';
         this.invoice.lineItems[2].name = 'BAZ';
@@ -2532,6 +2556,12 @@ describe('Model', function () {
         expect(this.invoice.errors).toEqual({'billingAddress.address': ['bar']});
       });
 
+      it('does not includes errors on owned hasOne associations that are destroyed', function() {
+        this.invoice.billingAddress.addError('address', 'bar');
+        this.invoice.billingAddress._destroy = true;
+        expect(this.invoice.errors).toEqual({});
+      });
+
       it('includes errors on owned hasMany associations', function() {
         this.invoice.lineItems[0].addError('name', 'a');
         this.invoice.lineItems[2].addError('name', 'b');
@@ -2539,6 +2569,12 @@ describe('Model', function () {
           'lineItems.0.name': ['a'],
           'lineItems.2.name': ['b']
         });
+      });
+
+      it('does not include errors on owned hasMany associations that are destroyed', function() {
+        this.invoice.lineItems[0].addError('name', 'a');
+        this.invoice.lineItems[0]._destroy = true
+        expect(this.invoice.errors).toEqual({});
       });
 
       it('does not include errors on non-owned associations', function() {
@@ -2772,4 +2808,3 @@ describe('Model', function () {
     });
   });
 });
-
