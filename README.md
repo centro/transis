@@ -288,10 +288,24 @@ coercion in action with the `birthday` and `numberOfPets` props. We set both of 
 strings but the `birthday` attr is parsed into a `Date` object and the `numberOfPets` attr is parsed
 into a number.
 
+Also take note of the way we're calling `extend` here as its slightly different than calling `extend`
+directly on `Basis.Object`. When extending `Basis.Model` you must pass a string representing the
+class name as the first argument. This class name is used when defining assocations, which we'll
+take a look at next.
+
 ### Two-way associations
 
-Associations between models can be defined using the `Basis.Model.hasOne` and `Basis.Model.hasMany`
-methods:
+All but the most trival data models have relationships among models. Basis helps model these
+relationships with associations. Assocations come in two flavors: a to-one relation or to-many
+relationship. When the association is defined on both sides of the relationship, the association is
+said to be two-way, meaning that manipulating one side of the association also manipulates the other
+side. For example, if an `Author` model has many `Book`s, and we add a book to an author's `books`
+association, that book will automatically have its `author` prop set. The reverse is true as well,
+if a book's `author` property is set, then that book instance gets added to the author's `books`
+association.
+
+Associations between models are defined using the `Basis.Model.hasOne` and `Basis.Model.hasMany`
+methods. These generate special props, which of course are observable.
 
 ```javascript
 var Author = Basis.Model.extend('Author', function() {
@@ -312,19 +326,307 @@ var a = new Author({
   ]
 });
 
-a.books;           //=> [#<Book (NEW):1 {"title":"A Game of Thrones"}>, #<Book (NEW):2 {"title":"A Storm of Swords"}>]
-a.books[0].author; //=> #<Author (NEW):3 {"name":"George R. R. Martin"}>
-a.books[1].author; //=> #<Author (NEW):3 {"name":"George R. R. Martin"}>
+console.log(a.books.toString());
+// [#<Book (NEW):1 {"title":"A Game of Thrones"}>, #<Book (NEW):2 {"title":"A Storm of Swords"}>]
+console.log(a.books[0].author.toString());
+// #<Author (NEW):3 {"name":"George R. R. Martin"}>
+console.log(a.books[1].author.toString());
+// #<Author (NEW):3 {"name":"George R. R. Martin"}>
 
 var book = a.books.pop();
-
-a.books;     //=> [#<Book (NEW):1 {"title":"A Game of Thrones"}>]
-book.author; //=> undefined
+console.log(a.books.toString());
+// [#<Book (NEW):1 {"title":"A Game of Thrones"}>]
+console.log(book.author);
+// undefined
 ```
 
-As you can see above, the associations are two-way, meaning that if you update one side of the
-association, the other side will be automatically updated as well. This will be the case as long
-as you specify the `inverse` option on both sides of the association.
+First observe how associations are defined. You call either the `.hasOne` or `.hasMany` method and
+pass it the name of the association, the name of the associated model (this must be the same string
+passed to  `Basis.Model.extend`), and an options hash. This will add a new prop to the class. For
+has-one associations the value of that prop is either `undefined` or an instance of the associated
+model class. For has-many associations, the value is always an array containing zero or more
+instances of the associated model class.
+
+Next you can see the two-way associations in action. The `inverse` option on both sides must be set
+in order for the association to be two way. This is how Basis figures out the prop to update on the
+other side when an assocation is changed.
+
+At this point you may be wondering how popping an item from the `Author#books` array causes the
+book's `author` prop to be updated. It works because Basis `hasMany` associations don't use regular
+native array objects, they instead use `Basis.Array` objects. Lets take a brief interlue from
+discussing `Basis.Model` to take a look at `Basis.Array`.
+
+### `Basis.Array`
+
+The `Basis.Array` class implements an observable native-like array. It behaves just like a native
+array except that it has some enhanced capabilities. An example best illustrates this:
+
+```javascript
+var a1 = Basis.Array.of(1,2,3);
+var a2 = Basis.Array.from([4,5,6]);
+
+console.log(a1.toString());
+// [1, 2, 3]
+console.log(a2.toString());
+// [4, 5, 6]
+
+console.log(a1.size);
+// 3
+a1.on('size', function() { console.log('a1 size changed:', a1.size); });
+a1.push(10);
+Basis.Object.flush();
+// a1 size changed: 4
+a1.shift();
+Basis.Object.flush();
+// a1 size changed: 3
+
+a2.on('@', function() { console.log('a2 was mutated:', a2.toString()); });
+a2.pop();
+Basis.Object.flush();
+// a2 was mutated: [4, 5]
+a2.at(0, 10);
+Basis.Object.flush();
+// a2 was mutated: [10, 5]
+```
+
+First we see two ways to instantiate a new `Basis.Array`. The first, using the `.of` method, returns
+a new `Basis.Array` containing each argument. This is analogous to using the brackets operator
+(`[]`) to create a native array. The second, using the `.from` method, converts a native array
+or array-like object to a `Basis.Array`.
+
+From there we can see that `Basis.Array` objects have a `size` prop that is observable. When a new
+item is pushed on to the array or shifted off, observers of the `size` prop are notified.
+
+Lastly we can see that `Basis.Array` objects have another observable prop named `@`. This is a
+special prop used to observe mutations made to the array. Any operation that changes the contents of
+the array in any way will notify observers of the `@` prop.
+
+The `Basis.Array` class has an interesting implementation. It does not truly subclass
+`Basis.Object`. You can see this by using the `instanceof` operator:
+
+```javascript
+var a = Basis.Array.of();
+console.log(a instanceof Basis.Array);
+// true
+console.log(a instanceof Basis.Object);
+// false
+```
+
+However, it behaves just like a `Basis.Object`. It is assigned an `objectId` and responds to the
+`#on` and `#off` methods. The reason that it does not descend from `Basis.Object` is because Basis
+arrays are actually a copy of the native `Array` class with some added capabilities. A copy of
+`Array` is created by grabbing a reference to the `Array` constructor function from an `iframe`.
+This approach allows us to create a custom array class that behaves just like normal arrays without
+manipulating the main native `Array`.
+
+This approach does have some caveats however. As mentioned `Basis.Array` does not truly descend from
+`Basis.Object`. Also, javascript provides no means to hook into use of the brackets operator (`[]`)
+when setting array indexes. This means that observers will not be notified when an array is mutated
+using the brackets operator. To set a value at a specific index in an observable manner, use the
+`Basis.Array#at` method instead:
+
+```javascript
+var a = Basis.Array.of(1,2,3);
+
+console.log(a.toString());
+// [1, 2, 3]
+a.on('@', function() { console.log('a was mutated:', a.toString()); });
+a[3] = 4;
+Basis.Object.flush();
+a.at(4, 5);
+Basis.Object.flush();
+// a was mutated: [1, 2, 3, 4, 5]
+```
+
+Here you can see that by setting `a[3] = 4` our observer was never notified. But by using the `#at`
+method, the observer was notified.
+
+### Persistence layer
+
+So far we've seen how to instantiate new models but nothing regarding persisting them to permanent
+storage. Basis is completely agnostic as to the persistence mechanism used in your application and
+it uses the [data mapper][data mapper] pattern to communicate with it. Since Basis was designed to
+be used as the model layer of a UI application, the most common persistence mechanism is an HTTP
+API.
+
+The data mapper pattern is very simple, each `Basis.Model` subclass that needs to be persisted must
+have its `mapper` property assigned to an object that responds to one or more of the following
+methods:
+
+* query(params)
+* get(id)
+* create(model)
+* update(model)
+* delete(model)
+
+These methods are responsible for doing the actual communication with the persistence layer and are
+invoked by the `Basis.Model` class. You should rarely ever need to call these methods directly.
+Since communicating with your persistence layer will likely involve an asynchronous operation, these
+methods all must return an `Promise` or promise like object that gets resolved/rejected when the
+asynchronous operation is complete. `Basis.Model` will throw an exception if a promise is not
+returned by these methods.
+
+Lets take a look at an example:
+
+```javascript
+var records = [
+  {id: 0, firstName: 'Homer', lastName: 'Simpson'},
+  {id: 1, firstName: 'Marge', lastName: 'Simpson'},
+  {id: 2, firstName: 'Ned', lastName: 'Flanders'},
+  {id: 3, firstName: 'Barney', lastName: 'Gumble'}
+];
+
+var PersonMapper = {
+  query: function(params) {
+    return new Promise(function(resolve, reject) {
+      resolve(records);
+    });
+  },
+
+  update: function(model) {
+    return new Promise(function(resolve, reject) {
+      records[model.id] = model.attrs();
+      resolve(records[model.id]);
+    });
+  }
+};
+
+var Person = Basis.Model.extend('Person', function() {
+  this.mapper = PersonMapper;
+
+  this.attr('firstName', 'string');
+  this.attr('lastName', 'string');
+});
+
+var people = Person.query();
+console.log(people.toString());
+// []
+console.log(people.isBusy);
+// true
+
+people.then(function() {
+  console.log(people.toString());
+  // [
+  //   #<Person (LOADED):3 {"firstName":"Homer","lastName":"Simpson","id":0}>,
+  //   #<Person (LOADED):4 {"firstName":"Marge","lastName":"Simpson","id":1}>,
+  //   #<Person (LOADED):5 {"firstName":"Ned","lastName":"Flanders","id":2}>,
+  //   #<Person (LOADED):6 {"firstName":"Barney","lastName":"Gumble","id":3}>
+  // ]
+  console.log(people.isBusy);
+  // false
+
+  var person = people.first;
+
+  person.firstName = 'Lisa';
+  person.save();
+  console.log(person.toString());
+  // #<Person (LOADED-BUSY):3 {"firstName":"Lisa","lastName":"Simpson","id":0}>
+  person.then(function() {
+    console.log(person.toString());
+    // #<Person (LOADED):3 {"firstName":"Lisa","lastName":"Simpson","id":0}>
+  });
+});
+
+```
+
+Here we can see that our mapper is just a simple javascript object. It can be as simple or complex
+as you desire, it just needs to respond to the appropriate methods mentioned above.
+
+The example has implemented two methods, `query` and `update`, which allows us to use the
+`Basis.Model.query` and `Basis.Model#save` methods. Here we're just operating on an in memory array,
+but in practice you'd likely talk to an API.
+
+Calling `query` on a model class will immediately return an empty array that has been enhanced with
+some new properties. One is the `isBusy` property which will be set to `true` until the mapper has
+resolved its promise. The array also has a `then` method, meaning it can be treated as a promise
+which we make use of to schedule some code to run after the query has completed.
+
+From there we grab the first model in the resulting query then update and save it. Calling save on
+a loaded model causes the model layer to invoke the mapper's `update` method (calling `save` on a
+new model will invoke the mapper's `create` method). From the `toString` representations you can
+see the model is in the busy state while the mapper is doing its work.
+
+### Model state
+
+Above we got a glimpse of how Basis tracks the state of a model when its interacting with the
+mapper - the `Basis.Model#isBusy` prop is set to `true` while a mapper operation is pending and is
+`false` otherwise. In addition to tracking the busy state of a model Basis also tracks the source
+state. The source state is available as the `Basis.Model#sourceState` prop and will always be set to
+one of the following states:
+
+* `NEW`
+* `EMPTY`
+* `LOADED`
+* `DELETED`
+
+There are corresponding props to each of these states:
+
+* `isNew`
+* `isEmpty`
+* `isLoaded`
+* `isDeleted`
+
+New models are those that have been instantiated but not yet persisted through the mapper:
+
+```javascript
+var TestModel = Basis.Model.extend('TestModel', function() {
+  this.mapper = {
+    get: function(id) {
+      return Promise.resolve({id: id, foo: (new Date).toString()});
+    }
+  };
+
+  this.attr('foo', 'string');
+});
+
+var newModel = new TestModel;
+console.log(newModel.toString());
+// #<TestModel (NEW):1 {}>
+```
+
+Empty models represent just an id and no other data. A model in the empty state is immediately
+returned by the `Basis.Model.get` method:
+
+```javascript
+var emptyModel = TestModel.get(9);
+console.log(emptyModel.toString());
+// #<TestModel (EMPTY-BUSY):2 {"id":9}>
+```
+
+You can also create an empty model with the `Basis.Model.empty` method:
+
+```javascript
+var emptyModel2 = TestModel.empty(21);
+console.log(emptyModel2.toString());
+// #<TestModel (EMPTY):3 {"id":21}>
+```
+
+Loaded models are models that have passed through the mapper from the persistence layer:
+
+```javascript
+var loadedModel = TestModel.get(23);
+loadedModel.then(function() {
+  console.log(loadedModel.toString());
+  // #<TestModel (LOADED):4 {"foo":"Wed Nov 04 2015 17:20:31 GMT-0600 (CST)","id":23}>
+});
+```
+
+Finally, the deleted state is reached after a model has been successfully deleted by the mapper:
+
+```javascript
+loadedModel.delete().then(function() {
+  console.log(loadedModel.toString());
+});
+// #<TestModel (DELETED):4 {"foo":"Wed Nov 04 2015 17:23:14 GMT-0600 (CST)","id":23}>
+```
+
+### Loading data
+
+### Change tracking
+
+### Validations
+
+### Computed props on associations
 
 ## Example Apps
 
@@ -345,3 +647,4 @@ Then load http://localhost:9090/basic/index.html.
 [identity map]: http://martinfowler.com/eaaCatalog/identityMap.html
 [ISO 8601]: https://en.wikipedia.org/wiki/ISO_8601
 [Date]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
+[data mapper]: http://martinfowler.com/eaaCatalog/dataMapper.html
