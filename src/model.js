@@ -386,7 +386,7 @@ var Model = BasisObject.extend(function() {
   this.load = function(attrs) {
     var id = attrs.id, associations = this.prototype.associations, associated = {}, model;
 
-    if (!id) {
+    if (id == null) {
       throw new Error(`${this}.load: an \`id\` attribute is required`);
     }
 

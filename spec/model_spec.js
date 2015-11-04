@@ -813,6 +813,12 @@ describe('Model', function () {
       });
     });
 
+    it('handles 0 ids', function() {
+      expect(() => {
+        Post.load({id: 0});
+      }).not.toThrow();
+    });
+
     it('returns an instance with no changes', function() {
       var t = Tag.load({id: 49, name: 'foobar'});
       expect(t.hasChanges).toBe(false);
@@ -2207,7 +2213,7 @@ describe('Model', function () {
         this.invoice.lineItems[0]._destroy = true;
         expect(this.invoice.changes).toEqual({
           'lineItems.0.name': 'foo',
-          'lineItems.0._destroy': undefined 
+          'lineItems.0._destroy': undefined
         });
       });
 
