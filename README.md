@@ -916,6 +916,73 @@ console.log(invoice.lineItems.toString());
 
 ### Validations
 
+Basis provides a simple validation framework for your models. At the class level you can register
+validator functions for individual attributes with the `Basis.Model.validate` class method. Calling
+the `Basis.Model#validate` instance method will run all registered validator functions. The
+validator functions should call the `#addError` method when it detects a validation error.
+
+```javascript
+var Invoice = Basis.Model.extend('Invoice', function() {
+  this.attr('name', 'string');
+  this.hasMany('lineItems', 'LineItem', {owner: true});
+
+  this.validate('name', function() {
+    if (!this.name || this.name.length < 6) {
+      this.addError('name', 'must be at least 6 characters');
+    }
+  });
+});
+
+var LineItem = Basis.Model.extend('LineItem', function() {
+  this.attr('quantity', 'number');
+  this.attr('rate', 'number');
+
+  this.validate('quantity', function() {
+    if (this.quantity < 0) {
+      this.addError('quantity', 'must be positive');
+    }
+  });
+});
+
+var invoice = new Invoice({name: 'foo'});
+console.log(invoice.validate());
+// false
+console.log(invoice.errors);
+// { name: [ 'must be at least 6 characters' ] }
+invoice.name = 'foobar';
+console.log(invoice.validate());
+// true
+console.log(invoice.errors);
+// {}
+```
+
+We can see here that the `#validate` method returns a boolean indicating whether or not the model
+is valid. If there are validation errors, they are available on the object returned by the `#errors`
+prop. The attribute that failed validation is the key and the value is an array of messages added
+by the `#addError` method.
+
+The `owner` option on associations used for change tracking also affects validations. The
+`#validate` method will recursively validate each owned associated model and make their errors
+available on the owner's `errors` prop:
+
+```javascript
+var invoice = new Invoice({
+  name: 'my invoice',
+  lineItems: [
+    new LineItem({quantity: 4, rate: 2.5}),
+    new LineItem({quantity: -2, rate: 6}),
+  ]
+});
+
+console.log(invoice.validate());
+// false
+console.log(invoice.errors);
+// { 'lineItems.1.quantity': [ 'must be positive' ] }
+```
+
+So even though the invoice object didn't have any validation errors, the `#validate` method returned
+`false` because one of its owned line item object did have an error.
+
 ### React integration
 
 ## Example Apps
