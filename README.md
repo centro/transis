@@ -786,6 +786,134 @@ to munge the data received from the persistence layer to make it loadable by Bas
 
 ### Change tracking
 
+Basis has automatic attribute change tracking built in. If you change an attribute from what was
+loaded, Basis will keep track of the previous value. This makes undoing changes trivial:
+
+```javascript
+var Person = Basis.Model.extend('Person', function() {
+  this.attr('firstName', 'string');
+  this.attr('lastName', 'string');
+});
+
+var p = Person.load({id: 1, firstName: 'Homer', lastName: 'Simpson'});
+console.log(p.hasChanges);
+// false
+console.log(p.changes);
+// {}
+p.firstName = 'Bart';
+console.log(p.hasChanges);
+// true
+console.log(p.changes);
+// { firstName: 'Homer' }
+
+console.log(p.toString());
+// #<Person (LOADED):1 {"firstName":"Bart","lastName":"Simpson","id":1}>
+s.undoChanges();
+console.log(p.toString());
+// #<Person (LOADED):1 {"firstName":"Homer","lastName":"Simpson","id":1}>
+```
+
+This example introduces the `Basis.Model#hasChanges` and `#changes` props. The `hasChanges` prop
+returns a boolean indicating whether or not the model has any attribute changes. The `changes` prop
+returns an object mapping the attribute that has changed to its previous value. We can also see that
+changes can be reverted by simply calling the `#undoChanges` method.
+
+This is useful, but there are times when we have UIs that allow for editing a hierarchy of data and
+we want to track changes throughout the whole hierarchy. We can do this by using the `owner` option
+on association definitions. When you set the `owner` option on the association, you are telling
+Basis to treat any changes made to the associated objects as changes on the owner object. So
+`#hasChanges` will return `true` on the owner if any of its owned objects have changes.
+
+```javascript
+var Invoice = Basis.Model.extend('Invoice', function() {
+  this.attr('name', 'string');
+
+  this.hasMany('lineItems', 'LineItem', {owner: true, inverse: 'invoice'});
+});
+
+var LineItem = Basis.Model.extend('LineItem', function() {
+  this.attr('name', 'string');
+  this.attr('quantity', 'number');
+  this.attr('rate', 'number');
+
+  this.hasOne('invoice', 'Invoice', {inverse: 'lineItems'});
+});
+
+var invoice = Invoice.load({
+  id: 9,
+  name: 'my invoice',
+  lineItems: [
+    {id: 100, name: 'a', quantity: 100, rate: 2.5},
+    {id: 101, name: 'b', quantity:  50, rate: 3},
+    {id: 102, name: 'c', quantity: 250, rate: 0.8},
+  ]
+});
+
+console.log(invoice.hasChanges);
+// false
+
+invoice.lineItems[0].quantity++;
+
+console.log(invoice.lineItems[0].quantity);
+// 101
+console.log(invoice.hasChanges);
+// true
+console.log(invoice.changes);
+// { 'lineItems.0.quantity': 100 }
+
+invoice.name = 'my awesome invoice';
+console.log(invoice.hasChanges);
+// true
+console.log(invoice.changes);
+// { name: 'my invoice', 'lineItems.0.quantity': 100 }
+
+invoice.undoChanges();
+console.log(invoice.hasChanges);
+// false
+console.log(invoice.name);
+// my invoice
+console.log(invoice.lineItems[0].quantity);
+// 100
+```
+
+Here we can see that by changing the `quantity` prop of one of the invoice's line items, that the
+line item is now reporting changes. For owned `hasMany` associations the key used in the `changes`
+object is the name of the association followed by the index of the object that changed followed by
+the attribute that changed.
+
+If we also make changes directly to the owner object, those changes are also listed in the `changes`
+object.
+
+Finally we can see that by calling `undoChanges` on the invoice, we also undo any changes on its
+owned line items
+
+In addition to tracking attribute changes, Basis will also track changes made to `hasMany`
+associations. So adding or removing an object from a `hasMany` array can also be undone:
+
+```javascript
+console.log(invoice.lineItems.toString());
+// [
+//   #<LineItem (LOADED):3 {"name":"a","quantity":100,"rate":2.5,"id":100,"invoice":9}>,
+//   #<LineItem (LOADED):4 {"name":"b","quantity":50,"rate":3,"id":101,"invoice":9}>,
+//   #<LineItem (LOADED):5 {"name":"c","quantity":250,"rate":0.8,"id":102,"invoice":9}>
+// ]
+invoice.lineItems.pop();
+console.log(invoice.changes);
+// { lineItems: { added: [], removed: [ [Object] ] } }
+console.log(invoice.lineItems.toString());
+// [
+//   #<LineItem (LOADED):3 {"name":"a","quantity":100,"rate":2.5,"id":100,"invoice":9}>,
+//   #<LineItem (LOADED):4 {"name":"b","quantity":50,"rate":3,"id":101,"invoice":9}>
+// ]
+invoice.undoChanges();
+console.log(invoice.lineItems.toString());
+// [
+//   #<LineItem (LOADED):3 {"name":"a","quantity":100,"rate":2.5,"id":100,"invoice":9}>,
+//   #<LineItem (LOADED):4 {"name":"b","quantity":50,"rate":3,"id":101,"invoice":9}>,
+//   #<LineItem (LOADED):5 {"name":"c","quantity":250,"rate":0.8,"id":102,"invoice":9}>
+// ]
+```
+
 ### Validations
 
 ### React integration
