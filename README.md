@@ -985,6 +985,52 @@ So even though the invoice object didn't have any validation errors, the `#valid
 
 ### React integration
 
+At Centro we use [React][React] to implement our views so we've created a small React mixin to make
+it easy to glue your React components to Basis models. Other than this mixin, Basis has no knowledge
+or dependency on React. It can be used with any view framework.
+
+React does a great job of re-rendering when props or state changes are made, however often times
+you pass a model instance to a React component and that model will undergo changes that need to
+be re-rendered. Since the actual prop value isn't changing, just its internal state, React won't
+know to trigger a re-render. Since our Basis model props are easily observable, it would be nice if
+we could just inform the component what props to observe on the model so that it can automatically
+update when any change. Thats precisely what the `Basis.ReactPropsMixin` does:
+
+```jsx
+var Person = Basis.Model.extend('Person', function() {
+  this.attr('firstName', 'string');
+  this.attr('lastName', 'string');
+
+  this.prop('fullName', {
+    on: ['firstName', 'lastName'],
+    get: function(firstName, lastName) {
+      return Basis.A(firstName, lastName).compact().join(' ').trim();
+    }
+  });
+});
+
+var PersonView = React.createClass({
+  mixins: [Basis.ReactPropsMixin({person: ['fullName']})],
+
+  propTypes: {
+    person: React.PropTypes.instanceOf(Person)
+  },
+
+  render: function() {
+    var person = this.props.person;
+
+    return (
+      <div>Hello, {person.fullName}</div>;
+    );
+  }
+});
+```
+
+Our `PersonView` component accepts a `person` prop that must be an instance of our `Person` model.
+We create our glue mixin by calling the `Basis.ReactPropsMixin` function and passing it an object
+that specifies the Basis props to observe on each React component prop. When any of these Basis
+props change, the mixin will call `forceUpdate` on the component to trigger a re-render.
+
 ## Example Apps
 
 A couple of simple example apps are available in the `examples` directory. To run them, simply serve
@@ -998,7 +1044,6 @@ $ ruby -run -e httpd ./examples -p 9090
 
 Then load http://localhost:9090/basic/index.html.
 
-
 [es6-shim]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty
 [Object.defineProperty]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty
 [identity map]: http://martinfowler.com/eaaCatalog/identityMap.html
@@ -1006,3 +1051,4 @@ Then load http://localhost:9090/basic/index.html.
 [Date]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
 [data mapper]: http://martinfowler.com/eaaCatalog/dataMapper.html
 [Law of Demeter]: https://en.wikipedia.org/wiki/Law_of_Demeter
+[React]: https://facebook.github.io/react
