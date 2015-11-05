@@ -173,7 +173,9 @@ console.log(doubler.doubledValue);
 And even with a custom getter function, the prop is still observable:
 
 ```javascript
-doubler.on('doubledValue', function() { console.log('doubledValue changed:', doubler.doubledValue); });
+doubler.on('doubledValue', function() {
+  console.log('doubledValue changed:', doubler.doubledValue);
+});
 doubler.doubledValue = 22;
 // doubledValue changed: 22
 ```
@@ -274,7 +276,9 @@ var Person = Basis.Model.extend('Person', function() {
   this.attr('numberOfPets', 'integer');
 });
 
-var p = new Person({firstName: 'Joe', lastName: 'Blow', birthday: '1970-01-01', numberOfPets: '3'});
+var p = new Person({
+  firstName: 'Joe', lastName: 'Blow', birthday: '1970-01-01', numberOfPets: '3'
+});
 console.log(p.firstName);
 // Joe
 console.log(p.lastName);
@@ -333,7 +337,10 @@ var a = new Author({
 });
 
 console.log(a.books.toString());
-// [#<Book (NEW):1 {"title":"A Game of Thrones"}>, #<Book (NEW):2 {"title":"A Storm of Swords"}>]
+// [
+//   #<Book (NEW):1 {"title":"A Game of Thrones"}>,
+//   #<Book (NEW):2 {"title":"A Storm of Swords"}>
+// ]
 console.log(a.books[0].author.toString());
 // #<Author (NEW):3 {"name":"George R. R. Martin"}>
 console.log(a.books[1].author.toString());
@@ -479,7 +486,9 @@ var author = new Author({name: 'Joe Blow'});
 var post = new Post({author: author});
 console.log(post.authorName);
 // Joe Blow
-post.on('authorName', function() { console.log('post.authorName changed:', post.authorName); });
+post.on('authorName', function() {
+  console.log('post.authorName changed:', post.authorName);
+});
 author.name = 'Jon Doe';
 // post.authorName changed: Jon Doe
 ```
@@ -517,7 +526,9 @@ var post = new Post({
 console.log(post.tagNames);
 // [ 'a', 'b' ]
 
-post.on('tagNames', function() { console.log('post.tagNames changed:', post.tagNames); });
+post.on('tagNames', function() {
+  console.log('post.tagNames changed:', post.tagNames);
+});
 
 post.tags.push(new Tag({name: 'c'}));
 Basis.Object.flush();
