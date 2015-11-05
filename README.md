@@ -85,12 +85,18 @@ var Square = Rectangle.extend(function() {
 var r = new Rectangle(4, 3);
 var s = new Square(5);
 var c = new Circle(9);
-console.log('r area:', r.area()); // r area: 12
-console.log('r perimeter:', r.perimeter()); // r perimeter: 14
-console.log('s area:', s.area()); // s area: 25
-console.log('s perimeter:', s.perimeter()); // s perimeter: 20
-console.log('c area:', c.area()); // c area: 254.46900494077323
-console.log('c perimeter:', c.perimeter()); // c perimeter: 56.548667764616276
+console.log('r area:', r.area());
+// r area: 12
+console.log('r perimeter:', r.perimeter());
+// r perimeter: 14
+console.log('s area:', s.area());
+// s area: 25
+console.log('s perimeter:', s.perimeter());
+// s perimeter: 20
+console.log('c area:', c.area());
+// c area: 254.46900494077323
+console.log('c perimeter:', c.perimeter());
+// c perimeter: 56.548667764616276
 ```
 
 ### Properties
