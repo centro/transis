@@ -343,8 +343,8 @@ console.log(book.author);
 First observe how associations are defined. You call either the `.hasOne` or `.hasMany` method and
 pass it the name of the association, the name of the associated model (this must be the same string
 passed to  `Basis.Model.extend`), and an options hash. This will add a new prop to the class. For
-has-one associations the value of that prop is either `undefined` or an instance of the associated
-model class. For has-many associations, the value is always an array containing zero or more
+`hasOne` associations the value of that prop is either `undefined` or an instance of the associated
+model class. For `hasMany` associations, the value is always an array containing zero or more
 instances of the associated model class.
 
 Next you can see the two-way associations in action. The `inverse` option on both sides must be set
@@ -440,6 +440,101 @@ Basis.Object.flush();
 
 Here you can see that by setting `a[3] = 4` our observer was never notified. But by using the `#at`
 method, the observer was notified.
+
+### Computed props on associations
+
+Now that we know how associations work, its time to take another look at computed props and some
+enhancements that are available on `Basis.Model`. With subclasses of `Basis.Object` we saw how you
+can define computed props that depend on other props on the same object. But sometimes we have a
+need to compute properties from properties on other objects. `Basis.Model` associations make this
+possible in an observable way.
+
+So how do we indicate that our computed prop depends on props on associated objects? We simply use
+dots to create a property path. Lets take a look at an example:
+
+```javascript
+var Author = Basis.Model.extend('Author', function() {
+  this.attr('name', 'string');
+  this.hasMany('posts', 'Post');
+});
+
+var Post = Basis.Model.extend('Post', function() {
+  this.hasOne('author', 'Author');
+
+  this.prop('authorName', {
+    on: ['author.name'],
+    get: function(authorName) {
+      return authorName;
+    }
+  });
+});
+
+var author = new Author({name: 'Joe Blow'});
+var post = new Post({author: author});
+console.log(post.authorName);
+// Joe Blow
+post.on('authorName', function() { console.log('post.authorName changed:', post.authorName); });
+author.name = 'Jon Doe';
+// post.authorName changed: Jon Doe
+```
+
+We've defined the `Post#authorName` prop that depends on the post's author's `name` prop. We
+indicate this by passing the path `'author.name'` as the `on` option. This works because
+`Basis.Model` instances propagate change notifications to their associated objects.
+
+Its important to point out here that you are only allowed to have one dot in a dependent property
+path - you can't depend on props that are not on immediate neighbors. This is by design as to make
+it difficult to violate the [Law of Demeter][Law of Demeter]. It also makes for a much simpler
+implementation. If you find yourself needing to declare a dependency on a prop that is not an
+immediate neighbor, simply define a prop on that immediate neighbor that you can depend on instead.
+
+But what about `hasMany` associations? How do we compute a prop over an array of objects? It works
+the same as with `hasOne` associations in that you pass a property path using the `on` object, but
+when the first segment in that path is an array, Basis will collect the next segment from each
+individual element of the array and pass an array of those values to the getter function. Continuing
+on with our previous example:
+
+```javascript
+Post.hasMany('tags', 'Tag');
+Post.prop('tagNames', {
+  on: ['tags.name'],
+  get: function(tagNames) {
+    return tagNames;
+  }
+});
+
+var post = new Post({
+  author: author,
+  tags: [new Tag({name: 'a'}), new Tag({name: 'b'})]
+});
+
+console.log(post.tagNames);
+// [ 'a', 'b' ]
+
+post.on('tagNames', function() { console.log('post.tagNames changed:', post.tagNames); });
+
+post.tags.push(new Tag({name: 'c'}));
+Basis.Object.flush();
+// post.tagNames changed: [ 'a', 'b', 'c' ]
+
+post.tags.shift();
+Basis.Object.flush();
+// post.tagNames changed: [ 'b', 'c' ]
+
+post.tags.first.name = 'x';
+Basis.Object.flush();
+// post.tagNames changed: [ 'x', 'c' ]
+```
+
+Our `Post#tagNames` prop depends on the `name` props of all of its associated `Tag`s. You can see
+that when the `tags` array is maniptulated, observers of the `tagNames` prop are notified. Also,
+when any currently associated `Tag` has its `name` prop changed the `tagNames` observers are still
+notified.
+
+This ability to define computed props over associated objects is very powerful. You can build out
+computed props that are effectively monitoring a large number of objects for changes. This comes in
+very handy when rendering views and keeping them in sync with model changes. We'll see more about
+how to do that later.
 
 ### Persistence layer
 
@@ -622,11 +717,61 @@ loadedModel.delete().then(function() {
 
 ### Loading data
 
+When data gets loaded through the mapper via `#query`, `#get`, or `.get` methods, Basis is actually
+calling the `Basis.Model.load` method and passing it the object that the mapper resolves its promise
+with. The `.load` method is very powerful in that it can do much more than just load the attributes
+for a single model object - it can also automatically load nested associated models as long as the
+object structure matches the defined associations:
+
+```javascript
+var Author = Basis.Model.extend('Author', function() {
+  this.attr('first', 'string');
+  this.attr('last', 'string');
+  this.hasMany('posts', 'Post', {inverse: 'author'});
+});
+
+var Post = Basis.Model.extend('Post', function() {
+  this.attr('title', 'string');
+  this.attr('body', 'string');
+  this.hasOne('author', 'Author', {inverse: 'posts'});
+  this.hasMany('tags', 'Tag', {inverse: 'posts'});
+});
+
+var Tag = Basis.Model.extend('Tag', function() {
+  this.attr('name', 'string');
+  this.hasMany('posts', 'Post', {inverse: 'tags'});
+});
+
+var post = Post.load({
+  id: 200, title: 'the title', body: 'the body',
+  author: {id: 9, first: 'Homer', last: 'Simpson'},
+  tags: [{id: 10, name: '#a'}, {id: 11, name: '#b'}]
+});
+
+console.log(post.toString());
+// #<Post (LOADED):1 {"title":"the title","body":"the body","id":200,"author":9,"tags":[10,11]}>
+console.log(post.author.toString());
+// #<Author (LOADED):2 {"first":"Homer","last":"Simpson","id":9,"posts":[200]}>
+console.log(post.author.posts.toString());
+// [#<Post (LOADED):1 {"title":"the title","body":"the body","id":200,"author":9,"tags":[10,11]}>]
+console.log(post.tags.first.posts.toString());
+// [#<Post (LOADED):1 {"title":"the title","body":"the body","id":200,"author":9,"tags":[10,11]}>]
+```
+
+Here we call `.load` on the `Post` class and a loaded instance of `Post` is returned. But if we look
+deeper we can see that the post's `author` and `tags` associations are also populated with loaded
+instances of the `Author` and `Tag` classes. Further, since the associations all have their inverses
+defined, the inverse associations are also properly established.
+
+With the `.load` method, loading data from your backend is trival as long as you build your APIs to
+match the structure of the Basis models. When you have differences, its the mapper's responsibilty
+to munge the data received from the persistence layer to make it loadable by Basis.
+
 ### Change tracking
 
 ### Validations
 
-### Computed props on associations
+### React integration
 
 ## Example Apps
 
@@ -648,3 +793,4 @@ Then load http://localhost:9090/basic/index.html.
 [ISO 8601]: https://en.wikipedia.org/wiki/ISO_8601
 [Date]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date
 [data mapper]: http://martinfowler.com/eaaCatalog/dataMapper.html
+[Law of Demeter]: https://en.wikipedia.org/wiki/Law_of_Demeter
