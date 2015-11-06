@@ -202,7 +202,9 @@ console.log(doubler2.value);
 // 4
 console.log(doubler2.doubledValue);
 // 8
-doubler2.on('doubledValue', function() { console.log('doubledValue changed:', doubler2.doubledValue); });
+doubler2.on('doubledValue', function() {
+  console.log('doubledValue changed:', doubler2.doubledValue);
+});
 doubler2.value = 5;
 // doubledValue changed: 10
 ```
@@ -223,6 +225,48 @@ your getter function in the same order they are named in the `on` option.
 If you must access `this` inside your getter, you can make your prop "impure" by setting the `pure`
 option to false. In this case, no arguments will be passed to your getter function, even if you have
 declared dependencies with the `on` option.
+
+_A note about observers_: Basis prop observers do not fire immediately when a prop is changed, they
+instead are fired asynchronously. This is important for performance reasons. Firing observers
+immediately is simpler and more straightforward, but it can potentially lead to your app doing a lot
+more work than necessary. This is especially true when leveraging observers to keep your views in
+sync with your models - we don't want to trigger renders for every single prop change that happens
+when loading in a bunch of data from our backend. By notifying observers asynchronously, we allow
+things to settle before responding to any change. This means that if a prop is changed multiple
+times in a single javascript execution context, observers will only be notified once. The
+`Basis.Object.flush` method can be used to force observers to fire immediately. This method should
+never be used in production code, its only for making specs easier to write. An example should make
+this clear:
+
+```javascript
+var Thing = Basis.Object.extend(function() {
+  this.prop('name');
+});
+
+var thing = new Thing;
+
+thing.on('name', function() {
+  console.log('name changed:', thing.name);
+});
+
+thing.name = 'a';
+thing.name = 'b';
+thing.name = 'c';
+
+Basis.Object.flush();
+// name changed: c
+
+thing.name = 'd';
+
+Basis.Object.flush();
+// name changed: d
+
+thing.name = 'e';
+thing.name = 'f';
+
+Basis.Object.flush();
+// name changed: f
+```
 
 ### Model layer
 
