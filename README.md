@@ -100,7 +100,7 @@ console.log('c perimeter:', c.perimeter());
 // c perimeter: 56.548667764616276
 ```
 
-### Properties
+### Props
 
 The other main feature of `Basis.Object` is observable properties. Properties, or "props" to
 distinguish them from normal javascript object properties, are defined with the `Basis.Object.prop`
@@ -134,7 +134,11 @@ can be attached using the `Basis.Object#on` method:
 ```javascript
 console.log(p.firstName);
 // Jane
-p.on('firstName', function() { console.log('firstName changed'); });
+
+p.on('firstName', function() {
+  console.log('firstName changed');
+});
+
 p.firstName = 'Bob';
 // firstName changed
 ```
