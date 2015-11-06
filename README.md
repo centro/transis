@@ -734,6 +734,10 @@ var TestModel = Basis.Model.extend('TestModel', function() {
   this.mapper = {
     get: function(id) {
       return Promise.resolve({id: id, foo: (new Date).toString()});
+    },
+
+    delete: function(model) {
+      return Promise.resolve();
     }
   };
 
