@@ -1084,6 +1084,7 @@ the `examples` directory using an HTTP server and load the `index.html` files.
 Here is an easy way to serve the directory:
 
 ```
+$ make package
 $ ruby -run -e httpd ./examples -p 9090
 ```
 
