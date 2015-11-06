@@ -12,6 +12,7 @@ the following features:
 * attribute change tracking with undo functionality
 * property observation of both simple and computed properties
 * automatic computed property caching
+* React integration
 
 ## Dependencies
 
