@@ -273,6 +273,42 @@ Basis.Object.flush();
 // name changed: f
 ```
 
+### Cached props
+
+Sometimes props are very expensive to compute and doing so over and over would have a significant
+performance impact on your application. Since Basis knows about your computed prop dependencies, it
+can easily cache prop values and invalidate that cache whenever a dependency changes. Simply add the
+`cache` option to your prop definition:
+
+```javascript
+var Person = Basis.Object.extend(function() {
+  this.prop('firstName');
+  this.prop('lastName');
+  this.prop('fullName', {
+    cache: true,
+    on: ['firstName', 'lastName'],
+    get: function(firstName, lastName) {
+      console.log('computing Person#firstName');
+      return firstName + ' ' + lastName;
+    }
+  });
+});
+
+var p = new Person({firstName: 'Homer', lastName: 'Simpson'});
+console.log(p.fullName);
+// computing Person#firstName
+// Homer Simpson
+console.log(p.fullName);
+// Homer Simpson
+p.firstName = 'Marge';
+Basis.Object.flush();
+console.log(p.fullName);
+// computing Person#firstName
+// Marge Simpson
+console.log(p.fullName);
+// Marge Simpson
+```
+
 ### Model layer
 
 The `Basis.Object` class is the foundation of Basis, but you will likely rarely use it directly in
