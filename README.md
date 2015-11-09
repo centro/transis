@@ -1,7 +1,7 @@
 # Basis
 
-Basis is a javascript data modeling library for use in single page web applications. It provides
-the following features:
+Basis is a javascript data modeling library useful for creating rich client-side experiences. It
+provides the following features:
 
 * two-way associations
 * identity map
