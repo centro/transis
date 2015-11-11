@@ -1,6 +1,6 @@
 ![Transis](https://cdn.rawgit.com/centro/transis/master/logo.svg)
 
-# Transis
+---
 
 Transis is a javascript data modeling library useful for creating rich client-side experiences. It
 provides the following features:
