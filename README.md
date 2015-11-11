@@ -1,4 +1,4 @@
-[Transis](https://raw.githubusercontent.com/centro/transis/master/logo.svg)
+![Transis](https://raw.githubusercontent.com/centro/transis/master/logo.svg)
 
 # Transis
 
