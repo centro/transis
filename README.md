@@ -1,7 +1,7 @@
 # Basis
 
-Basis is a javascript data modeling library for use in single page web applications. It provides
-the following features:
+Basis is a javascript data modeling library useful for creating rich client-side experiences. It
+provides the following features:
 
 * two-way associations
 * identity map
@@ -629,7 +629,7 @@ Basis.Object.flush();
 ```
 
 Our `Post#tagNames` prop depends on the `name` props of all of its associated `Tag`s. You can see
-that when the `tags` array is maniptulated, observers of the `tagNames` prop are notified. Also,
+that when the `tags` array is manipulated, observers of the `tagNames` prop are notified. Also,
 when any currently associated `Tag` has its `name` prop changed the `tagNames` observers are still
 notified.
 
