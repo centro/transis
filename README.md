@@ -21,6 +21,29 @@ provides the following features:
 Transis has no dependencies other than some ES6 features that are not yet available in all browsers.
 Its advised to use [es6-shim][es6-shim] until browser support improves.
 
+## Installation
+
+```
+npm install --save transis
+```
+
+## Usage
+
+```javascript
+var Transis = require('transis');
+
+var Person = Transis.Model.extend('Person', function() {
+  this.attr('firstName', 'string');
+  this.attr('lastName', 'string');
+  this.prop('fullName', {
+    on: ['firstName', 'lastName'],
+    get: function(firstName, lastName) {
+      return Transis.A(firstName, lastName).compact().join(' ');
+    }
+  });
+});
+```
+
 ## Feature Breakdown
 
 Below is a walkthrough of the main `Transis` features.
