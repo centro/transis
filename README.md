@@ -1,3 +1,5 @@
+[Transis](https://raw.githubusercontent.com/centro/transis/master/logo.svg)
+
 # Transis
 
 Transis is a javascript data modeling library useful for creating rich client-side experiences. It
