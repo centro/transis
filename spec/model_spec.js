@@ -813,6 +813,12 @@ describe('Model', function () {
       });
     });
 
+    it('handles 0 ids', function() {
+      expect(() => {
+        Post.load({id: 0});
+      }).not.toThrow();
+    });
+
     it('returns an instance with no changes', function() {
       var t = Tag.load({id: 49, name: 'foobar'});
       expect(t.hasChanges).toBe(false);
@@ -2196,13 +2202,19 @@ describe('Model', function () {
       it('does not include changes on owned hasOne associations that are destroyed', function() {
         this.invoice.billingAddress.address = '321 Maple Ave.';
         this.invoice.billingAddress._destroy = true;
-        expect(this.invoice.changes).toEqual({});
+        expect(this.invoice.changes).toEqual({
+          'billingAddress.address': '123 Fake St.',
+          'billingAddress._destroy': undefined
+        });
       });
 
       it('does not includes changes on owned hasMany associations that are destroyed', function() {
         this.invoice.lineItems[0].name = 'FOO';
         this.invoice.lineItems[0]._destroy = true;
-        expect(this.invoice.changes).toEqual({});
+        expect(this.invoice.changes).toEqual({
+          'lineItems.0.name': 'foo',
+          'lineItems.0._destroy': undefined
+        });
       });
 
       it('includes changes on owned hasMany associations', function() {
@@ -2796,4 +2808,3 @@ describe('Model', function () {
     });
   });
 });
-
