@@ -1,7 +1,7 @@
 {
   "name": "Transis",
-  "version": "0.0.0",
-  "description": "A data modeling library for building JavaScript applications.",
+  "version": "0.1.0",
+  "description": "A javascript data modeling library useful for creating rich client-side experiences.",
   "main": "dist/index.js",
   "scripts": {
     "test": "make",
