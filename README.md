@@ -26,8 +26,8 @@ Below is a walkthrough of the main `Transis` features.
 ### Object system
 
 `Transis` provides a basic object system that works on top of constructor functions and the `new`
-operator. New classes are created by calling the `extend` method on `Transis.Object` and passing it a
-function that represents the "class body". The `extend` method returns a regular constructor
+operator. New classes are created by calling the `extend` method on `Transis.Object` and passing it
+a function that represents the "class body". The `extend` method returns a regular constructor
 function that can be instantiated with the `new` operator. Inside the class body function you can
 define both static and instance properties and methods. To add an initializer, simply define the
 `init` method, any arguments passed to the constructor function will be forwarded on to it.
@@ -103,9 +103,9 @@ console.log('c perimeter:', c.perimeter());
 ### Props
 
 The other main feature of `Transis.Object` is observable properties. Properties, or "props" to
-distinguish them from normal javascript object properties, are defined with the `Transis.Object.prop`
-method. The simplest prop is just defined with a name and can be get and set just like any other
-javascript property:
+distinguish them from normal javascript object properties, are defined with the
+`Transis.Object.prop` method. The simplest prop is just defined with a name and can be get and set
+just like any other javascript property:
 
 ```javascript
 var Person = Transis.Object.extend(function() {
@@ -231,8 +231,8 @@ If you must access `this` inside your getter, you can make your prop "impure" by
 option to false. In this case, no arguments will be passed to your getter function, even if you have
 declared dependencies with the `on` option.
 
-_A note about observers_: Transis prop observers do not fire immediately when a prop is changed, they
-instead are fired asynchronously. This is important for performance reasons. Firing observers
+_A note about observers_: Transis prop observers do not fire immediately when a prop is changed,
+they instead are fired asynchronously. This is important for performance reasons. Firing observers
 immediately is simpler and more straightforward, but it can potentially lead to your app doing a lot
 more work than necessary. This is especially true when leveraging observers to keep your views in
 sync with your models - we don't want to trigger renders for every single prop change that happens
@@ -276,9 +276,9 @@ Transis.Object.flush();
 ### Cached props
 
 Sometimes props are very expensive to compute and doing so over and over would have a significant
-performance impact on your application. Since Transis knows about your computed prop dependencies, it
-can easily cache prop values and invalidate that cache whenever a dependency changes. Simply add the
-`cache` option to your prop definition:
+performance impact on your application. Since Transis knows about your computed prop dependencies,
+it can easily cache prop values and invalidate that cache whenever a dependency changes. Simply add
+the `cache` option to your prop definition:
 
 ```javascript
 var Person = Transis.Object.extend(function() {
@@ -311,9 +311,10 @@ console.log(p.fullName);
 
 ### Model layer
 
-The `Transis.Object` class is the foundation of Transis, but you will likely rarely use it directly in
-a user interface application to define your model objects. Instead you will use `Transis.Model` which
-is a subclass of `Transis.Object` and therefore inherits its ability to define observable props.
+The `Transis.Object` class is the foundation of Transis, but you will likely rarely use it directly
+in a user interface application to define your model objects. Instead you will use `Transis.Model`
+which is a subclass of `Transis.Object` and therefore inherits its ability to define observable
+props.
 
 `Transis.Model` builds on `Transis.Object` by adding an identity map, typed attributes, two-way
 associations, a thin persistence layer, state management, change tracking, and validations. Each of
@@ -348,8 +349,8 @@ Transis supports the following attribute types:
 * date
 * datetime
 
-Additionally, you can register your own custom attribute types using the `Transis.Model.registerAttr`
-method.
+Additionally, you can register your own custom attribute types using the
+`Transis.Model.registerAttr` method.
 
 Here is an example of attributes in action:
 
@@ -383,10 +384,10 @@ coercion in action with the `birthday` and `numberOfPets` props. We set both of 
 strings but the `birthday` attr is parsed into a `Date` object and the `numberOfPets` attr is parsed
 into a number.
 
-Also take note of the way we're calling `extend` here as its slightly different than calling `extend`
-directly on `Transis.Object`. When extending `Transis.Model` you must pass a string representing the
-class name as the first argument. This class name is used when defining assocations, which we'll
-take a look at next.
+Also take note of the way we're calling `extend` here as its slightly different than calling
+`extend` directly on `Transis.Object`. When extending `Transis.Model` you must pass a string
+representing the class name as the first argument. This class name is used when defining
+assocations, which we'll take a look at next.
 
 ### Two-way associations
 
@@ -446,13 +447,13 @@ model class. For `hasMany` associations, the value is always an array containing
 instances of the associated model class.
 
 Next you can see the two-way associations in action. The `inverse` option on both sides must be set
-in order for the association to be two way. This is how Transis figures out the prop to update on the
-other side when an assocation is changed.
+in order for the association to be two way. This is how Transis figures out the prop to update on
+the other side when an assocation is changed.
 
 At this point you may be wondering how popping an item from the `Author#books` array causes the
-book's `author` prop to be updated. It works because Transis `hasMany` associations don't use regular
-native array objects, they instead use `Transis.Array` objects. Lets take a brief interlue from
-discussing `Transis.Model` to take a look at `Transis.Array`.
+book's `author` prop to be updated. It works because Transis `hasMany` associations don't use
+regular native array objects, they instead use `Transis.Array` objects. Lets take a brief interlue
+from discussing `Transis.Model` to take a look at `Transis.Array`.
 
 ### `Transis.Array`
 
@@ -487,10 +488,10 @@ Transis.Object.flush();
 // a2 was mutated: [10, 5]
 ```
 
-First we see two ways to instantiate a new `Transis.Array`. The first, using the `.of` method, returns
-a new `Transis.Array` containing each argument. This is analogous to using the brackets operator
-(`[]`) to create a native array. The second, using the `.from` method, converts a native array
-or array-like object to a `Transis.Array`.
+First we see two ways to instantiate a new `Transis.Array`. The first, using the `.of` method,
+returns a new `Transis.Array` containing each argument. This is analogous to using the brackets
+operator (`[]`) to create a native array. The second, using the `.from` method, converts a native
+array or array-like object to a `Transis.Array`.
 
 From there we can see that `Transis.Array` objects have a `size` prop that is observable. When a new
 item is pushed on to the array or shifted off, observers of the `size` prop are notified.
@@ -511,17 +512,17 @@ console.log(a instanceof Transis.Object);
 ```
 
 However, it behaves just like a `Transis.Object`. It is assigned an `objectId` and responds to the
-`#on` and `#off` methods. The reason that it does not descend from `Transis.Object` is because Transis
-arrays are actually a copy of the native `Array` class with some added capabilities. A copy of
-`Array` is created by grabbing a reference to the `Array` constructor function from an `iframe`.
+`#on` and `#off` methods. The reason that it does not descend from `Transis.Object` is because
+Transis arrays are actually a copy of the native `Array` class with some added capabilities. A copy
+of `Array` is created by grabbing a reference to the `Array` constructor function from an `iframe`.
 This approach allows us to create a custom array class that behaves just like normal arrays without
 manipulating the main native `Array`.
 
-This approach does have some caveats however. As mentioned `Transis.Array` does not truly descend from
-`Transis.Object`. Also, javascript provides no means to hook into use of the brackets operator (`[]`)
-when setting array indexes. This means that observers will not be notified when an array is mutated
-using the brackets operator. To set a value at a specific index in an observable manner, use the
-`Transis.Array#at` method instead:
+This approach does have some caveats however. As mentioned `Transis.Array` does not truly descend
+from `Transis.Object`. Also, javascript provides no means to hook into use of the brackets operator
+(`[]`) when setting array indexes. This means that observers will not be notified when an array is
+mutated using the brackets operator. To set a value at a specific index in an observable manner, use
+the `Transis.Array#at` method instead:
 
 ```javascript
 var a = Transis.Array.of(1,2,3);
@@ -542,8 +543,8 @@ method, the observer was notified.
 ### Computed props on associations
 
 Now that we know how associations work, its time to take another look at computed props and some
-enhancements that are available on `Transis.Model`. With subclasses of `Transis.Object` we saw how you
-can define computed props that depend on other props on the same object. But sometimes we have a
+enhancements that are available on `Transis.Model`. With subclasses of `Transis.Object` we saw how
+you can define computed props that depend on other props on the same object. But sometimes we have a
 need to compute properties from properties on other objects. `Transis.Model` associations make this
 possible in an observable way.
 
@@ -646,8 +647,8 @@ it uses the [data mapper][data mapper] pattern to communicate with it. Since Tra
 be used as the model layer of a UI application, the most common persistence mechanism is an HTTP
 API.
 
-The data mapper pattern is very simple, each `Transis.Model` subclass that needs to be persisted must
-have its `mapper` property assigned to an object that responds to one or more of the following
+The data mapper pattern is very simple, each `Transis.Model` subclass that needs to be persisted
+must have its `mapper` property assigned to an object that responds to one or more of the following
 methods:
 
 * query(params)
@@ -730,8 +731,8 @@ Here we can see that our mapper is just a simple javascript object. It can be as
 as you desire, it just needs to respond to the appropriate methods mentioned above.
 
 The example has implemented two methods, `query` and `update`, which allows us to use the
-`Transis.Model.query` and `Transis.Model#save` methods. Here we're just operating on an in memory array,
-but in practice you'd likely talk to an API.
+`Transis.Model.query` and `Transis.Model#save` methods. Here we're just operating on an in memory
+array, but in practice you'd likely talk to an API.
 
 Calling `query` on a model class will immediately return an empty array that has been enhanced with
 some new properties. One is the `isBusy` property which will be set to `true` until the mapper has
@@ -748,8 +749,8 @@ see the model is in the busy state while the mapper is doing its work.
 Above we got a glimpse of how Transis tracks the state of a model when its interacting with the
 mapper - the `Transis.Model#isBusy` prop is set to `true` while a mapper operation is pending and is
 `false` otherwise. In addition to tracking the busy state of a model Transis also tracks the source
-state. The source state is available as the `Transis.Model#sourceState` prop and will always be set to
-one of the following states:
+state. The source state is available as the `Transis.Model#sourceState` prop and will always be set
+to one of the following states:
 
 * `NEW`
 * `EMPTY`
@@ -823,11 +824,11 @@ loadedModel.delete().then(function() {
 
 ### Loading data
 
-When data gets loaded through the mapper via `#query`, `#get`, or `.get` methods, Transis is actually
-calling the `Transis.Model.load` method and passing it the object that the mapper resolves its promise
-with. The `.load` method is very powerful in that it can do much more than just load the attributes
-for a single model object - it can also automatically load nested associated models as long as the
-object structure matches the defined associations:
+When data gets loaded through the mapper via `#query`, `#get`, or `.get` methods, Transis is
+actually calling the `Transis.Model.load` method and passing it the object that the mapper resolves
+its promise with. The `.load` method is very powerful in that it can do much more than just load the
+attributes for a single model object - it can also automatically load nested associated models as
+long as the object structure matches the defined associations:
 
 ```javascript
 var Author = Transis.Model.extend('Author', function() {
@@ -1006,9 +1007,9 @@ console.log(invoice.lineItems.toString());
 ### Validations
 
 Transis provides a simple validation framework for your models. At the class level you can register
-validator functions for individual attributes with the `Transis.Model.validate` class method. Calling
-the `Transis.Model#validate` instance method will run all registered validator functions. The
-validator functions should call the `#addError` method when it detects a validation error.
+validator functions for individual attributes with the `Transis.Model.validate` class method.
+Calling the `Transis.Model#validate` instance method will run all registered validator functions.
+The validator functions should call the `#addError` method when it detects a validation error.
 
 ```javascript
 var Invoice = Transis.Model.extend('Invoice', function() {
@@ -1075,15 +1076,15 @@ So even though the invoice object didn't have any validation errors, the `#valid
 ### React integration
 
 At Centro we use [React][React] to implement our views so we've created a small React mixin to make
-it easy to glue your React components to Transis models. Other than this mixin, Transis has no knowledge
-or dependency on React. It can be used with any view framework.
+it easy to glue your React components to Transis models. Other than this mixin, Transis has no
+knowledge or dependency on React. It can be used with any view framework.
 
 React does a great job of re-rendering when props or state changes are made, however often times
 you pass a model instance to a React component and that model will undergo changes that need to
 be re-rendered. Since the actual prop value isn't changing, just its internal state, React won't
-know to trigger a re-render. Since our Transis model props are easily observable, it would be nice if
-we could just inform the component what props to observe on the model so that it can automatically
-update when any change. Thats precisely what the `Transis.ReactPropsMixin` does:
+know to trigger a re-render. Since our Transis model props are easily observable, it would be nice
+if we could just inform the component what props to observe on the model so that it can
+automatically update when any change. Thats precisely what the `Transis.ReactPropsMixin` does:
 
 ```jsx
 var Person = Transis.Model.extend('Person', function() {
