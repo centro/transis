@@ -16,17 +16,17 @@ the following features:
 
 ## Dependencies
 
-Basis has no dependencies other than some ES6 features that are not yet available in all browsers.
+Transis has no dependencies other than some ES6 features that are not yet available in all browsers.
 Its advised to use [es6-shim][es6-shim] until browser support improves.
 
 ## Feature Breakdown
 
-Below is a walkthrough of the main `Basis` features.
+Below is a walkthrough of the main `Transis` features.
 
 ### Object system
 
-`Basis` provides a basic object system that works on top of constructor functions and the `new`
-operator. New classes are created by calling the `extend` method on `Basis.Object` and passing it a
+`Transis` provides a basic object system that works on top of constructor functions and the `new`
+operator. New classes are created by calling the `extend` method on `Transis.Object` and passing it a
 function that represents the "class body". The `extend` method returns a regular constructor
 function that can be instantiated with the `new` operator. Inside the class body function you can
 define both static and instance properties and methods. To add an initializer, simply define the
@@ -36,7 +36,7 @@ The `extend` method sets up the prototype chain so that instance level inheritan
 expected. It also copies static properties from the superclass to the subclass.
 
 ```javascript
-var Shape = Basis.Object.extend(function() {
+var Shape = Transis.Object.extend(function() {
   this.prototype.area = function() {
     return 0;
   };
@@ -102,13 +102,13 @@ console.log('c perimeter:', c.perimeter());
 
 ### Props
 
-The other main feature of `Basis.Object` is observable properties. Properties, or "props" to
-distinguish them from normal javascript object properties, are defined with the `Basis.Object.prop`
+The other main feature of `Transis.Object` is observable properties. Properties, or "props" to
+distinguish them from normal javascript object properties, are defined with the `Transis.Object.prop`
 method. The simplest prop is just defined with a name and can be get and set just like any other
 javascript property:
 
 ```javascript
-var Person = Basis.Object.extend(function() {
+var Person = Transis.Object.extend(function() {
   this.prop('firstName');
   this.prop('lastName');
 });
@@ -125,11 +125,11 @@ console.log(p.lastName);
 // Doe
 ```
 
-As you can see above, the default `Basis.Object` constructor takes an object mapping prop keys to
+As you can see above, the default `Transis.Object` constructor takes an object mapping prop keys to
 values. Any key in the given object that matches a defined prop will be set by the constructor.
 
 What sets props apart from normal javascript properties is their ability to be observed. Observers
-can be attached using the `Basis.Object#on` method:
+can be attached using the `Transis.Object#on` method:
 
 ```javascript
 console.log(p.firstName);
@@ -144,14 +144,14 @@ p.firstName = 'Bob';
 ```
 
 The `#on` method is very simple, it just takes a prop name and a callback function. To remove an
-observer, use the `Basis.Object#off` method and pass it the same arguments passed to `#on`.
+observer, use the `Transis.Object#off` method and pass it the same arguments passed to `#on`.
 
-Basis props can be much more sophisticated than the example above - you can specify custom getter
+Transis props can be much more sophisticated than the example above - you can specify custom getter
 and setter functions to be invoked whenever the prop is read or written. Under the hood the `prop`
 method is using [`Object.defineProperty`][Object.defineProperty].
 
 ```javascript
-var Doubler = Basis.Object.extend(function() {
+var Doubler = Transis.Object.extend(function() {
   this.prop('value');
   this.prop('doubledValue', {
     get: function() {
@@ -187,12 +187,12 @@ doubler.doubledValue = 22;
 
 There is a problem with the above `Doubler` example however. If we set the `value` prop, that
 effectively updates the `doubledValue` prop, but any observers on `doubledValue` won't get notified.
-This is because we haven't informed Basis that the `doubledValue` prop actually depends on the
+This is because we haven't informed Transis that the `doubledValue` prop actually depends on the
 `value` prop. We can do that by using the `on` option to the `prop` method. Simply pass it a list of
 prop names that the prop you are defining depends on:
 
 ```javascript
-var Doubler2 = Basis.Object.extend(function() {
+var Doubler2 = Transis.Object.extend(function() {
   this.prop('value');
   this.prop('doubledValue', {
     on: ['value'],
@@ -215,23 +215,23 @@ doubler2.value = 5;
 ```
 
 Now, our observer on the `doubledValue` prop gets notified when we change the `value` prop. This is
-how you define observable computed properties in Basis.
+how you define observable computed properties in Transis.
 
 One thing you may have noticed in the `Doubler2` example is that the `doubledValue` getter function
 takes an argument and does not access `this`. This is what is known as a "pure" prop and is the
 default when you define a custom getter function on your prop without also defining a custom setter.
 A pure prop is called as such because its getter function must be a pure function, meaning it has no
-side effects. This is enforced by Basis by invoking the getter function in the `null` context,
+side effects. This is enforced by Transis by invoking the getter function in the `null` context,
 meaning `this` will be `null` inside the body of the function. So if you can't access `this`, how do
 you access the dependent props? This is where the `on` option comes in. You must declare all
-dependencies using the `on` option and Basis will take care of accessing them and passing them to
+dependencies using the `on` option and Transis will take care of accessing them and passing them to
 your getter function in the same order they are named in the `on` option.
 
 If you must access `this` inside your getter, you can make your prop "impure" by setting the `pure`
 option to false. In this case, no arguments will be passed to your getter function, even if you have
 declared dependencies with the `on` option.
 
-_A note about observers_: Basis prop observers do not fire immediately when a prop is changed, they
+_A note about observers_: Transis prop observers do not fire immediately when a prop is changed, they
 instead are fired asynchronously. This is important for performance reasons. Firing observers
 immediately is simpler and more straightforward, but it can potentially lead to your app doing a lot
 more work than necessary. This is especially true when leveraging observers to keep your views in
@@ -239,12 +239,12 @@ sync with your models - we don't want to trigger renders for every single prop c
 when loading in a bunch of data from our backend. By notifying observers asynchronously, we allow
 things to settle before responding to any change. This means that if a prop is changed multiple
 times in a single javascript execution context, observers will only be notified once. The
-`Basis.Object.flush` method can be used to force observers to fire immediately. This method should
+`Transis.Object.flush` method can be used to force observers to fire immediately. This method should
 never be used in production code, its only for making specs easier to write. An example should make
 this clear:
 
 ```javascript
-var Thing = Basis.Object.extend(function() {
+var Thing = Transis.Object.extend(function() {
   this.prop('name');
 });
 
@@ -258,30 +258,30 @@ thing.name = 'a';
 thing.name = 'b';
 thing.name = 'c';
 
-Basis.Object.flush();
+Transis.Object.flush();
 // name changed: c
 
 thing.name = 'd';
 
-Basis.Object.flush();
+Transis.Object.flush();
 // name changed: d
 
 thing.name = 'e';
 thing.name = 'f';
 
-Basis.Object.flush();
+Transis.Object.flush();
 // name changed: f
 ```
 
 ### Cached props
 
 Sometimes props are very expensive to compute and doing so over and over would have a significant
-performance impact on your application. Since Basis knows about your computed prop dependencies, it
+performance impact on your application. Since Transis knows about your computed prop dependencies, it
 can easily cache prop values and invalidate that cache whenever a dependency changes. Simply add the
 `cache` option to your prop definition:
 
 ```javascript
-var Person = Basis.Object.extend(function() {
+var Person = Transis.Object.extend(function() {
   this.prop('firstName');
   this.prop('lastName');
   this.prop('fullName', {
@@ -301,7 +301,7 @@ console.log(p.fullName);
 console.log(p.fullName);
 // Homer Simpson
 p.firstName = 'Marge';
-Basis.Object.flush();
+Transis.Object.flush();
 console.log(p.fullName);
 // computing Person#firstName
 // Marge Simpson
@@ -311,17 +311,17 @@ console.log(p.fullName);
 
 ### Model layer
 
-The `Basis.Object` class is the foundation of Basis, but you will likely rarely use it directly in
-a user interface application to define your model objects. Instead you will use `Basis.Model` which
-is a subclass of `Basis.Object` and therefore inherits its ability to define observable props.
+The `Transis.Object` class is the foundation of Transis, but you will likely rarely use it directly in
+a user interface application to define your model objects. Instead you will use `Transis.Model` which
+is a subclass of `Transis.Object` and therefore inherits its ability to define observable props.
 
-`Basis.Model` builds on `Basis.Object` by adding an identity map, typed attributes, two-way
+`Transis.Model` builds on `Transis.Object` by adding an identity map, typed attributes, two-way
 associations, a thin persistence layer, state management, change tracking, and validations. Each of
 these features will be explored next.
 
 ### Identity map
 
-`Basis.Model` makes use of an [identity map][identity map] to ensure that each model instance gets
+`Transis.Model` makes use of an [identity map][identity map] to ensure that each model instance gets
 loaded only once into memory. A model instance is uniquely identified by its class and `id` prop.
 
 This is important for user interface applications because things can quickly get out of hand if we
@@ -331,14 +331,14 @@ its version of the object wasn't actually changed.
 
 ### Typed attributes
 
-`Basis.Model` introduces a new way to define typed props, otherwise known as attributes with the
-`Basis.Model.attr` method. Attributes are special Basis props that ensure their value is of a
+`Transis.Model` introduces a new way to define typed props, otherwise known as attributes with the
+`Transis.Model.attr` method. Attributes are special Transis props that ensure their value is of a
 particular type. This is really helpful when dealing with JSON APIs where the amount of data types
-is fairly limited. For example, JSON doesn't support a Date data type, but Basis provides a date
+is fairly limited. For example, JSON doesn't support a Date data type, but Transis provides a date
 attribute type that will automatically parse [ISO 8601][ISO 8601] formatted date strings and turn
 them into javascript [`Date`][Date] objects.
 
-Basis supports the following attribute types:
+Transis supports the following attribute types:
 
 * identity (no coercion is performed)
 * string
@@ -348,13 +348,13 @@ Basis supports the following attribute types:
 * date
 * datetime
 
-Additionally, you can register your own custom attribute types using the `Basis.Model.registerAttr`
+Additionally, you can register your own custom attribute types using the `Transis.Model.registerAttr`
 method.
 
 Here is an example of attributes in action:
 
 ```javascript
-var Person = Basis.Model.extend('Person', function() {
+var Person = Transis.Model.extend('Person', function() {
   this.attr('firstName', 'string');
   this.attr('lastName', 'string');
   this.attr('birthday', 'date');
@@ -384,13 +384,13 @@ strings but the `birthday` attr is parsed into a `Date` object and the `numberOf
 into a number.
 
 Also take note of the way we're calling `extend` here as its slightly different than calling `extend`
-directly on `Basis.Object`. When extending `Basis.Model` you must pass a string representing the
+directly on `Transis.Object`. When extending `Transis.Model` you must pass a string representing the
 class name as the first argument. This class name is used when defining assocations, which we'll
 take a look at next.
 
 ### Two-way associations
 
-All but the most trival data models have relationships among models. Basis helps model these
+All but the most trival data models have relationships among models. Transis helps model these
 relationships with associations. Assocations come in two flavors: a to-one relation or to-many
 relationship. When the association is defined on both sides of the relationship, the association is
 said to be two-way, meaning that manipulating one side of the association also manipulates the other
@@ -399,7 +399,7 @@ association, that book will automatically have its `author` prop set. The revers
 if a book's `author` property is set, then that book instance gets added to the author's `books`
 association.
 
-Associations between models are defined using the `Basis.Model.hasOne` and `Basis.Model.hasMany`
+Associations between models are defined using the `Transis.Model.hasOne` and `Transis.Model.hasMany`
 methods. These generate special props, which of course are observable.
 
 ```javascript
@@ -440,28 +440,28 @@ console.log(book.author);
 
 First observe how associations are defined. You call either the `.hasOne` or `.hasMany` method and
 pass it the name of the association, the name of the associated model (this must be the same string
-passed to  `Basis.Model.extend`), and an options hash. This will add a new prop to the class. For
+passed to  `Transis.Model.extend`), and an options hash. This will add a new prop to the class. For
 `hasOne` associations the value of that prop is either `undefined` or an instance of the associated
 model class. For `hasMany` associations, the value is always an array containing zero or more
 instances of the associated model class.
 
 Next you can see the two-way associations in action. The `inverse` option on both sides must be set
-in order for the association to be two way. This is how Basis figures out the prop to update on the
+in order for the association to be two way. This is how Transis figures out the prop to update on the
 other side when an assocation is changed.
 
 At this point you may be wondering how popping an item from the `Author#books` array causes the
-book's `author` prop to be updated. It works because Basis `hasMany` associations don't use regular
-native array objects, they instead use `Basis.Array` objects. Lets take a brief interlue from
-discussing `Basis.Model` to take a look at `Basis.Array`.
+book's `author` prop to be updated. It works because Transis `hasMany` associations don't use regular
+native array objects, they instead use `Transis.Array` objects. Lets take a brief interlue from
+discussing `Transis.Model` to take a look at `Transis.Array`.
 
-### `Basis.Array`
+### `Transis.Array`
 
-The `Basis.Array` class implements an observable native-like array. It behaves just like a native
+The `Transis.Array` class implements an observable native-like array. It behaves just like a native
 array except that it has some enhanced capabilities. An example best illustrates this:
 
 ```javascript
-var a1 = Basis.Array.of(1,2,3);
-var a2 = Basis.Array.from([4,5,6]);
+var a1 = Transis.Array.of(1,2,3);
+var a2 = Transis.Array.from([4,5,6]);
 
 console.log(a1.toString());
 // [1, 2, 3]
@@ -472,67 +472,67 @@ console.log(a1.size);
 // 3
 a1.on('size', function() { console.log('a1 size changed:', a1.size); });
 a1.push(10);
-Basis.Object.flush();
+Transis.Object.flush();
 // a1 size changed: 4
 a1.shift();
-Basis.Object.flush();
+Transis.Object.flush();
 // a1 size changed: 3
 
 a2.on('@', function() { console.log('a2 was mutated:', a2.toString()); });
 a2.pop();
-Basis.Object.flush();
+Transis.Object.flush();
 // a2 was mutated: [4, 5]
 a2.at(0, 10);
-Basis.Object.flush();
+Transis.Object.flush();
 // a2 was mutated: [10, 5]
 ```
 
-First we see two ways to instantiate a new `Basis.Array`. The first, using the `.of` method, returns
-a new `Basis.Array` containing each argument. This is analogous to using the brackets operator
+First we see two ways to instantiate a new `Transis.Array`. The first, using the `.of` method, returns
+a new `Transis.Array` containing each argument. This is analogous to using the brackets operator
 (`[]`) to create a native array. The second, using the `.from` method, converts a native array
-or array-like object to a `Basis.Array`.
+or array-like object to a `Transis.Array`.
 
-From there we can see that `Basis.Array` objects have a `size` prop that is observable. When a new
+From there we can see that `Transis.Array` objects have a `size` prop that is observable. When a new
 item is pushed on to the array or shifted off, observers of the `size` prop are notified.
 
-Lastly we can see that `Basis.Array` objects have another observable prop named `@`. This is a
+Lastly we can see that `Transis.Array` objects have another observable prop named `@`. This is a
 special prop used to observe mutations made to the array. Any operation that changes the contents of
 the array in any way will notify observers of the `@` prop.
 
-The `Basis.Array` class has an interesting implementation. It does not truly subclass
-`Basis.Object`. You can see this by using the `instanceof` operator:
+The `Transis.Array` class has an interesting implementation. It does not truly subclass
+`Transis.Object`. You can see this by using the `instanceof` operator:
 
 ```javascript
-var a = Basis.Array.of();
-console.log(a instanceof Basis.Array);
+var a = Transis.Array.of();
+console.log(a instanceof Transis.Array);
 // true
-console.log(a instanceof Basis.Object);
+console.log(a instanceof Transis.Object);
 // false
 ```
 
-However, it behaves just like a `Basis.Object`. It is assigned an `objectId` and responds to the
-`#on` and `#off` methods. The reason that it does not descend from `Basis.Object` is because Basis
+However, it behaves just like a `Transis.Object`. It is assigned an `objectId` and responds to the
+`#on` and `#off` methods. The reason that it does not descend from `Transis.Object` is because Transis
 arrays are actually a copy of the native `Array` class with some added capabilities. A copy of
 `Array` is created by grabbing a reference to the `Array` constructor function from an `iframe`.
 This approach allows us to create a custom array class that behaves just like normal arrays without
 manipulating the main native `Array`.
 
-This approach does have some caveats however. As mentioned `Basis.Array` does not truly descend from
-`Basis.Object`. Also, javascript provides no means to hook into use of the brackets operator (`[]`)
+This approach does have some caveats however. As mentioned `Transis.Array` does not truly descend from
+`Transis.Object`. Also, javascript provides no means to hook into use of the brackets operator (`[]`)
 when setting array indexes. This means that observers will not be notified when an array is mutated
 using the brackets operator. To set a value at a specific index in an observable manner, use the
-`Basis.Array#at` method instead:
+`Transis.Array#at` method instead:
 
 ```javascript
-var a = Basis.Array.of(1,2,3);
+var a = Transis.Array.of(1,2,3);
 
 console.log(a.toString());
 // [1, 2, 3]
 a.on('@', function() { console.log('a was mutated:', a.toString()); });
 a[3] = 4;
-Basis.Object.flush();
+Transis.Object.flush();
 a.at(4, 5);
-Basis.Object.flush();
+Transis.Object.flush();
 // a was mutated: [1, 2, 3, 4, 5]
 ```
 
@@ -542,21 +542,21 @@ method, the observer was notified.
 ### Computed props on associations
 
 Now that we know how associations work, its time to take another look at computed props and some
-enhancements that are available on `Basis.Model`. With subclasses of `Basis.Object` we saw how you
+enhancements that are available on `Transis.Model`. With subclasses of `Transis.Object` we saw how you
 can define computed props that depend on other props on the same object. But sometimes we have a
-need to compute properties from properties on other objects. `Basis.Model` associations make this
+need to compute properties from properties on other objects. `Transis.Model` associations make this
 possible in an observable way.
 
 So how do we indicate that our computed prop depends on props on associated objects? We simply use
 dots to create a property path. Lets take a look at an example:
 
 ```javascript
-var Author = Basis.Model.extend('Author', function() {
+var Author = Transis.Model.extend('Author', function() {
   this.attr('name', 'string');
   this.hasMany('posts', 'Post');
 });
 
-var Post = Basis.Model.extend('Post', function() {
+var Post = Transis.Model.extend('Post', function() {
   this.hasOne('author', 'Author');
 
   this.prop('authorName', {
@@ -580,7 +580,7 @@ author.name = 'Jon Doe';
 
 We've defined the `Post#authorName` prop that depends on the post's author's `name` prop. We
 indicate this by passing the path `'author.name'` as the `on` option. This works because
-`Basis.Model` instances propagate change notifications to their associated objects.
+`Transis.Model` instances propagate change notifications to their associated objects.
 
 Its important to point out here that you are only allowed to have one dot in a dependent property
 path - you can't depend on props that are not on immediate neighbors. This is by design as to make
@@ -590,7 +590,7 @@ immediate neighbor, simply define a prop on that immediate neighbor that you can
 
 But what about `hasMany` associations? How do we compute a prop over an array of objects? It works
 the same as with `hasOne` associations in that you pass a property path using the `on` object, but
-when the first segment in that path is an array, Basis will collect the next segment from each
+when the first segment in that path is an array, Transis will collect the next segment from each
 individual element of the array and pass an array of those values to the getter function. Continuing
 on with our previous example:
 
@@ -616,15 +616,15 @@ post.on('tagNames', function() {
 });
 
 post.tags.push(new Tag({name: 'c'}));
-Basis.Object.flush();
+Transis.Object.flush();
 // post.tagNames changed: [ 'a', 'b', 'c' ]
 
 post.tags.shift();
-Basis.Object.flush();
+Transis.Object.flush();
 // post.tagNames changed: [ 'b', 'c' ]
 
 post.tags.first.name = 'x';
-Basis.Object.flush();
+Transis.Object.flush();
 // post.tagNames changed: [ 'x', 'c' ]
 ```
 
@@ -641,12 +641,12 @@ how to do that later.
 ### Persistence layer
 
 So far we've seen how to instantiate new models but nothing regarding persisting them to permanent
-storage. Basis is completely agnostic as to the persistence mechanism used in your application and
-it uses the [data mapper][data mapper] pattern to communicate with it. Since Basis was designed to
+storage. Transis is completely agnostic as to the persistence mechanism used in your application and
+it uses the [data mapper][data mapper] pattern to communicate with it. Since Transis was designed to
 be used as the model layer of a UI application, the most common persistence mechanism is an HTTP
 API.
 
-The data mapper pattern is very simple, each `Basis.Model` subclass that needs to be persisted must
+The data mapper pattern is very simple, each `Transis.Model` subclass that needs to be persisted must
 have its `mapper` property assigned to an object that responds to one or more of the following
 methods:
 
@@ -657,10 +657,10 @@ methods:
 * delete(model)
 
 These methods are responsible for doing the actual communication with the persistence layer and are
-invoked by the `Basis.Model` class. You should rarely ever need to call these methods directly.
+invoked by the `Transis.Model` class. You should rarely ever need to call these methods directly.
 Since communicating with your persistence layer will likely involve an asynchronous operation, these
 methods all must return an `Promise` or promise like object that gets resolved/rejected when the
-asynchronous operation is complete. `Basis.Model` will throw an exception if a promise is not
+asynchronous operation is complete. `Transis.Model` will throw an exception if a promise is not
 returned by these methods.
 
 Lets take a look at an example:
@@ -688,7 +688,7 @@ var PersonMapper = {
   }
 };
 
-var Person = Basis.Model.extend('Person', function() {
+var Person = Transis.Model.extend('Person', function() {
   this.mapper = PersonMapper;
 
   this.attr('firstName', 'string');
@@ -730,7 +730,7 @@ Here we can see that our mapper is just a simple javascript object. It can be as
 as you desire, it just needs to respond to the appropriate methods mentioned above.
 
 The example has implemented two methods, `query` and `update`, which allows us to use the
-`Basis.Model.query` and `Basis.Model#save` methods. Here we're just operating on an in memory array,
+`Transis.Model.query` and `Transis.Model#save` methods. Here we're just operating on an in memory array,
 but in practice you'd likely talk to an API.
 
 Calling `query` on a model class will immediately return an empty array that has been enhanced with
@@ -745,10 +745,10 @@ see the model is in the busy state while the mapper is doing its work.
 
 ### Model state
 
-Above we got a glimpse of how Basis tracks the state of a model when its interacting with the
-mapper - the `Basis.Model#isBusy` prop is set to `true` while a mapper operation is pending and is
-`false` otherwise. In addition to tracking the busy state of a model Basis also tracks the source
-state. The source state is available as the `Basis.Model#sourceState` prop and will always be set to
+Above we got a glimpse of how Transis tracks the state of a model when its interacting with the
+mapper - the `Transis.Model#isBusy` prop is set to `true` while a mapper operation is pending and is
+`false` otherwise. In addition to tracking the busy state of a model Transis also tracks the source
+state. The source state is available as the `Transis.Model#sourceState` prop and will always be set to
 one of the following states:
 
 * `NEW`
@@ -766,7 +766,7 @@ There are corresponding props to each of these states:
 New models are those that have been instantiated but not yet persisted through the mapper:
 
 ```javascript
-var TestModel = Basis.Model.extend('TestModel', function() {
+var TestModel = Transis.Model.extend('TestModel', function() {
   this.mapper = {
     get: function(id) {
       return Promise.resolve({id: id, foo: (new Date).toString()});
@@ -786,7 +786,7 @@ console.log(newModel.toString());
 ```
 
 Empty models represent just an id and no other data. A model in the empty state is immediately
-returned by the `Basis.Model.get` method:
+returned by the `Transis.Model.get` method:
 
 ```javascript
 var emptyModel = TestModel.get(9);
@@ -794,7 +794,7 @@ console.log(emptyModel.toString());
 // #<TestModel (EMPTY-BUSY):2 {"id":9}>
 ```
 
-You can also create an empty model with the `Basis.Model.empty` method:
+You can also create an empty model with the `Transis.Model.empty` method:
 
 ```javascript
 var emptyModel2 = TestModel.empty(21);
@@ -823,27 +823,27 @@ loadedModel.delete().then(function() {
 
 ### Loading data
 
-When data gets loaded through the mapper via `#query`, `#get`, or `.get` methods, Basis is actually
-calling the `Basis.Model.load` method and passing it the object that the mapper resolves its promise
+When data gets loaded through the mapper via `#query`, `#get`, or `.get` methods, Transis is actually
+calling the `Transis.Model.load` method and passing it the object that the mapper resolves its promise
 with. The `.load` method is very powerful in that it can do much more than just load the attributes
 for a single model object - it can also automatically load nested associated models as long as the
 object structure matches the defined associations:
 
 ```javascript
-var Author = Basis.Model.extend('Author', function() {
+var Author = Transis.Model.extend('Author', function() {
   this.attr('first', 'string');
   this.attr('last', 'string');
   this.hasMany('posts', 'Post', {inverse: 'author'});
 });
 
-var Post = Basis.Model.extend('Post', function() {
+var Post = Transis.Model.extend('Post', function() {
   this.attr('title', 'string');
   this.attr('body', 'string');
   this.hasOne('author', 'Author', {inverse: 'posts'});
   this.hasMany('tags', 'Tag', {inverse: 'posts'});
 });
 
-var Tag = Basis.Model.extend('Tag', function() {
+var Tag = Transis.Model.extend('Tag', function() {
   this.attr('name', 'string');
   this.hasMany('posts', 'Post', {inverse: 'tags'});
 });
@@ -870,16 +870,16 @@ instances of the `Author` and `Tag` classes. Further, since the associations all
 defined, the inverse associations are also properly established.
 
 With the `.load` method, loading data from your backend is trival as long as you build your APIs to
-match the structure of the Basis models. When you have differences, its the mapper's responsibilty
-to munge the data received from the persistence layer to make it loadable by Basis.
+match the structure of the Transis models. When you have differences, its the mapper's responsibilty
+to munge the data received from the persistence layer to make it loadable by Transis.
 
 ### Change tracking
 
-Basis has automatic attribute change tracking built in. If you change an attribute from what was
-loaded, Basis will keep track of the previous value. This makes undoing changes trivial:
+Transis has automatic attribute change tracking built in. If you change an attribute from what was
+loaded, Transis will keep track of the previous value. This makes undoing changes trivial:
 
 ```javascript
-var Person = Basis.Model.extend('Person', function() {
+var Person = Transis.Model.extend('Person', function() {
   this.attr('firstName', 'string');
   this.attr('lastName', 'string');
 });
@@ -902,7 +902,7 @@ console.log(p.toString());
 // #<Person (LOADED):1 {"firstName":"Homer","lastName":"Simpson","id":1}>
 ```
 
-This example introduces the `Basis.Model#hasChanges` and `#changes` props. The `hasChanges` prop
+This example introduces the `Transis.Model#hasChanges` and `#changes` props. The `hasChanges` prop
 returns a boolean indicating whether or not the model has any attribute changes. The `changes` prop
 returns an object mapping the attribute that has changed to its previous value. We can also see that
 changes can be reverted by simply calling the `#undoChanges` method.
@@ -910,17 +910,17 @@ changes can be reverted by simply calling the `#undoChanges` method.
 This is useful, but there are times when we have UIs that allow for editing a hierarchy of data and
 we want to track changes throughout the whole hierarchy. We can do this by using the `owner` option
 on association definitions. When you set the `owner` option on the association, you are telling
-Basis to treat any changes made to the associated objects as changes on the owner object. So
+Transis to treat any changes made to the associated objects as changes on the owner object. So
 `#hasChanges` will return `true` on the owner if any of its owned objects have changes.
 
 ```javascript
-var Invoice = Basis.Model.extend('Invoice', function() {
+var Invoice = Transis.Model.extend('Invoice', function() {
   this.attr('name', 'string');
 
   this.hasMany('lineItems', 'LineItem', {owner: true, inverse: 'invoice'});
 });
 
-var LineItem = Basis.Model.extend('LineItem', function() {
+var LineItem = Transis.Model.extend('LineItem', function() {
   this.attr('name', 'string');
   this.attr('quantity', 'number');
   this.attr('rate', 'number');
@@ -976,7 +976,7 @@ object.
 Finally we can see that by calling `undoChanges` on the invoice, we also undo any changes on its
 owned line items
 
-In addition to tracking attribute changes, Basis will also track changes made to `hasMany`
+In addition to tracking attribute changes, Transis will also track changes made to `hasMany`
 associations. So adding or removing an object from a `hasMany` array can also be undone:
 
 ```javascript
@@ -1005,13 +1005,13 @@ console.log(invoice.lineItems.toString());
 
 ### Validations
 
-Basis provides a simple validation framework for your models. At the class level you can register
-validator functions for individual attributes with the `Basis.Model.validate` class method. Calling
-the `Basis.Model#validate` instance method will run all registered validator functions. The
+Transis provides a simple validation framework for your models. At the class level you can register
+validator functions for individual attributes with the `Transis.Model.validate` class method. Calling
+the `Transis.Model#validate` instance method will run all registered validator functions. The
 validator functions should call the `#addError` method when it detects a validation error.
 
 ```javascript
-var Invoice = Basis.Model.extend('Invoice', function() {
+var Invoice = Transis.Model.extend('Invoice', function() {
   this.attr('name', 'string');
   this.hasMany('lineItems', 'LineItem', {owner: true});
 
@@ -1022,7 +1022,7 @@ var Invoice = Basis.Model.extend('Invoice', function() {
   });
 });
 
-var LineItem = Basis.Model.extend('LineItem', function() {
+var LineItem = Transis.Model.extend('LineItem', function() {
   this.attr('quantity', 'number');
   this.attr('rate', 'number');
 
@@ -1075,31 +1075,31 @@ So even though the invoice object didn't have any validation errors, the `#valid
 ### React integration
 
 At Centro we use [React][React] to implement our views so we've created a small React mixin to make
-it easy to glue your React components to Basis models. Other than this mixin, Basis has no knowledge
+it easy to glue your React components to Transis models. Other than this mixin, Transis has no knowledge
 or dependency on React. It can be used with any view framework.
 
 React does a great job of re-rendering when props or state changes are made, however often times
 you pass a model instance to a React component and that model will undergo changes that need to
 be re-rendered. Since the actual prop value isn't changing, just its internal state, React won't
-know to trigger a re-render. Since our Basis model props are easily observable, it would be nice if
+know to trigger a re-render. Since our Transis model props are easily observable, it would be nice if
 we could just inform the component what props to observe on the model so that it can automatically
-update when any change. Thats precisely what the `Basis.ReactPropsMixin` does:
+update when any change. Thats precisely what the `Transis.ReactPropsMixin` does:
 
 ```jsx
-var Person = Basis.Model.extend('Person', function() {
+var Person = Transis.Model.extend('Person', function() {
   this.attr('firstName', 'string');
   this.attr('lastName', 'string');
 
   this.prop('fullName', {
     on: ['firstName', 'lastName'],
     get: function(firstName, lastName) {
-      return Basis.A(firstName, lastName).compact().join(' ').trim();
+      return Transis.A(firstName, lastName).compact().join(' ').trim();
     }
   });
 });
 
 var PersonView = React.createClass({
-  mixins: [Basis.ReactPropsMixin({person: ['fullName']})],
+  mixins: [Transis.ReactPropsMixin({person: ['fullName']})],
 
   propTypes: {
     person: React.PropTypes.instanceOf(Person)
@@ -1116,8 +1116,8 @@ var PersonView = React.createClass({
 ```
 
 Our `PersonView` component accepts a `person` prop that must be an instance of our `Person` model.
-We create our glue mixin by calling the `Basis.ReactPropsMixin` function and passing it an object
-that specifies the Basis props to observe on each React component prop. When any of these Basis
+We create our glue mixin by calling the `Transis.ReactPropsMixin` function and passing it an object
+that specifies the Transis props to observe on each React component prop. When any of these Transis
 props change, the mixin will call `forceUpdate` on the component to trigger a re-render.
 
 ## Example Apps
