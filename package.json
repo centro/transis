@@ -1,11 +1,11 @@
 {
-  "name": "basis",
+  "name": "Transis",
   "version": "0.0.0",
-  "description": "Data modeling library",
+  "description": "A data modeling library for building JavaScript applications.",
   "main": "dist/index.js",
   "scripts": {
     "test": "make",
-    "prepublish": "make clean basis"
+    "prepublish": "make clean transis"
   },
   "keywords": [
     "model",

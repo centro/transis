@@ -1,28 +1,28 @@
 import "es6-shim";
-import BasisArray from "../array";
-import BasisObject from "../object";
+import TransisArray from "../array";
+import TransisObject from "../object";
 
-var A = BasisArray.of;
+var A = TransisArray.of;
 
 describe('Array', function() {
   describe('.of', function() {
-    it('returns a Basis.Array containing all of the given arguments', function() {
+    it('returns a Transis.Array containing all of the given arguments', function() {
       var a1 = A(1,2,3), a2 = A(9);
 
-      expect(a1 instanceof BasisArray).toBe(true);
+      expect(a1 instanceof TransisArray).toBe(true);
       expect(a1.length).toBe(3);
       expect(a1.at(0)).toBe(1);
       expect(a1.at(1)).toBe(2);
       expect(a1.at(2)).toBe(3);
-      expect(a2 instanceof BasisArray).toBe(true);
+      expect(a2 instanceof TransisArray).toBe(true);
       expect(a2.length).toBe(1);
       expect(a2.at(0)).toBe(9);
     });
 
-    it('returns an empty Basis.Array when given no arguments', function() {
+    it('returns an empty Transis.Array when given no arguments', function() {
       var a = A();
 
-      expect(a instanceof BasisArray).toBe(true);
+      expect(a instanceof TransisArray).toBe(true);
       expect(a.length).toBe(0);
     });
 
@@ -48,16 +48,16 @@ describe('Array', function() {
 
     it('notifies observers when the array length is changed', function() {
       this.a.pop();
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.spy).toHaveBeenCalledWith('size');
       this.a.push(10);
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.spy.calls.count()).toBe(2);
     });
 
     it('does not notify observers on a splice that does not result in a length change', function() {
       this.a.splice(0, 1, 10);
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.spy).not.toHaveBeenCalled();
     });
   });
@@ -73,7 +73,7 @@ describe('Array', function() {
 
       a.on('first', spy);
       a.unshift();
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('first');
     });
 
@@ -82,7 +82,7 @@ describe('Array', function() {
 
       a.on('first', spy);
       a.pop();
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).not.toHaveBeenCalled();
     });
   });
@@ -90,17 +90,17 @@ describe('Array', function() {
   describe('@ prop', function() {
     beforeEach(function() {
       this.a = A(1,2,3);
-      BasisObject.flush();
+      TransisObject.flush();
       this.spy = jasmine.createSpy();
       this.a.on('@', this.spy);
     });
 
     it('notifies observers when the array is spliced', function() {
       this.a.push(4);
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.spy).toHaveBeenCalledWith('@');
       this.a.pop();
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.spy.calls.count()).toBe(2);
     });
   });
@@ -190,10 +190,10 @@ describe('Array', function() {
       expect(a2.eq(a1)).toBe(true);
     });
 
-    it("returns `false` when given an argument that is not a regular array or Basis.Array", function() {
+    it("returns `false` when given an argument that is not a regular array or Transis.Array", function() {
       expect((A()).eq("foo")).toBe(false);
       expect((A()).eq({})).toBe(false);
-      expect((A()).eq(new BasisObject)).toBe(false);
+      expect((A()).eq(new TransisObject)).toBe(false);
     });
   });
 
@@ -314,7 +314,7 @@ describe('Array', function() {
 
         expect(function() {
           a.splice(-12);
-        }).toThrow(new Error('Basis.Array#splice: index -12 is too small for ' + a));
+        }).toThrow(new Error('Transis.Array#splice: index -12 is too small for ' + a));
       });
     });
 
@@ -328,8 +328,8 @@ describe('Array', function() {
       expect(A(0, 1, 2).splice(10, 3, 10)).toEqual(A());
     });
 
-    it('returns an instance of Basis.Array', function() {
-      expect(A(0, 1, 2).splice(0) instanceof BasisArray).toBe(true);
+    it('returns an instance of Transis.Array', function() {
+      expect(A(0, 1, 2).splice(0) instanceof TransisArray).toBe(true);
       expect(A(0, 1, 2).splice(0).objectId).toBeDefined();
     });
   });
@@ -413,7 +413,7 @@ describe('Array', function() {
       expect(A(1,2,3).concat(4,5,6)).toEqual(A(1,2,3,4,5,6));
     });
 
-    it('returns a new array comprising the receiver joined with the given Basis.Array', function() {
+    it('returns a new array comprising the receiver joined with the given Transis.Array', function() {
       expect(A(1,2,3).concat(A(4,5,6))).toEqual(A(1,2,3,4,5,6));
     });
 
@@ -425,8 +425,8 @@ describe('Array', function() {
       expect(A(1,2,3).concat([4,5], 6, A(7,8), 9)).toEqual(A(1,2,3,4,5,6,7,8,9));
     });
 
-    it('returns an instance of Basis.Array', function() {
-      expect(A(1,2,3).concat(4,5,6) instanceof BasisArray).toBe(true);
+    it('returns an instance of Transis.Array', function() {
+      expect(A(1,2,3).concat(4,5,6) instanceof TransisArray).toBe(true);
       expect(A(1,2,3).concat(4,5,6).objectId).toBeDefined();
     });
   });
@@ -442,8 +442,8 @@ describe('Array', function() {
       expect(A(0,1,2,3,4,5).slice(1,4)).toEqual(A(1,2,3));
     });
 
-    it('returns an instance of Basis.Array', function() {
-      expect(A(1,2,3,4,5).slice() instanceof BasisArray).toBe(true);
+    it('returns an instance of Transis.Array', function() {
+      expect(A(1,2,3,4,5).slice() instanceof TransisArray).toBe(true);
       expect(A(1,2,3,4,5).slice().objectId).toBeDefined();
     });
   });
@@ -453,8 +453,8 @@ describe('Array', function() {
       expect(A(1,2,3).map(function(x) { return x * 2; })).toEqual(A(2,4,6));
     });
 
-    it('returns an instance of Basis.Array', function() {
-      expect(A(1,2,3).map(function(x) { return x * 2; }) instanceof BasisArray).toBe(true);
+    it('returns an instance of Transis.Array', function() {
+      expect(A(1,2,3).map(function(x) { return x * 2; }) instanceof TransisArray).toBe(true);
       expect(A(1,2,3).map(function(x) { return x * 2; }).objectId).toBeDefined();
     });
 
@@ -470,8 +470,8 @@ describe('Array', function() {
       expect(A(1,2,3,4,5).filter(function(x) { return x % 2 === 0; })).toEqual(A(2,4));
     });
 
-    it('returns an instance of Basis.Array', function() {
-      expect(A(1,2,3,4,5).filter(function(x) { return x % 2 === 0; }) instanceof BasisArray).toBe(true);
+    it('returns an instance of Transis.Array', function() {
+      expect(A(1,2,3,4,5).filter(function(x) { return x % 2 === 0; }) instanceof TransisArray).toBe(true);
       expect(A(1,2,3,4,5).filter(function(x) { return x % 2 === 0; }).objectId).toBeDefined();
     });
 
@@ -664,7 +664,7 @@ describe('Array', function() {
   });
 
   describe('#replace', function() {
-    it('replaces the contents of the receiver with the given `Basis.Array` contents', function() {
+    it('replaces the contents of the receiver with the given `Transis.Array` contents', function() {
       var a = A(1,2,3);
       a.replace(A('foo', 'bar'));
       expect(a).toEqual(A('foo', 'bar'));
@@ -736,12 +736,12 @@ describe('Array', function() {
   });
 
   describe('#proxy', function() {
-    var Test = BasisObject.extend(function() {
+    var Test = TransisObject.extend(function() {
       this.prop('x');
     });
 
     beforeEach(function() {
-      this.to = new BasisObject;
+      this.to = new TransisObject;
       this.a  = A(new Test({x: 1}), new Test({x: 2}), new Test({x: 3}));
       this.a.proxy(this.to, 'things');
     });
@@ -750,29 +750,29 @@ describe('Array', function() {
       var spy = jasmine.createSpy();
       this.to.on('things.x', spy);
       this.a[0].x = 10;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('things.x');
     });
 
     it('handles added objects', function() {
       var spy = jasmine.createSpy(), t = new Test({x: 10});
       this.a.push(t);
-      BasisObject.flush();
+      TransisObject.flush();
 
       this.to.on('things.x', spy);
       t.x = 11;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('things.x');
     });
 
     it('handles removed objects', function() {
       var spy = jasmine.createSpy();
       var t = this.a.pop();
-      BasisObject.flush();
+      TransisObject.flush();
 
       this.to.on('things.x', spy);
       t.x = 11;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).not.toHaveBeenCalled();
     });
 
@@ -780,16 +780,16 @@ describe('Array', function() {
       var spy = jasmine.createSpy();
       this.to.on('things', spy);
       this.a.pop();
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('things');
     });
 
     it('does not immediately trigger a change on the given object', function() {
-      var to = new BasisObject, spy = jasmine.createSpy();
+      var to = new TransisObject, spy = jasmine.createSpy();
 
       to.on('foos', spy);
       A(new Test({x: 1})).proxy(to, 'foos');
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).not.toHaveBeenCalled();
     });
   });

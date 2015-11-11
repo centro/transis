@@ -1,8 +1,8 @@
 import "es6-shim";
-import BasisObject from "../object";
+import TransisObject from "../object";
 
-describe('Basis.Object', function() {
-  var Test = BasisObject.extend(function() {
+describe('Transis.Object', function() {
+  var Test = TransisObject.extend(function() {
     this.prop('str');
 
     this.prop('num', {
@@ -20,7 +20,7 @@ describe('Basis.Object', function() {
   });
 
   describe('.extend', function() {
-    var Child = BasisObject.extend(function() {
+    var Child = TransisObject.extend(function() {
       this.prototype.init = function() {};
     });
 
@@ -36,12 +36,12 @@ describe('Basis.Object', function() {
     });
 
     it("sets the subclass's prototype to an object that inherites from the parents prototype", function() {
-      expect(BasisObject.prototype.isPrototypeOf(Child.prototype)).toBe(true);
+      expect(TransisObject.prototype.isPrototypeOf(Child.prototype)).toBe(true);
       expect(Child.prototype.isPrototypeOf(Grandchild.prototype)).toBe(true);
     });
 
     it("sets the __super__ property on the subclass to the parent's prototype", function() {
-      expect(Child.__super__).toBe(BasisObject.prototype);
+      expect(Child.__super__).toBe(TransisObject.prototype);
       expect(Grandchild.__super__).toBe(Child.prototype);
     });
 
@@ -113,7 +113,7 @@ describe('Basis.Object', function() {
 
       describe('with pure set to false', function() {
         var spy = jasmine.createSpy();
-        var Foo = BasisObject.extend(function() {
+        var Foo = TransisObject.extend(function() {
           this.prop('impure', {
             pure: false,
             get: spy
@@ -135,7 +135,7 @@ describe('Basis.Object', function() {
           return a * 2;
         };
 
-        var Foo = BasisObject.extend(function() {
+        var Foo = TransisObject.extend(function() {
           this.prop('a');
           this.prop('twiceA', {pure: true, on: ['a'], get: spy});
         });
@@ -175,7 +175,7 @@ describe('Basis.Object', function() {
 
         t.on('str', spy);
         t.str = 'xyz';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('str');
       });
 
@@ -184,7 +184,7 @@ describe('Basis.Object', function() {
 
         t.on('*', spy);
         t.str = 'xyz';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('*');
       });
 
@@ -197,7 +197,7 @@ describe('Basis.Object', function() {
     });
 
     describe('with on option', function() {
-      var User = BasisObject.extend(function() {
+      var User = TransisObject.extend(function() {
         this.prop('first');
         this.prop('last');
         this.prop('full', {
@@ -216,11 +216,11 @@ describe('Basis.Object', function() {
         u.on('full', spy);
         expect(u.full).toBe('Joe Blow');
         u.first = 'Bob';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('full');
         expect(spy.calls.count()).toBe(1);
         u.last = 'Smith';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy.calls.count()).toBe(2);
       });
 
@@ -230,7 +230,7 @@ describe('Basis.Object', function() {
         u.on('greeting', spy);
         expect(u.greeting).toBe('Hello Joe Blow');
         u.last = 'Smith';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('greeting');
         expect(u.greeting).toBe('Hello Joe Smith');
       });
@@ -241,7 +241,7 @@ describe('Basis.Object', function() {
         u.on('full', spy);
         u.first = 'Bob';
         u.last = 'Smith';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('full');
         expect(spy.calls.count()).toBe(1);
       });
@@ -252,13 +252,13 @@ describe('Basis.Object', function() {
         u.on('*', spy);
         u.first = 'Bob';
         u.last = 'Smith';
-        BasisObject.flush();
+        TransisObject.flush();
         expect(spy).toHaveBeenCalledWith('*');
         expect(spy.calls.count()).toBe(1);
       });
 
       describe('with a prop name that contains a period', function() {
-        var Foo = BasisObject.extend(function() {
+        var Foo = TransisObject.extend(function() {
           this.prop('x', {on: ['foo.bar'], get: function() { return 9; }});
         });
 
@@ -268,20 +268,20 @@ describe('Basis.Object', function() {
           f.on('x', spy);
 
           f.didChange('foo.bar');
-          BasisObject.flush();
+          TransisObject.flush();
           expect(spy.calls.count()).toBe(1);
 
           f.didChange('foo');
-          BasisObject.flush();
+          TransisObject.flush();
           expect(spy.calls.count()).toBe(2);
         });
 
         it('throws an exception when the prop name has more than one period', function() {
           expect(function() {
-            BasisObject.extend(function() {
+            TransisObject.extend(function() {
               this.prop('x', {on: ['foo.bar.baz'], get: function() {}});
             });
-          }).toThrow(new Error('Basis.Object.defineProp: dependent property paths of more than two segments are not allowed: `foo.bar.baz`'));
+          }).toThrow(new Error('Transis.Object.defineProp: dependent property paths of more than two segments are not allowed: `foo.bar.baz`'));
         });
       });
     });
@@ -291,7 +291,7 @@ describe('Basis.Object', function() {
 
       beforeEach(function() {
         spy = jasmine.createSpy().and.callFake(function(a) { return a * 2; });
-        Foo = BasisObject.extend(function() {
+        Foo = TransisObject.extend(function() {
           this.prop('a');
           this.prop('doubleA', {cache: true, on: ['a'], get: spy});
         });
@@ -321,13 +321,13 @@ describe('Basis.Object', function() {
         expect(f.doubleA).toBe(6);
         expect(spy.calls.count()).toBe(1);
         f.a = 5;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(f.doubleA).toBe(10);
         expect(spy.calls.count()).toBe(2);
         expect(f.doubleA).toBe(10);
         expect(spy.calls.count()).toBe(2);
         f.a = 21;
-        BasisObject.flush();
+        TransisObject.flush();
         expect(f.doubleA).toBe(42);
         expect(spy.calls.count()).toBe(3);
         expect(f.doubleA).toBe(42);
@@ -337,7 +337,7 @@ describe('Basis.Object', function() {
   });
 
   describe('.props', function() {
-    var PropsTest = BasisObject.extend(function() {
+    var PropsTest = TransisObject.extend(function() {
       this.props({
         x: {},
         y: {
@@ -360,20 +360,20 @@ describe('Basis.Object', function() {
   describe('.delay', function() {
     beforeEach(function() {
       this.spy = jasmine.createSpy();
-      BasisObject.delay(this.spy);
+      TransisObject.delay(this.spy);
     });
 
     it('invokes the given function after the next flush', function() {
       expect(this.spy).not.toHaveBeenCalled();
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.spy).toHaveBeenCalled();
     });
 
     it('does not invoke the given function on subsequent flushes', function() {
       expect(this.spy.calls.count()).toBe(0);
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.spy.calls.count()).toBe(1);
-      BasisObject.flush();
+      TransisObject.flush();
       expect(this.spy.calls.count()).toBe(1);
     });
   });
@@ -401,8 +401,8 @@ describe('Basis.Object', function() {
   });
 
   describe('#objectId', function() {
-    it('returns a unique id for each instance of Basis.Object', function() {
-      var o1 = new BasisObject, o2 = new BasisObject, o3 = new BasisObject;
+    it('returns a unique id for each instance of Transis.Object', function() {
+      var o1 = new TransisObject, o2 = new TransisObject, o3 = new TransisObject;
 
       expect(typeof o1.objectId).toBe('number');
       expect(typeof o2.objectId).toBe('number');
@@ -429,7 +429,7 @@ describe('Basis.Object', function() {
 
       this.t.on('x', spy);
       this.t.x = 9;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('x');
     });
 
@@ -438,7 +438,7 @@ describe('Basis.Object', function() {
 
       this.t.on('*', spy);
       this.t.x = 9;
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('*');
     });
   });
@@ -463,25 +463,25 @@ describe('Basis.Object', function() {
 
   describe("'*' observers", function() {
     it('gets fired when a local property changes', function() {
-      var o = new BasisObject, spy = jasmine.createSpy();
+      var o = new TransisObject, spy = jasmine.createSpy();
       o.on('*', spy);
       o.didChange('foo');
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).toHaveBeenCalledWith('*');
     });
 
     it('does not get fired when only a remote property changes', function() {
-      var o = new BasisObject, spy = jasmine.createSpy();
+      var o = new TransisObject, spy = jasmine.createSpy();
       o.on('*', spy);
       o.didChange('foo.bar');
-      BasisObject.flush();
+      TransisObject.flush();
       expect(spy).not.toHaveBeenCalled();
     });
   });
 
   describe('observer notification', function() {
     it('does not throw an error when one observer of a property removes another', function() {
-      var o = new BasisObject, spy = jasmine.createSpy(), cb;
+      var o = new TransisObject, spy = jasmine.createSpy(), cb;
 
       cb = function() { o.off('*', spy); };
 
@@ -491,7 +491,7 @@ describe('Basis.Object', function() {
       o.didChange('x');
 
       expect(function() {
-        BasisObject.flush();
+        TransisObject.flush();
       }).not.toThrow();
 
       expect(spy).not.toHaveBeenCalled();
@@ -500,20 +500,20 @@ describe('Basis.Object', function() {
 
   describe('#toString', function() {
     it('returns a string containing the constructor name and object id', function() {
-      var X = BasisObject.extend(), x = new X, o = new BasisObject;
+      var X = TransisObject.extend(), x = new X, o = new TransisObject;
       X.displayName = 'X';
 
-      expect(o.toString()).toBe(`#<Basis.Object:${o.objectId}>`);
+      expect(o.toString()).toBe(`#<Transis.Object:${o.objectId}>`);
       expect(x.toString()).toBe(`#<X:${x.objectId}>`);
     });
   });
 
   describe('#getPath', function() {
-    var Foo = BasisObject.extend(function() {
+    var Foo = TransisObject.extend(function() {
       this.prop('bar');
     });
 
-    var Bar = BasisObject.extend(function() {
+    var Bar = TransisObject.extend(function() {
       this.prop('baz');
     });
 
@@ -537,7 +537,7 @@ describe('Basis.Object', function() {
       t1.str = 'aa';
       t2.str = 'bb';
 
-      BasisObject.flush();
+      TransisObject.flush();
 
       expect(spy1).toHaveBeenCalled();
       expect(spy2).toHaveBeenCalled();
@@ -546,7 +546,7 @@ describe('Basis.Object', function() {
 
   describe('#notify', function() {
     beforeEach(function() {
-      this.object = new BasisObject;
+      this.object = new TransisObject;
       this.spy = jasmine.createSpy();
       this.object.on('foo', this.spy);
     });

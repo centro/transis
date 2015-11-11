@@ -1,17 +1,17 @@
-var Person = Basis.Model.extend('Person', function() {
+var Person = Transis.Model.extend('Person', function() {
   this.attr('firstName', 'string');
   this.attr('lastName', 'string');
 
   this.prop('fullName', {
     on: ['firstName', 'lastName'],
     get: function(firstName, lastName) {
-      return Basis.A(firstName, lastName).compact().join(' ').trim();
+      return Transis.A(firstName, lastName).compact().join(' ').trim();
     }
   });
 });
 
 var PersonView = React.createClass({
-  mixins: [Basis.ReactPropsMixin({person: ['fullName']})],
+  mixins: [Transis.ReactPropsMixin({person: ['fullName']})],
 
   propTypes: {
     person: React.PropTypes.instanceOf(Person)
@@ -29,7 +29,7 @@ var PersonView = React.createClass({
 });
 
 var PersonEditView = React.createClass({
-  mixins: [Basis.ReactPropsMixin({person: ['firstName', 'lastName']})],
+  mixins: [Transis.ReactPropsMixin({person: ['firstName', 'lastName']})],
 
   propTypes: {
     person: React.PropTypes.instanceOf(Person)

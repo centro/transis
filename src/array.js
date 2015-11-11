@@ -1,9 +1,9 @@
-import BasisObject from "./object";
+import TransisObject from "./object";
 import * as util from "./util";
 
 var iframe;
 
-var BasisArray = (function () {
+var TransisArray = (function () {
   // http://danielmendel.github.io/blog/2013/02/20/subclassing-javascript-arrays/
 
   if (typeof window !== "undefined") {
@@ -23,39 +23,39 @@ var BasisArray = (function () {
   }
 })();
 
-var {concat, slice, splice, map, filter} = BasisArray.prototype;
+var {concat, slice, splice, map, filter} = TransisArray.prototype;
 
-Object.assign(BasisArray, BasisObject);
-Object.assign(BasisArray.prototype, BasisObject.prototype);
+Object.assign(TransisArray, TransisObject);
+Object.assign(TransisArray.prototype, TransisObject.prototype);
 
-// Internal: Copy over polyfilled methods from `Array` to `Basis.Array`.
+// Internal: Copy over polyfilled methods from `Array` to `Transis.Array`.
 ['findIndex', 'find'].forEach(function(x) {
-  BasisArray.prototype[x] = Array.prototype[x];
+  TransisArray.prototype[x] = Array.prototype[x];
 });
 
-// Public: Returns a new `Basis.Array` containing the given arguments as contents. This is the main
-// `Basis.Array` constructor, never use the `Basis.Array` constructor function directly.
+// Public: Returns a new `Transis.Array` containing the given arguments as contents. This is the
+// main `Transis.Array` constructor, never use the `Transis.Array` constructor function directly.
 //
 // ...elements - The elements to add to the array.
 //
-// Returns a new `Basis.Array`.
-BasisArray.of = function() {
-  var a = new BasisArray(arguments.length), i, n;
-  BasisObject.call(a);
+// Returns a new `Transis.Array`.
+TransisArray.of = function() {
+  var a = new TransisArray(arguments.length), i, n;
+  TransisObject.call(a);
   for (i = 0, n = arguments.length; i < n; i++) { a[i] = arguments[i]; }
   return a;
 };
 
-// Public: Creates a new `Basis.Array` from the given array-like object. Useful for converting a
-// regular array to a `Basis.Array`.
+// Public: Creates a new `Transis.Array` from the given array-like object. Useful for converting a
+// regular array to a `Transis.Array`.
 //
 // a - An array-like object.
 //
-// Returns a new `Basis.Array`.
-BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
+// Returns a new `Transis.Array`.
+TransisArray.from = function(a) { return TransisArray.of.apply(null, a); };
 
 (function() {
-  this.displayName = 'Basis.Array';
+  this.displayName = 'Transis.Array';
 
   this.prop('size', {get: function() { return this.length; }});
   this.prop('first', {get: function() { return this[0]; }});
@@ -88,10 +88,10 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
     }
   };
 
-  // Public: `Basis.Array` equality test. This method performs an element-wise comparison between the
-  // receiver and the given array.
+  // Public: `Transis.Array` equality test. This method performs an element-wise comparison between
+  // the receiver and the given array.
   //
-  // other - A `Basis.Array` or native array to compare to the receiver.
+  // other - A `Transis.Array` or native array to compare to the receiver.
   //
   // Returns `true` if the arrays are equal and `false` otherwise.
   this.prototype.eq = function(other) { return util.arrayEq(this, other); };
@@ -108,13 +108,13 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
 
     if (this.__proxy__) {
       removed.forEach(function(x) {
-        if (x instanceof BasisObject || x instanceof BasisArray) {
+        if (x instanceof TransisObject || x instanceof TransisArray) {
           x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
         }
       }, this);
 
       added.forEach(function(x) {
-        if (x instanceof BasisObject || x instanceof BasisArray) {
+        if (x instanceof TransisObject || x instanceof TransisArray) {
           x._registerProxy(this.__proxy__.to, this.__proxy__.name);
         }
       }, this);
@@ -122,7 +122,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
       this.__proxy__.to.didChange(this.__proxy__.name);
     }
 
-    return BasisArray.from(removed);
+    return TransisArray.from(removed);
   };
 
   // Public: Array mutator. All mutations made to an array (pushing, popping, assignment, etc.) are
@@ -133,13 +133,13 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   //            starting from `i` are removed.
   // ...items - Zero or more items to add to the array, starting at index `i`.
   //
-  // Returns a new `Basis.Array` containing the elements removed.
+  // Returns a new `Transis.Array` containing the elements removed.
   // Throws `Error` when given an index that is out of range.
   this.prototype.splice = function(i, n) {
     var added = slice.call(arguments, 2), index = i < 0 ? this.length + i : i;
 
     if (index < 0) {
-      throw new Error(`Basis.Array#splice: index ${i} is too small for ${this}`);
+      throw new Error(`Transis.Array#splice: index ${i} is too small for ${this}`);
     }
 
     if (n === undefined) { n = this.length - index; }
@@ -191,9 +191,9 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   //         negative index indicates an offset from the end of the array. If omitted, slice
   //         extracts through the end of the array.
   //
-  // Returns a new `Basis.Array`.
+  // Returns a new `Transis.Array`.
   this.prototype.slice = function() {
-    return BasisArray.from(slice.apply(this, arguments));
+    return TransisArray.from(slice.apply(this, arguments));
   };
 
   // Public: Creates a new array with the results of calling the given function on every element in
@@ -205,9 +205,9 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   //   array   - The array map was called on.
   // ctx      - Value to use as this when invoking callback.
   //
-  // Returns a new `Basis.Array`.
+  // Returns a new `Transis.Array`.
   this.prototype.map = function() {
-    return BasisArray.from(map.apply(this, arguments));
+    return TransisArray.from(map.apply(this, arguments));
   };
 
   // Public: Creates a new array with all elements that pass the test implemented by the provided
@@ -217,24 +217,24 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   //            false to discard.
   // ctx      - Value to use as this when invoking callback.
   //
-  // Returns a new `Basis.Array`.
+  // Returns a new `Transis.Array`.
   this.prototype.filter = function() {
-    return BasisArray.from(filter.apply(this, arguments));
+    return TransisArray.from(filter.apply(this, arguments));
   };
 
-  // Public: Returns a new `Basis.Array` comprised of the receiver joined with the array(s) or
+  // Public: Returns a new `Transis.Array` comprised of the receiver joined with the array(s) or
   // value(s) provided as arguments.
   //
   // ...value - Arrays or values to concatenate into the new array.
   //
-  // Returns a new `Basis.Array`.
+  // Returns a new `Transis.Array`.
   this.prototype.concat = function() {
-    return BasisArray.from(concat.apply(this, arguments));
+    return TransisArray.from(concat.apply(this, arguments));
   };
 
   // Public: Replaces the contents of the receiver with the contents of the given array.
   //
-  // a - A `Basis.Array` or native array.
+  // a - A `Transis.Array` or native array.
   //
   // Returns the receiver.
   this.prototype.replace = function(a) {
@@ -253,18 +253,18 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   // Public: Builds a new array that is the one-dimensional flattening of the receiver. In other
   // words, for every item that is itself an array, its items are added to the new array.
   //
-  // Returns a new `Basis.Array` instance.
+  // Returns a new `Transis.Array` instance.
   this.prototype.flatten = function() {
-    var a = BasisArray.of();
+    var a = TransisArray.of();
 
     for (let i = 0, n = this.length; i < n; i++) {
       let el = this[i];
 
-      if (el instanceof BasisArray) {
+      if (el instanceof TransisArray) {
         a = a.concat(el.flatten());
       }
       else if (Array.isArray(el)) {
-        a = a.concat(BasisArray.from(el).flatten());
+        a = a.concat(TransisArray.from(el).flatten());
       }
       else {
         a.push(el);
@@ -279,7 +279,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
     return this.reduce(function(acc, el) {
       if (el != null) { acc.push(el); }
       return acc;
-    }, BasisArray.of());
+    }, TransisArray.of());
   };
 
   // Public: Returns a new array containing only the unique items in the receiver.
@@ -289,7 +289,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
     return this.reduce(function(acc, el) {
       if (!map.has(el)) { map.set(el, true); acc.push(el); }
       return acc;
-    }, BasisArray.of());
+    }, TransisArray.of());
   };
 
   // Public: Yields each set of consecutive `n` elements to the function as a native array.
@@ -299,7 +299,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   //
   // Examples
   //
-  //   Basis.A(1,2,3,4,5,6,7).forEachCons(2, console.log);
+  //   Transis.A(1,2,3,4,5,6,7).forEachCons(2, console.log);
   //   // outputs:
   //   // [ 1, 2 ]
   //   // [ 2, 3 ]
@@ -326,7 +326,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   //
   // Examples
   //
-  //   Basis.A(1,2,3,4,5,6,7).forEachSlice(2, console.log);
+  //   Transis.A(1,2,3,4,5,6,7).forEachSlice(2, console.log);
   //   // outputs:
   //   // [ 1, 2 ]
   //   // [ 3, 4 ]
@@ -358,7 +358,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
     this.__proxy__ = {to, name};
 
     this.forEach(function(x) {
-      if (x instanceof BasisObject || x instanceof BasisArray) {
+      if (x instanceof TransisObject || x instanceof TransisArray) {
         x._registerProxy(to, name);
       }
     });
@@ -370,7 +370,7 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
   this.prototype.unproxy = function() {
     if (this.__proxy__) {
       this.forEach(function(x) {
-        if (x instanceof BasisObject || x instanceof BasisArray) {
+        if (x instanceof TransisObject || x instanceof TransisArray) {
           x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
         }
       }, this);
@@ -390,6 +390,6 @@ BasisArray.from = function(a) { return BasisArray.of.apply(null, a); };
     var index = this.indexOf(el);
     return index !== -1 ? this.splice(index, 1)[0] : null;
   };
-}).call(BasisArray);
+}).call(TransisArray);
 
-export default BasisArray;
+export default TransisArray;

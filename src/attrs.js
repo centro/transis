@@ -53,7 +53,7 @@ export var DateAttr = {
     if (typeof v === 'number') { return new Date(v); }
 
     if (typeof v !== 'string') {
-      throw new Error(`Basis.DateAttr#coerce: don't know how to coerce \`${v}\` to a Date`);
+      throw new Error(`Transis.DateAttr#coerce: don't know how to coerce \`${v}\` to a Date`);
     }
 
     return parsers.parseDate(v);
@@ -70,7 +70,7 @@ export var DateTimeAttr = {
     if (typeof v === 'number') { return new Date(v); }
 
     if (typeof v !== 'string') {
-      throw new Error(`Basis.DateTimeAttr#coerce: don't know how to coerce \`${v}\` to a Date`);
+      throw new Error(`Transis.DateTimeAttr#coerce: don't know how to coerce \`${v}\` to a Date`);
     }
 
     return parsers.parseDateTime(v);

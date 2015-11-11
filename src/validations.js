@@ -1,4 +1,4 @@
-import BasisArray from "./array";
+import TransisArray from "./array";
 import * as util from "./util";
 import * as parsers from "./parsers";
 
@@ -6,7 +6,7 @@ function isBlank(v) {
   return v == null ||
     (util.type(v) === 'string' && v.match(/^\s*$/)) ||
     util.type(v) === 'array' && v.length === 0 ||
-    v instanceof BasisArray && v.length === 0;
+    v instanceof TransisArray && v.length === 0;
 }
 
 var Validations = {
