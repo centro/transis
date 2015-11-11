@@ -1,5 +1,5 @@
 {
-  "name": "Transis",
+  "name": "transis",
   "version": "0.1.0",
   "description": "A javascript data modeling library useful for creating rich client-side experiences.",
   "main": "dist/index.js",
