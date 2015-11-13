@@ -1056,8 +1056,8 @@ var Model = TransisObject.extend(function() {
   };
 
   // Public: Runs registered validators for the given attribute. This will clear any existing
-  // validation errors for the given attribute. The registered validators which are executed can be scoped
-  // by provided an optional context.
+  // validation errors for the given attribute. The registered validators can be scoped
+  // by providing an optional context.
   //
   // name - The name of the attribute to run validations for.
   // ctx  - The context in which to run validations on the given attribute. (optional)
