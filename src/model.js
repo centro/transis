@@ -362,14 +362,14 @@ var Model = TransisObject.extend(function() {
   // the `Model#addError` method to record a validation error when one is detected.
   //
   // name - The name of the property to validate.
-  // f    - A validator function or the name of an instance method.
+  // f    - A validator function, the name of an instance method, or a context in which to validate.
   //
   // Returns the receiver.
-  this.validate = function(name, object) {
+  this.validate = function(name, f) {
     if (!this.prototype.hasOwnProperty('validators')) {
       this.prototype.validators = Object.create(this.prototype.validators);
     }
-    (this.prototype.validators[name] = this.prototype.validators[name] || []).push(object);
+    (this.prototype.validators[name] = this.prototype.validators[name] || []).push(f);
     return this;
   };
 
@@ -1056,9 +1056,11 @@ var Model = TransisObject.extend(function() {
   };
 
   // Public: Runs registered validators for the given attribute. This will clear any existing
-  // validation errors for the given attribute.
+  // validation errors for the given attribute. The registered validators which are executed can be scoped
+  // by provided an optional context.
   //
   // name - The name of the attribute to run validations for.
+  // ctx  - The context in which to run validations on the given attribute. (optional)
   //
   // Returns `true` if no validation errors are found on the given attribute and `false` otherwise.
   this.prototype.validateAttr = function(name, ctx) {
@@ -1084,6 +1086,8 @@ var Model = TransisObject.extend(function() {
 
   // Public: Runs all registered validators for all properties and also validates owned
   // associations.
+  //
+  // ctx - The context in which to run validations
   //
   // Returns `true` if no validation errors are found and `false` otherwise.
   this.prototype.validate = function(ctx) {
