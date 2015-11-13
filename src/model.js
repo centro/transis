@@ -365,13 +365,11 @@ var Model = TransisObject.extend(function() {
   // f    - A validator function or the name of an instance method.
   //
   // Returns the receiver.
-  this.validate = function(name, f) {
+  this.validate = function(name, object) {
     if (!this.prototype.hasOwnProperty('validators')) {
       this.prototype.validators = Object.create(this.prototype.validators);
     }
-
-    (this.prototype.validators[name] = this.prototype.validators[name] || []).push(f);
-
+    (this.prototype.validators[name] = this.prototype.validators[name] || []).push(object);
     return this;
   };
 
@@ -1063,18 +1061,24 @@ var Model = TransisObject.extend(function() {
   // name - The name of the attribute to run validations for.
   //
   // Returns `true` if no validation errors are found on the given attribute and `false` otherwise.
-  this.prototype.validateAttr = function(name) {
+  this.prototype.validateAttr = function(name, ctx) {
     this._clearErrors(name);
 
     if (!this.validators[name]) { return true; }
-
     for (let i = 0, n = this.validators[name].length; i < n; i++) {
-      let validator = this.validators[name][i];
-      if (typeof validator === 'function') { validator.call(this); }
-      else if (typeof validator === 'string' && validator in this) { this[validator](); }
-      else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
+      if(ctx) {
+        if(typeof this.validators[name][i] === 'object' && this.validators[name][i].on === ctx) {
+          this.validators[name][i].validator.call(this);
+        }
+      }
+      else {
+        let validator = this.validators[name][i];
+        if (typeof validator === 'function') { validator.call(this); }
+        else if (typeof validator === 'string' && validator in this) { this[validator](); }
+        else if (typeof validator === 'object') { continue; }
+        else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
+      }
     }
-
     return !(name in this.ownErrors);
   };
 
@@ -1082,13 +1086,13 @@ var Model = TransisObject.extend(function() {
   // associations.
   //
   // Returns `true` if no validation errors are found and `false` otherwise.
-  this.prototype.validate = function() {
+  this.prototype.validate = function(ctx) {
     var associations = this.associations, failed = false;
 
     this._clearErrors();
 
     for (let name in this.validators) {
-      if (!this.validateAttr(name)) { failed = true; }
+      if (!this.validateAttr(name, ctx)) { failed = true; }
     }
 
     util.detectRecursion(this, function() {
@@ -1099,12 +1103,12 @@ var Model = TransisObject.extend(function() {
 
         if (desc.type === 'hasOne') {
           if (this[name] && !this[name]._destroy) {
-            if (!this[name].validate()) { failed = true; }
+            if (!this[name].validate(ctx)) { failed = true; }
           }
         }
         else if (desc.type === 'hasMany') {
           this[name].forEach((m) => {
-            if (!m._destroy && !m.validate()) { failed = true; }
+            if (!m._destroy && !m.validate(ctx)) { failed = true; }
           });
         }
       }

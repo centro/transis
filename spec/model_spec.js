@@ -2400,6 +2400,15 @@ describe('Model', function () {
         }
       });
 
+      this.validate('name', {
+        on: 'context',
+        validator: function() {
+          if(this.name && this.name.length <= 5) {
+            this.addError('name', 'must be greater than 5 characters');
+          }
+        }
+      });
+
       this.validate('num', 'numIsInteger');
 
       this.hasMany('bars', 'ValidatedBar', {owner: true});
@@ -2734,6 +2743,13 @@ describe('Model', function () {
         expect(m.ownErrors).toEqual({});
         m.validate();
         expect(m.ownErrors).toEqual({name: ['must be lower case'], num: ['is not an integer']});
+      });
+
+      it('runs validators for the given context', function() {
+        var m = new ValidatedFoo({name: 'Foo'});
+        expect(m.ownErrors).toEqual({});
+        m.validate('context');
+        expect(m.ownErrors).toEqual({name: ['must be greater than 5 characters']});
       });
 
       it('runs validate on owned associated models', function() {
