@@ -2401,10 +2401,19 @@ describe('Model', function () {
       });
 
       this.validate('name', {
-        on: 'context',
+        on: 'nameContext',
         validator: function() {
           if(this.name && this.name.length <= 5) {
             this.addError('name', 'must be greater than 5 characters');
+          }
+        }
+      });
+
+      this.validate('num', {
+        on: 'typeContext',
+        validator: function() {
+          if(!(typeof this.num === 'number')) {
+            this.addError('num', 'not a valid type for num')
           }
         }
       });
@@ -2434,6 +2443,16 @@ describe('Model', function () {
           this.addError('x', 'must be even');
         }
       });
+
+      this.validate('x', {
+        on:'typeContext',
+        validator: function() {
+          if(!(typeof this.x === 'number')) {
+            this.addError('x', 'not a valid type for x')
+          }
+        }
+      });
+
     });
 
     beforeEach(function() {
@@ -2701,12 +2720,26 @@ describe('Model', function () {
         expect(m.ownErrors.name).toEqual(['must be lower case', 'must be less than 10 characters']);
       });
 
+      it('runs only validators for the given property name that include the context', function() {
+        var m = new ValidatedFoo({name: 'FOO'});
+        m.validateAttr('name', 'nameContext');
+        expect(m.ownErrors.name).toEqual(['must be greater than 5 characters']);
+      });
+
       it('clears existing validation errors on the given property name', function() {
         var m = new ValidatedFoo({name: 'Foo'});
         m.addError('name', 'abc');
         expect(m.ownErrors.name).toEqual(['abc']);
         m.validateAttr('name');
         expect(m.ownErrors.name).toEqual(['must be lower case']);
+      });
+
+      it('given a context clears existing validation errors on the given property name', function() {
+        var m = new ValidatedFoo({name: 'FOO'});
+        m.addError('name', 'abc');
+        expect(m.ownErrors.name).toEqual(['abc']);
+        m.validateAttr('name', 'nameContext');
+        expect(m.ownErrors.name).toEqual(['must be greater than 5 characters']);
       });
 
       it('clears existing validation errors for the given property name even when there are no registered validators', function() {
@@ -2730,9 +2763,19 @@ describe('Model', function () {
         expect(m.validateAttr('name')).toBe(true);
       });
 
+      it('given a context returns true when all validations pass', function() {
+        var m = new ValidatedFoo({name: 'foobar'});
+        expect(m.validateAttr('name', 'nameContext')).toBe(true);
+      });
+
       it('returns false when some validation fails', function() {
         var m = new ValidatedFoo({name: 'Foo'});
         expect(m.validateAttr('name')).toBe(false);
+      });
+
+      it('given a context returns false when some validation fails', function() {
+        var m = new ValidatedFoo({name: 'Foo'});
+        expect(m.validateAttr('name', 'nameContext')).toBe(false);
       });
     });
 
@@ -2745,11 +2788,20 @@ describe('Model', function () {
         expect(m.ownErrors).toEqual({name: ['must be lower case'], num: ['is not an integer']});
       });
 
-      it('runs validators for the given context', function() {
+      it('runs only validators for the given context', function() {
         var m = new ValidatedFoo({name: 'Foo'});
         expect(m.ownErrors).toEqual({});
-        m.validate('context');
+        m.validate('nameContext');
         expect(m.ownErrors).toEqual({name: ['must be greater than 5 characters']});
+      });
+
+      it('runs only validators for the given context on owned associated models', function() {
+        var m = new ValidatedFoo({num: 'foo', bars: [new ValidatedBar({x: 'foo'})]});
+        expect(m.bars.at(0).ownErrors).toEqual({});
+        expect(m.ownErrors).toEqual({});
+        m.validate('typeContext');
+        expect(m.bars.at(0).ownErrors).toEqual({x: ['not a valid type for x']});
+        expect(m.ownErrors).toEqual({num: ['not a valid type for num']});
       });
 
       it('runs validate on owned associated models', function() {
@@ -2770,9 +2822,23 @@ describe('Model', function () {
         expect(m.bars.first.validate).not.toHaveBeenCalled();
       });
 
+      it('given a context does not run validate on owned associated models that are marked for destruction', function() {
+        var m = new ValidatedFoo({
+          name: 'foo', num: 10, bars: [new ValidatedBar({_destroy: true, x: 'foo'})]
+        });
+        spyOn(m.bars.first, 'validate');
+        m.validate('typeContext');
+        expect(m.bars.first.validate).not.toHaveBeenCalled();
+      });
+
       it('returns true when no validation errors are found', function() {
         var m = new ValidatedFoo({name: 'foo', num: 10});
         expect(m.validate()).toBe(true);
+      });
+
+      it('given a context returns true when no validation errors are found', function() {
+        var m = new ValidatedFoo({name: 'foofoo', num: 10});
+        expect(m.validate('nameContext')).toBe(true);
       });
 
       it('returns false when a validation error is found on the receiver', function() {
@@ -2780,9 +2846,19 @@ describe('Model', function () {
         expect(m.validate()).toBe(false);
       });
 
+      it('given a context returns false when a validation error is found on the receiver', function() {
+        var m = new ValidatedFoo({name: 'Foo', num: 10});
+        expect(m.validate('nameContext')).toBe(false);
+      });
+
       it('returns false when a validation error is found on an owned associated model', function() {
         var m = new ValidatedFoo({name: 'foo', num: 10, bars: [new ValidatedBar({x: 2}), new ValidatedBar({x: 3})]});
         expect(m.validate()).toBe(false);
+      });
+
+      it('given a context returns false when a validation error is found on an owned associated model', function() {
+        var m = new ValidatedFoo({name: 'foo', num: 10, bars: [new ValidatedBar({x: 2}), new ValidatedBar({x: 'foo'})]});
+        expect(m.validate('typeContext')).toBe(false);
       });
 
       it('clears errors for non-validated properties', function() {
@@ -2790,6 +2866,14 @@ describe('Model', function () {
 
         m.addError('notValidated', 'foobar');
         m.validate();
+        expect(m.ownErrors.notValidated).toBeUndefined();
+      });
+
+      it('given a context errors are cleaed for non-validated properties', function() {
+        var m = new ValidatedFoo;
+
+        m.addError('notValidated', 'foobar');
+        m.validate('nameContext');
         expect(m.ownErrors.notValidated).toBeUndefined();
       });
 
