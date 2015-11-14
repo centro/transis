@@ -2389,10 +2389,16 @@ describe('Model', function () {
 
   describe('validations', function() {
     var ValidatedFoo = Model.extend('ValidatedFoo', function() {
-      this.attr('name', 'string');
+      this.attr('name', 'string')
+      this.attr('withoutContext', 'number');
       this.attr('num', 'number');
       this.attr('notValidated', 'number');
 
+      this.validate('withoutContext', function() {
+        if(this.withoutContext && this.withoutContext > 10) {
+          this.addError('withoutContext', 'maximum value exceeded')
+        }
+      });
       this.validate('name', 'nameIsLowerCase');
       this.validate('name', function() {
         if (this.name && this.name.length >= 10) {
@@ -2410,10 +2416,10 @@ describe('Model', function () {
       });
 
       this.validate('num', {
-        on: 'typeContext',
+        on: 'maxNumContext',
         validator: function() {
-          if(!(typeof this.num === 'number')) {
-            this.addError('num', 'not a valid type for num')
+          if(this.num > 10) {
+            this.addError('num', 'exceeds maximum value for num')
           }
         }
       });
@@ -2445,14 +2451,13 @@ describe('Model', function () {
       });
 
       this.validate('x', {
-        on:'typeContext',
+        on: 'maxNumContext',
         validator: function() {
-          if(!(typeof this.x === 'number')) {
-            this.addError('x', 'not a valid type for x')
+          if(this.x > 10) {
+            this.addError('x', 'exceeds maximum value for x')
           }
         }
       });
-
     });
 
     beforeEach(function() {
@@ -2789,19 +2794,29 @@ describe('Model', function () {
       });
 
       it('runs only validators for the given context', function() {
-        var m = new ValidatedFoo({name: 'Foo'});
+        var m = new ValidatedFoo({name: 'Foo', num: 3.4});
         expect(m.ownErrors).toEqual({});
         m.validate('nameContext');
-        expect(m.ownErrors).toEqual({name: ['must be greater than 5 characters']});
+        expect(m.ownErrors).toEqual({name: ['must be greater than 5 characters'], num: ['is not an integer']});
+      });
+
+      it('runs all validations without a context when a context is supplied to validate', function() {
+        var m = new ValidatedFoo({name: 'Foo', withoutContext: 20, num: 1});
+        expect(m.ownErrors).toEqual({});
+        m.validate('nameContext');
+        expect(m.ownErrors).toEqual({
+          name: ['must be greater than 5 characters'],
+          withoutContext: ['maximum value exceeded']
+        });
       });
 
       it('runs only validators for the given context on owned associated models', function() {
-        var m = new ValidatedFoo({num: 'foo', bars: [new ValidatedBar({x: 'foo'})]});
+        var m = new ValidatedFoo({num: 15, bars: [new ValidatedBar({x: 15})]});
         expect(m.bars.at(0).ownErrors).toEqual({});
         expect(m.ownErrors).toEqual({});
-        m.validate('typeContext');
-        expect(m.bars.at(0).ownErrors).toEqual({x: ['not a valid type for x']});
-        expect(m.ownErrors).toEqual({num: ['not a valid type for num']});
+        m.validate('maxNumContext');
+        expect(m.bars.at(0).ownErrors).toEqual({x: ['exceeds maximum value for x']});
+        expect(m.ownErrors).toEqual({num: ['exceeds maximum value for num']});
       });
 
       it('runs validate on owned associated models', function() {
@@ -2827,7 +2842,7 @@ describe('Model', function () {
           name: 'foo', num: 10, bars: [new ValidatedBar({_destroy: true, x: 'foo'})]
         });
         spyOn(m.bars.first, 'validate');
-        m.validate('typeContext');
+        m.validate('maxNumContext');
         expect(m.bars.first.validate).not.toHaveBeenCalled();
       });
 
@@ -2857,8 +2872,8 @@ describe('Model', function () {
       });
 
       it('given a context returns false when a validation error is found on an owned associated model', function() {
-        var m = new ValidatedFoo({name: 'foo', num: 10, bars: [new ValidatedBar({x: 2}), new ValidatedBar({x: 'foo'})]});
-        expect(m.validate('typeContext')).toBe(false);
+        var m = new ValidatedFoo({name: 'foo', num: 10, bars: [new ValidatedBar({x: 2}), new ValidatedBar({x: 19})]});
+        expect(m.validate('maxNumContext')).toBe(false);
       });
 
       it('clears errors for non-validated properties', function() {

@@ -1056,8 +1056,8 @@ var Model = TransisObject.extend(function() {
   };
 
   // Public: Runs registered validators for the given attribute. This will clear any existing
-  // validation errors for the given attribute. The registered validators can be scoped
-  // by providing an optional context.
+  // validation errors for the given attribute. The registered validators can be reduced by
+  // providing an optional context.
   //
   // name - The name of the attribute to run validations for.
   // ctx  - The context in which to run validations on the given attribute. (optional)
@@ -1065,15 +1065,14 @@ var Model = TransisObject.extend(function() {
   // Returns `true` if no validation errors are found on the given attribute and `false` otherwise.
   this.prototype.validateAttr = function(name, ctx) {
     this._clearErrors(name);
-
     if (!this.validators[name]) { return true; }
-    for (let i = 0, n = this.validators[name].length; i < n; i++) {
-      if(ctx) {
-        if(typeof this.validators[name][i] === 'object' && this.validators[name][i].on === ctx) {
-          this.validators[name][i].validator.call(this);
-        }
-      }
-      else {
+
+    let attrCtx = this.validators[name].find( (v)=> {return v.on && v.on === ctx} );
+    if(ctx && attrCtx) {
+      attrCtx.validator.call(this);
+    }
+    else {
+      for (let i = 0, n = this.validators[name].length; i < n; i++) {
         let validator = this.validators[name][i];
         if (typeof validator === 'function') { validator.call(this); }
         else if (typeof validator === 'string' && validator in this) { this[validator](); }
@@ -1081,11 +1080,13 @@ var Model = TransisObject.extend(function() {
         else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
       }
     }
+
     return !(name in this.ownErrors);
   };
 
   // Public: Runs all registered validators for all properties and also validates owned
-  // associations.
+  // associations. Validations with no `on:` option will run no matter the context. Validations with
+  // some `on:` option will only run in the specified context.
   //
   // ctx - The context in which to run validations
   //
