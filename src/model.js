@@ -369,7 +369,9 @@ var Model = TransisObject.extend(function() {
     if (!this.prototype.hasOwnProperty('validators')) {
       this.prototype.validators = Object.create(this.prototype.validators);
     }
+
     (this.prototype.validators[name] = this.prototype.validators[name] || []).push(f);
+
     return this;
   };
 
@@ -1068,7 +1070,7 @@ var Model = TransisObject.extend(function() {
     if (!this.validators[name]) { return true; }
 
     let attrCtx = this.validators[name].find( (v)=> {return v.on && v.on === ctx} );
-    if(ctx && attrCtx) {
+    if(attrCtx) {
       attrCtx.validator.call(this);
     }
     else {
