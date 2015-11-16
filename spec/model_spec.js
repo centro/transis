@@ -2758,16 +2758,18 @@ describe('Model', function () {
 
 
       describe('given a context', function() {
+        var contains = function(array, value) { return array.indexOf(value) >= 0 }
+
         it('runs only validators for the given property name that include the context', function() {
           var m = new ValidatedFoo({name: 'FOO', num: 34.3});
           m.validateAttr('name', 'nameContext');
-          expect(m.ownErrors.name).toEqual(['must be greater than 5 characters']);
+          expect( contains(m.ownErrors.name, 'must be greater than 5 characters') ).toBe(true);
         });
 
         it('runs validators for same attribute that do not have a context', function() {
           var m = new ValidatedFoo({name: 'FOO'});
           m.validateAttr('name', 'nameContext');
-          expect(m.ownErrors.name).toEqual([ 'must be lower case']);
+          expect( contains(m.ownErrors.name, 'must be lower case') ).toBe(true);
         });
 
         it('clears existing validation errors on the given property name', function() {
