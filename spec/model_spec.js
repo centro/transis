@@ -2761,7 +2761,13 @@ describe('Model', function () {
         it('runs only validators for the given property name that include the context', function() {
           var m = new ValidatedFoo({name: 'FOO', num: 34.3});
           m.validateAttr('name', 'nameContext');
-          expect(m.ownErrors.name).toEqual(['must be greater than 5 characters']);
+          expect(m.ownErrors.name).toEqual(['must be lower case', 'must be greater than 5 characters']);
+        });
+
+        it('runs validators for same attribute that do not have a context', function() {
+          var m = new ValidatedFoo({name: 'FOO'});
+          m.validateAttr('name', 'nameContext');
+          expect(m.ownErrors.name).toEqual([ 'must be lower case', 'must be greater than 5 characters']);
         });
 
         it('clears existing validation errors on the given property name', function() {
@@ -2769,7 +2775,7 @@ describe('Model', function () {
           m.addError('name', 'abc');
           expect(m.ownErrors.name).toEqual(['abc']);
           m.validateAttr('name', 'nameContext');
-          expect(m.ownErrors.name).toEqual(['must be greater than 5 characters']);
+          expect(m.ownErrors.name).toEqual(['must be lower case', 'must be greater than 5 characters']);
         });
 
         it('returns false when some validation fails', function() {
@@ -2799,7 +2805,7 @@ describe('Model', function () {
         expect(m.bars.at(0).ownErrors).toEqual({});
         expect(m.ownErrors).toEqual({});
         m.validate('maxNumContext');
-        expect(m.bars.at(0).ownErrors).toEqual({x: ['exceeds maximum value for x']});
+        expect(m.bars.at(0).ownErrors).toEqual({x: ['must be even', 'exceeds maximum value for x']});
         expect(m.ownErrors).toEqual({num: ['exceeds maximum value for num']});
       });
 
@@ -2857,7 +2863,7 @@ describe('Model', function () {
           var m = new ValidatedFoo({name: 'Foo', num: 3.4});
           expect(m.ownErrors).toEqual({});
           m.validate('nameContext');
-          expect(m.ownErrors).toEqual({name: ['must be greater than 5 characters'], num: ['is not an integer']});
+          expect(m.ownErrors).toEqual({name: ['must be lower case', 'must be greater than 5 characters'], num: ['is not an integer']});
         });
 
         it('runs all other validations without a context', function() {
@@ -2865,7 +2871,7 @@ describe('Model', function () {
           expect(m.ownErrors).toEqual({});
           m.validate('nameContext');
           expect(m.ownErrors).toEqual({
-            name: ['must be greater than 5 characters'],
+            name: ['must be lower case', 'must be greater than 5 characters'],
             withoutContext: ['maximum value exceeded']
           });
         });

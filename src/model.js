@@ -1070,19 +1070,14 @@ var Model = TransisObject.extend(function() {
     this._clearErrors(name);
     if (!this.validators[name]) { return true; }
 
-    let attrCtx = ctx && this.validators[name].find( (v)=> {return v.opts.on && v.opts.on === ctx} );
-    if(attrCtx) {
-      attrCtx.validator.call(this);
-    }
-    else {
-      for (let i = 0, n = this.validators[name].length; i < n; i++) {
-        if (this.validators[name][i].opts.on) { continue; }
-        let validator = this.validators[name][i].validator;
+    let validators = this.validators[name].filter( (v)=> !v.opts.on || v.opts.on === ctx );
 
-        if (typeof validator === 'function') { validator.call(this); }
-        else if (typeof validator === 'string' && validator in this) { this[validator](); }
-        else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
-      }
+    for (let i = 0, n = validators.length; i < n; i++) {
+      let validator = validators[i].validator;
+
+      if (typeof validator === 'function') { validator.call(this); }
+      else if (typeof validator === 'string' && validator in this) { this[validator](); }
+      else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
     }
 
     return !(name in this.ownErrors);
