@@ -2406,32 +2406,23 @@ describe('Model', function () {
         }
       });
 
-      this.validate('name', {
-        on: 'nameContext',
-        validator: function() {
+      this.validate('name', function() {
           if(this.name && this.name.length <= 5) {
             this.addError('name', 'must be greater than 5 characters');
           }
-        }
-      });
+        }, {on: 'nameContext'});
 
-      this.validate('name', {
-        on: 'contextNotUsed',
-        validator: function() {
+      this.validate('name', function() {
           if(this.name && this.name.length <= 5) {
             this.addError('name', 'error not used');
           }
-        }
-      });
+        }, {on: 'contextNotUsed'});
 
-      this.validate('num', {
-        on: 'maxNumContext',
-        validator: function() {
+      this.validate('num', function() {
           if(this.num > 10) {
             this.addError('num', 'exceeds maximum value for num')
           }
-        }
-      });
+      }, {on: 'maxNumContext'});
 
       this.validate('num', 'numIsInteger');
 
@@ -2459,14 +2450,11 @@ describe('Model', function () {
         }
       });
 
-      this.validate('x', {
-        on: 'maxNumContext',
-        validator: function() {
+      this.validate('x', function() {
           if(this.x > 10) {
             this.addError('x', 'exceeds maximum value for x')
           }
-        }
-      });
+      }, {on: 'maxNumContext'});
     });
 
     beforeEach(function() {

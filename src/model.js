@@ -362,15 +362,16 @@ var Model = TransisObject.extend(function() {
   // the `Model#addError` method to record a validation error when one is detected.
   //
   // name - The name of the property to validate.
-  // f    - A validator function, the name of an instance method, or a context in which to validate.
+  // f    - A validator function or the name of an instance method.
+  // opts - An `on:` option can be provided to specify the context in which to validate.
   //
   // Returns the receiver.
-  this.validate = function(name, f) {
+  this.validate = function(name, f, opts = {}) {
     if (!this.prototype.hasOwnProperty('validators')) {
       this.prototype.validators = Object.create(this.prototype.validators);
     }
 
-    (this.prototype.validators[name] = this.prototype.validators[name] || []).push(f);
+    (this.prototype.validators[name] = this.prototype.validators[name] || []).push({validator: f, opts});
 
     return this;
   };
@@ -1069,16 +1070,17 @@ var Model = TransisObject.extend(function() {
     this._clearErrors(name);
     if (!this.validators[name]) { return true; }
 
-    let attrCtx = this.validators[name].find( (v)=> {return v.on && v.on === ctx} );
+    let attrCtx = ctx && this.validators[name].find( (v)=> {return v.opts.on && v.opts.on === ctx} );
     if(attrCtx) {
       attrCtx.validator.call(this);
     }
     else {
       for (let i = 0, n = this.validators[name].length; i < n; i++) {
-        let validator = this.validators[name][i];
+        if (this.validators[name][i].opts.on) { continue; }
+        let validator = this.validators[name][i].validator;
+
         if (typeof validator === 'function') { validator.call(this); }
         else if (typeof validator === 'string' && validator in this) { this[validator](); }
-        else if (typeof validator === 'object') { continue; }
         else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
       }
     }
