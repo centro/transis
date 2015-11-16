@@ -1116,7 +1116,7 @@ var Invoice = Transis.Model.extend('Invoice', function() {
 
 var invoice = new Invoice({name: 'foo'});
 console.log(invoice.validate());
-// true since there is no context provided
+// true
 console.log(invoice.validate('nameContext'));
 // false
 console.log(invoice.errors);
