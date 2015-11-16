@@ -1099,8 +1099,7 @@ So even though the invoice object didn't have any validation errors, the `#valid
 `false` because one of its owned line item object did have an error.
 
 Transis also supports validation contexts. Multiple contextual validations can be registered for the same attribute.
-Each contextual validation will executed depending on the context provided. It's important to note that all attributes
-without a registered context will execute regardless of the context provided.
+Contextual validations will only be applied when a matching context value is provided to the `Transis.Model.validate` method.
 
 ```javascript
 var Invoice = Transis.Model.extend('Invoice', function() {

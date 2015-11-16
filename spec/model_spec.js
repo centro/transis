@@ -2761,13 +2761,13 @@ describe('Model', function () {
         it('runs only validators for the given property name that include the context', function() {
           var m = new ValidatedFoo({name: 'FOO', num: 34.3});
           m.validateAttr('name', 'nameContext');
-          expect(m.ownErrors.name).toEqual(['must be lower case', 'must be greater than 5 characters']);
+          expect(m.ownErrors.name).toEqual(['must be greater than 5 characters']);
         });
 
         it('runs validators for same attribute that do not have a context', function() {
           var m = new ValidatedFoo({name: 'FOO'});
           m.validateAttr('name', 'nameContext');
-          expect(m.ownErrors.name).toEqual([ 'must be lower case', 'must be greater than 5 characters']);
+          expect(m.ownErrors.name).toEqual([ 'must be lower case']);
         });
 
         it('clears existing validation errors on the given property name', function() {
