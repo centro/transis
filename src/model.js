@@ -1070,7 +1070,7 @@ var Model = TransisObject.extend(function() {
     this._clearErrors(name);
     if (!this.validators[name]) { return true; }
 
-    let validators = this.validators[name].filter( (v)=> !v.opts.on || v.opts.on === ctx );
+    const validators = this.validators[name].filter( (v)=> !v.opts.on || v.opts.on === ctx );
 
     for (let i = 0, n = validators.length; i < n; i++) {
       let validator = validators[i].validator;
