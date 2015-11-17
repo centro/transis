@@ -37,7 +37,7 @@ repl: transis
 
 release: transis
 	@echo Releasing $(VERSION)...
-	@grep "\[$(VERSION)\]" ./CHANGELOG.md || echo "Missing CHANGELOG entry for $(VERSION)" && false
+	@grep "\[$(VERSION)\]" ./CHANGELOG.md || (echo "Missing CHANGELOG entry for $(VERSION)" && false)
 	npm publish
 	git tag -a v$(VERSION) -m '$(VERSION) release'
 	git push origin v$(VERSION)
