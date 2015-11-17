@@ -37,9 +37,13 @@ repl: transis
 
 release: transis
 	@echo Releasing $(VERSION)...
-	npm publish && git tag -a v$(VERSION) -m '$(VERSION) release'
+	@grep "\[$(VERSION)\]" ./CHANGELOG.md || echo "Missing CHANGELOG entry for $(VERSION)" && false
+	npm publish
+	git tag -a v$(VERSION) -m '$(VERSION) release'
+	git push origin v$(VERSION)
+
 
 clean:
 	rm -rf ./dist
 
-.PHONY: transis default clean spec spec_node spec_browser dist
+.PHONY: transis default clean spec spec_node spec_browser dist release
