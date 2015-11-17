@@ -363,14 +363,15 @@ var Model = TransisObject.extend(function() {
   //
   // name - The name of the property to validate.
   // f    - A validator function or the name of an instance method.
+  // opts - An `on:` option can be provided to specify the context in which to validate.
   //
   // Returns the receiver.
-  this.validate = function(name, f) {
+  this.validate = function(name, f, opts = {}) {
     if (!this.prototype.hasOwnProperty('validators')) {
       this.prototype.validators = Object.create(this.prototype.validators);
     }
 
-    (this.prototype.validators[name] = this.prototype.validators[name] || []).push(f);
+    (this.prototype.validators[name] = this.prototype.validators[name] || []).push({validator: f, opts});
 
     return this;
   };
@@ -1058,18 +1059,22 @@ var Model = TransisObject.extend(function() {
   };
 
   // Public: Runs registered validators for the given attribute. This will clear any existing
-  // validation errors for the given attribute.
+  // validation errors for the given attribute. The registered validators can be reduced by
+  // providing an optional context.
   //
   // name - The name of the attribute to run validations for.
+  // ctx  - The context in which to run validations on the given attribute. (optional)
   //
   // Returns `true` if no validation errors are found on the given attribute and `false` otherwise.
-  this.prototype.validateAttr = function(name) {
+  this.prototype.validateAttr = function(name, ctx) {
     this._clearErrors(name);
-
     if (!this.validators[name]) { return true; }
 
-    for (let i = 0, n = this.validators[name].length; i < n; i++) {
-      let validator = this.validators[name][i];
+    const validators = this.validators[name].filter( (v)=> !v.opts.on || v.opts.on === ctx );
+
+    for (let i = 0, n = validators.length; i < n; i++) {
+      let validator = validators[i].validator;
+
       if (typeof validator === 'function') { validator.call(this); }
       else if (typeof validator === 'string' && validator in this) { this[validator](); }
       else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
@@ -1079,16 +1084,19 @@ var Model = TransisObject.extend(function() {
   };
 
   // Public: Runs all registered validators for all properties and also validates owned
-  // associations.
+  // associations. Validations with no `on:` option will run no matter the context. Validations with
+  // some `on:` option will only run in the specified context.
+  //
+  // ctx - The context in which to run validations
   //
   // Returns `true` if no validation errors are found and `false` otherwise.
-  this.prototype.validate = function() {
+  this.prototype.validate = function(ctx) {
     var associations = this.associations, failed = false;
 
     this._clearErrors();
 
     for (let name in this.validators) {
-      if (!this.validateAttr(name)) { failed = true; }
+      if (!this.validateAttr(name, ctx)) { failed = true; }
     }
 
     util.detectRecursion(this, function() {
@@ -1099,12 +1107,12 @@ var Model = TransisObject.extend(function() {
 
         if (desc.type === 'hasOne') {
           if (this[name] && !this[name]._destroy) {
-            if (!this[name].validate()) { failed = true; }
+            if (!this[name].validate(ctx)) { failed = true; }
           }
         }
         else if (desc.type === 'hasMany') {
           this[name].forEach((m) => {
-            if (!m._destroy && !m.validate()) { failed = true; }
+            if (!m._destroy && !m.validate(ctx)) { failed = true; }
           });
         }
       }

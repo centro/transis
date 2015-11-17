@@ -1098,6 +1098,30 @@ console.log(invoice.errors);
 So even though the invoice object didn't have any validation errors, the `#validate` method returned
 `false` because one of its owned line item object did have an error.
 
+Transis also supports validation contexts. Multiple contextual validations can be registered for the same attribute. Each contextual validation will executed depending on the context provided. Contextual validations will only be applied
+when a matching context value is provided to the `Transis.Model.validate` method.
+
+```javascript
+var Invoice = Transis.Model.extend('Invoice', function() {
+  this.attr('name', 'string');
+  this.hasMany('lineItems', 'LineItem');
+
+  this.validate('name', function() {
+    if (!this.name || this.name.length < 6) {
+      this.addError('name', 'must be at least 6 characters');
+    }
+  }, {on: 'nameContext'});
+});
+
+var invoice = new Invoice({name: 'foo'});
+console.log(invoice.validate());
+// true
+console.log(invoice.validate('nameContext'));
+// false
+console.log(invoice.errors);
+// { name: [ 'must be at least 6 characters' ] }
+```
+
 ### React integration
 
 At Centro we use [React][React] to implement our views so we've created a small React mixin to make
