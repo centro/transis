@@ -4,6 +4,8 @@ SPECS   = $(wildcard spec/*.js)
 ES5_SOURCES = $(SOURCES:src/%.js=dist/%.js)
 ES5_SPECS   = $(SPECS:spec/%.js=dist/spec/%.js)
 
+VERSION = $(shell node -e "console.log(JSON.parse(require('fs').readFileSync('./package.json')).version)")
+
 default: spec
 
 transis: $(ES5_SOURCES)
@@ -32,6 +34,10 @@ spec: spec_node spec_browser
 
 repl: transis
 	env NODE_NO_READLINE=1 rlwrap node ./util/repl.js
+
+release: transis
+	@echo Releasing $(VERSION)...
+	npm publish && git tag -a v$(VERSION) -m '$(VERSION) release'
 
 clean:
 	rm -rf ./dist
