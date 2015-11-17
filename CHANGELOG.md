@@ -6,5 +6,8 @@ All notable changes to this project will be documented in this file. This projec
 ### Added
 - Contextual validation support. [#19](https://github.com/centro/transis/pull/19)
 
+### Changed
+- Updated dev dependencies.
+
 ## [0.1.0]
 - Initial public release.
