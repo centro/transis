@@ -1172,17 +1172,15 @@ props change, the mixin will call `forceUpdate` on the component to trigger a re
 
 ## Example Apps
 
-A couple of simple example apps are available in the `examples` directory. To run them, simply serve
-the `examples` directory using an HTTP server and load the `index.html` files.
-
-Here is an easy way to serve the directory:
+A couple of simple example apps are available in the `examples` directory. Run them as follows:
 
 ```
-$ make package
-$ ruby -run -e httpd ./examples -p 9090
+$ npm install
+$ make examples
 ```
 
-Then load http://localhost:9090/basic/index.html.
+This will launch a web server running on port `8080`. An index listing of the example apps can be
+seen at http://localhost:8080/.
 
 [es6-shim]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty
 [Object.defineProperty]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty

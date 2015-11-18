@@ -11,7 +11,7 @@ default: spec
 transis: $(ES5_SOURCES)
 
 dist/transis.js: $(SOURCES)
-	./node_modules/.bin/webpack --output-file $@
+	./node_modules/.bin/webpack --output-filename $@
 
 dist/%.js: src/%.js
 	@mkdir -p dist
@@ -42,6 +42,8 @@ release: transis
 	git tag -a v$(VERSION) -m '$(VERSION) release'
 	git push origin v$(VERSION)
 
+examples: package
+	./node_modules/.bin/http-server ./examples
 
 clean:
 	rm -rf ./dist
