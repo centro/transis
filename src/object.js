@@ -168,6 +168,14 @@ TransisObject.flush = function() {
   return this;
 };
 
+// Public: Clears the pending change queue. This should only be used in specs.
+TransisObject.clearChangeQueue = function() {
+  clearTimeout(flushTimer);
+  changedObjects = {};
+  delayCallbacks = [];
+  return this;
+};
+
 // Public: Register a callback to be invoked immediately after the next flush cycle completes.
 //
 // f - A function.
