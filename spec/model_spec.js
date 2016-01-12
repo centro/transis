@@ -1867,6 +1867,28 @@ describe('Model', function () {
         a.load({id: 4, first: 'Bart', last: 'Simpson'});
       }).toThrow(new Error('Author#load: received attributes with id `4` but model already has id `3`'));
     });
+
+    it('loads the existing model instead of the new model when given an id that already exists in the id map', function() {
+      var a1 = Author.load({id: 12, first: 'Homer', last: 'Simpson'});
+      var a2 = new Author;
+
+      a2.load({id: 12, first: 'HOMER', last: 'SIMPSON'});
+
+      expect(a2.isNew).toBe(true);
+
+      expect(a1.first).toBe('HOMER');
+      expect(a1.last).toBe('SIMPSON');
+      expect(a1.isLoaded).toBe(true);
+    });
+
+    it('logs a warning when there is an existing model with the same id already in the id map', function() {
+      var a1 = Author.load({id: 12, first: 'Homer', last: 'Simpson'});
+      var a2 = new Author;
+
+      a2.load({id: 12, first: 'HOMER', last: 'SIMPSON'});
+
+      expect(console.warn).toHaveBeenCalledWith('Author#load: loading attributes that contain an id (12) that already exists in the identity map, the receiver will not be updated');
+    });
   });
 
   describe('change tracking', function() {

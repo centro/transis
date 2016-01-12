@@ -945,6 +945,10 @@ var Model = TransisObject.extend(function() {
   // Public: Loads the given attributes into the model. This method simply ensure's that the
   // receiver has its `id` set and then delegates to `Model.load`.
   //
+  // If the given attributes have an `id` that already exists in the identity map, then this method
+  // will actually load the attributes onto the existing model instead of the receiver. This
+  // situation may occur when you have a create or update situation on the backend.
+  //
   // Returns the receiver.
   this.prototype.load = function(attrs) {
     var id = attrs.id;
@@ -957,9 +961,17 @@ var Model = TransisObject.extend(function() {
       throw new Error(`${this.constructor}#load: received attributes with id \`${id}\` but model already has id \`${this.id}\``);
     }
 
-    if (this.id == null) { this.id = id; }
+    if (this.id == null) {
+      if (!IdMap.get(this.constructor, id)) {
+        this.id = id;
+      }
+      else {
+        console.warn(`${this.constructor}#load: loading attributes that contain an id (${id}) that already exists in the identity map, the receiver will not be updated`);
+      }
+    }
 
-    attrs.id = this.id;
+    attrs.id = id || this.id;
+
     this.constructor.load(attrs);
 
     return this;
