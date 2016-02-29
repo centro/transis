@@ -2,7 +2,7 @@
 
 ---
 
-Transis is a javascript data modeling library useful for creating rich client-side experiences. It
+Transis is a JavaScript data modeling library useful for creating rich client-side experiences. It
 provides the following features:
 
 * two-way associations
@@ -19,7 +19,7 @@ provides the following features:
 ## Dependencies
 
 Transis has no dependencies other than some ES6 features that are not yet available in all browsers.
-Its advised to use [es6-shim][es6-shim] until browser support improves.
+It's advised to use [es6-shim][es6-shim] until browser support improves.
 
 ## Installation
 
@@ -46,7 +46,7 @@ var Person = Transis.Model.extend('Person', function() {
 
 ## Feature Breakdown
 
-Below is a walkthrough of the main `Transis` features.
+Below is a walk-through of the main `Transis` features.
 
 ### Object system
 
@@ -128,9 +128,9 @@ console.log('c perimeter:', c.perimeter());
 ### Props
 
 The other main feature of `Transis.Object` is observable properties. Properties, or "props" to
-distinguish them from normal javascript object properties, are defined with the
+distinguish them from normal JavaScript object properties, are defined with the
 `Transis.Object.prop` method. The simplest prop is just defined with a name and can be get and set
-just like any other javascript property:
+just like any other JavaScript property:
 
 ```javascript
 var Person = Transis.Object.extend(function() {
@@ -153,7 +153,7 @@ console.log(p.lastName);
 As you can see above, the default `Transis.Object` constructor takes an object mapping prop keys to
 values. Any key in the given object that matches a defined prop will be set by the constructor.
 
-What sets props apart from normal javascript properties is their ability to be observed. Observers
+What sets props apart from normal JavaScript properties is their ability to be observed. Observers
 can be attached using the `Transis.Object#on` method:
 
 ```javascript
@@ -263,9 +263,9 @@ more work than necessary. This is especially true when leveraging observers to k
 sync with your models - we don't want to trigger renders for every single prop change that happens
 when loading in a bunch of data from our backend. By notifying observers asynchronously, we allow
 things to settle before responding to any change. This means that if a prop is changed multiple
-times in a single javascript execution context, observers will only be notified once. The
+times in a single JavaScript execution context, observers will only be notified once. The
 `Transis.Object.flush` method can be used to force observers to fire immediately. This method should
-never be used in production code, its only for making specs easier to write. An example should make
+never be used in production code, it's only for making specs easier to write. An example should make
 this clear:
 
 ```javascript
@@ -362,7 +362,7 @@ its version of the object wasn't actually changed.
 particular type. This is really helpful when dealing with JSON APIs where the amount of data types
 is fairly limited. For example, JSON doesn't support a Date data type, but Transis provides a date
 attribute type that will automatically parse [ISO 8601][ISO 8601] formatted date strings and turn
-them into javascript [`Date`][Date] objects.
+them into JavaScript [`Date`][Date] objects.
 
 Transis supports the following attribute types:
 
@@ -409,15 +409,15 @@ coercion in action with the `birthday` and `numberOfPets` props. We set both of 
 strings but the `birthday` attr is parsed into a `Date` object and the `numberOfPets` attr is parsed
 into a number.
 
-Also take note of the way we're calling `extend` here as its slightly different than calling
+Also take note of the way we're calling `extend` here as it's slightly different than calling
 `extend` directly on `Transis.Object`. When extending `Transis.Model` you must pass a string
 representing the class name as the first argument. This class name is used when defining
-assocations, which we'll take a look at next.
+associations, which we'll take a look at next.
 
 ### Two-way associations
 
-All but the most trival data models have relationships among models. Transis helps model these
-relationships with associations. Assocations come in two flavors: a to-one relation or to-many
+All but the most trivial data models have relationships among models. Transis helps model these
+relationships with associations. Associations come in two flavors: a to-one relation or to-many
 relationship. When the association is defined on both sides of the relationship, the association is
 said to be two-way, meaning that manipulating one side of the association also manipulates the other
 side. For example, if an `Author` model has many `Book`s, and we add a book to an author's `books`
@@ -472,12 +472,12 @@ model class. For `hasMany` associations, the value is always an array containing
 instances of the associated model class.
 
 Next you can see the two-way associations in action. The `inverse` option on both sides must be set
-in order for the association to be two way. This is how Transis figures out the prop to update on
-the other side when an assocation is changed.
+in order for the association to be two-way. This is how Transis figures out the prop to update on
+the other side when an association is changed.
 
 At this point you may be wondering how popping an item from the `Author#books` array causes the
 book's `author` prop to be updated. It works because Transis `hasMany` associations don't use
-regular native array objects, they instead use `Transis.Array` objects. Lets take a brief interlue
+regular native array objects, they instead use `Transis.Array` objects. Lets take a brief interlude
 from discussing `Transis.Model` to take a look at `Transis.Array`.
 
 ### `Transis.Array`
@@ -537,14 +537,14 @@ console.log(a instanceof Transis.Object);
 ```
 
 However, it behaves just like a `Transis.Object`. It is assigned an `objectId` and responds to the
-`#on` and `#off` methods. The reason that it does not descend from `Transis.Object` is because
+`#on` and `#off` methods. The reason that it does not inherit from `Transis.Object` is because
 Transis arrays are actually a copy of the native `Array` class with some added capabilities. A copy
 of `Array` is created by grabbing a reference to the `Array` constructor function from an `iframe`.
 This approach allows us to create a custom array class that behaves just like normal arrays without
 manipulating the main native `Array`.
 
-This approach does have some caveats however. As mentioned `Transis.Array` does not truly descend
-from `Transis.Object`. Also, javascript provides no means to hook into use of the brackets operator
+This approach does have some caveats however. As mentioned `Transis.Array` does not truly inherit
+from `Transis.Object`. Also, JavaScript provides no means to hook into use of the brackets operator
 (`[]`) when setting array indexes. This means that observers will not be notified when an array is
 mutated using the brackets operator. To set a value at a specific index in an observable manner, use
 the `Transis.Array#at` method instead:
@@ -567,7 +567,7 @@ method, the observer was notified.
 
 ### Computed props on associations
 
-Now that we know how associations work, its time to take another look at computed props and some
+Now that we know how associations work, it's time to take another look at computed props and some
 enhancements that are available on `Transis.Model`. With subclasses of `Transis.Object` we saw how
 you can define computed props that depend on other props on the same object. But sometimes we have a
 need to compute properties from properties on other objects. `Transis.Model` associations make this
@@ -608,7 +608,7 @@ We've defined the `Post#authorName` prop that depends on the post's author's `na
 indicate this by passing the path `'author.name'` as the `on` option. This works because
 `Transis.Model` instances propagate change notifications to their associated objects.
 
-Its important to point out here that you are only allowed to have one dot in a dependent property
+It's important to point out here that you are only allowed to have one dot in a dependent property
 path - you can't depend on props that are not on immediate neighbors. This is by design as to make
 it difficult to violate the [Law of Demeter][Law of Demeter]. It also makes for a much simpler
 implementation. If you find yourself needing to declare a dependency on a prop that is not an
@@ -685,7 +685,7 @@ methods:
 These methods are responsible for doing the actual communication with the persistence layer and are
 invoked by the `Transis.Model` class. You should rarely ever need to call these methods directly.
 Since communicating with your persistence layer will likely involve an asynchronous operation, these
-methods all must return an `Promise` or promise like object that gets resolved/rejected when the
+methods all must return a `Promise` or promise like object that gets resolved/rejected when the
 asynchronous operation is complete. `Transis.Model` will throw an exception if a promise is not
 returned by these methods.
 
@@ -752,7 +752,7 @@ people.then(function() {
 
 ```
 
-Here we can see that our mapper is just a simple javascript object. It can be as simple or complex
+Here we can see that our mapper is just a simple JavaScript object. It can be as simple or complex
 as you desire, it just needs to respond to the appropriate methods mentioned above.
 
 The example has implemented two methods, `query` and `update`, which allows us to use the
@@ -771,7 +771,7 @@ see the model is in the busy state while the mapper is doing its work.
 
 ### Model state
 
-Above we got a glimpse of how Transis tracks the state of a model when its interacting with the
+Above we got a glimpse of how Transis tracks the state of a model when it's interacting with the
 mapper - the `Transis.Model#isBusy` prop is set to `true` while a mapper operation is pending and is
 `false` otherwise. In addition to tracking the busy state of a model Transis also tracks the source
 state. The source state is available as the `Transis.Model#sourceState` prop and will always be set
@@ -895,8 +895,8 @@ deeper we can see that the post's `author` and `tags` associations are also popu
 instances of the `Author` and `Tag` classes. Further, since the associations all have their inverses
 defined, the inverse associations are also properly established.
 
-With the `.load` method, loading data from your backend is trival as long as you build your APIs to
-match the structure of the Transis models. When you have differences, its the mapper's responsibilty
+With the `.load` method, loading data from your backend is trivial as long as you build your APIs to
+match the structure of the Transis models. When you have differences, it's the mapper's responsibility
 to munge the data received from the persistence layer to make it loadable by Transis.
 
 ### Change tracking
@@ -1098,7 +1098,8 @@ console.log(invoice.errors);
 So even though the invoice object didn't have any validation errors, the `#validate` method returned
 `false` because one of its owned line item object did have an error.
 
-Transis also supports validation contexts. Multiple contextual validations can be registered for the same attribute. Each contextual validation will executed depending on the context provided. Contextual validations will only be applied
+Transis also supports validation contexts. Multiple contextual validations can be registered for the same attribute.
+Each contextual validation may be executed depending on the context provided. Contextual validations will only be applied
 when a matching context value is provided to the `Transis.Model.validate` method.
 
 ```javascript
@@ -1133,7 +1134,7 @@ you pass a model instance to a React component and that model will undergo chang
 be re-rendered. Since the actual prop value isn't changing, just its internal state, React won't
 know to trigger a re-render. Since our Transis model props are easily observable, it would be nice
 if we could just inform the component what props to observe on the model so that it can
-automatically update when any change. Thats precisely what the `Transis.ReactPropsMixin` does:
+automatically update when any change. That's precisely what the `Transis.ReactPropsMixin` does:
 
 ```jsx
 var Person = Transis.Model.extend('Person', function() {
