@@ -55,12 +55,8 @@ TransisArray.of = function() {
 //
 // Returns a new `Transis.Array`.
 TransisArray.from = function(a, mapFn, thisArg) {
-  if(mapFn) {
-    for (var i = 0; i < a.length; i++) {
-      a[i] = mapFn.call(thisArg || this, a[i]);
-    }
-  }
-  return TransisArray.of.apply(null, a);
+  let arr = TransisArray.of.apply(null, a);
+  return mapFn ? arr.map(x => mapFn.call(thisArg || this, x)) : arr;
 };
 
 (function() {

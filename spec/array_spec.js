@@ -65,6 +65,14 @@ describe('Array', function() {
       expect(a2.at(0)).toBe('foo');
       expect(a2.at(1)).toBe('bar');
     });
+
+    it('returns a Transis.Array with the correct context', function() {
+      var a1 = [1,2];
+      var mapFn = function() {return this};
+      var a2 = TransisArray.from(a1, mapFn, 'context');
+
+      expect(a2).toEqual([ 'context', 'context']);
+    });
   });
 
   describe('size prop', function() {
