@@ -184,8 +184,9 @@ var Model = TransisObject.extend(function() {
   };
 
   this.resolveSubclass = function(name) {
-    if(!this.subclasses) { throw new Error(`${this}.resolveSubclass: ${this} does not have subclasses`); }
-    if(this.subclasses.indexOf(name) < 0) { throw new Error(`${this}.resolveSubclass: could not find subclass ${name}`); }
+    if(!this.subclasses || this.subclasses.indexOf(name) < 0) {
+      throw new Error(`${this}.resolveSubclass: could not find subclass ${name}`);
+    }
 
     return resolve(name);
   };

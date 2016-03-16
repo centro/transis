@@ -2985,11 +2985,13 @@ describe('Model', function () {
       });
 
       it('throws an exception when there are no subclasses', function() {
-        expect(()=> Child.resolveSubclass('Grandchild')).toThrow(new Error('Child.resolveSubclass: Child does not have subclasses'));
+        expect(()=> Child.resolveSubclass('Grandchild'))
+          .toThrow(new Error('Child.resolveSubclass: could not find subclass Grandchild'));
       });
 
       it('throws an exception when the subclasses could not be found', function() {
-        expect(()=> Parent.resolveSubclass('SomethingElse')).toThrow(new Error('Parent.resolveSubclass: could not find subclass SomethingElse'));
+        expect(()=> Parent.resolveSubclass('SomethingElse'))
+          .toThrow(new Error('Parent.resolveSubclass: could not find subclass SomethingElse'));
       });
     });
 
