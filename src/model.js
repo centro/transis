@@ -175,7 +175,19 @@ var Model = TransisObject.extend(function() {
 
     if (typeof f === 'function') { f.call(subclass); }
 
+    if(this.displayName !== 'Transis.Model') {
+      this.subclasses = this.subclasses || [];
+      this.subclasses.push(name);
+    }
+
     return subclass;
+  };
+
+  this.resolveSubclass = function(name) {
+    if(!this.subclasses) { throw new Error(`${this}.resolveSubclass: ${this} does not have subclasses`); }
+    if(this.subclasses.indexOf(name) < 0) { throw new Error(`${this}.resolveSubclass: could not find subclass ${name}`); }
+
+    return resolve(name);
   };
 
   // Public: Returns an empty instance of the model class. An empty instance contains only an id
@@ -385,7 +397,7 @@ var Model = TransisObject.extend(function() {
   // Returns the loaded model instance.
   // Throws `Error` if the given attributes do not contain an `id` attribute.
   this.load = function(attrs) {
-    var id = attrs.id, associations = this.prototype.associations, associated = {}, model;
+    var id = attrs.id, associations = this.prototype.associations, associated = {}, model, LoadKlass;
 
     if (id == null) {
       throw new Error(`${this}.load: an \`id\` attribute is required`);
@@ -394,7 +406,15 @@ var Model = TransisObject.extend(function() {
     loads.push(true);
 
     attrs = Object.assign({}, attrs);
-    model = IdMap.get(this, id) || new this;
+    if(typeof this.getSubclass === 'function') {
+      LoadKlass = this.resolveSubclass(this.getSubclass(attrs));
+    }
+    else {
+      LoadKlass = this;
+    }
+
+    model = IdMap.get(LoadKlass, id) || new LoadKlass;
+
     delete attrs.id;
 
     // extract associated attributes
