@@ -2955,4 +2955,76 @@ describe('Model', function () {
       }, 100);
     });
   });
+
+  describe('subclassing', function() {
+    var Parent = Model.extend('Parent', function() {
+      this.getSubclass = function(attrs) {
+        return attrs.type;
+      };
+    });
+
+    var Child = Parent.extend('Child');
+    var AnotherChild = Parent.extend('AnotherChild');
+
+    var Composition = Model.extend('Composition', function() {
+      this.hasMany('things', 'Parent');
+    });
+
+    describe('.resolveSubclass', function() {
+      it('can resolve subclases', function() {
+        var subclass = Parent.resolveSubclass('Child');
+        expect(subclass).toBe(Child);
+      });
+
+      it('throws an exception when there are no subclasses', function() {
+        expect(()=> Child.resolveSubclass('Grandchild'))
+          .toThrow(new Error('Child.resolveSubclass: could not find subclass Grandchild'));
+      });
+
+      it('throws an exception when the subclasses could not be found', function() {
+        expect(()=> Parent.resolveSubclass('SomethingElse'))
+          .toThrow(new Error('Parent.resolveSubclass: could not find subclass SomethingElse'));
+      });
+    });
+
+    describe('loading subclasses', function() {
+      it('returns an instance of appropriate subclass', function() {
+        var loaded = Parent.load({id: 1, type: 'Child'});
+        expect(loaded instanceof Child).toBe(true);
+      });
+
+      it('loads associated subclasses', function() {
+        var loaded = Composition.load({
+          id: 1,
+          things: [
+            {
+              id: 'thing1',
+              type: 'Child'
+            },
+            {
+              id: 'thing2',
+              type: 'AnotherChild'
+            }
+          ]
+        });
+
+        expect(loaded.things[0] instanceof Child).toBe(true);
+        expect(loaded.things[1] instanceof AnotherChild).toBe(true);
+      });
+
+      it('rejects non subclasses', function() {
+        expect(()=> {
+          Composition.load({
+            id: 2,
+            things: [
+              {
+                id: 'randomThing1',
+                type: 'SomethingElse'
+              }
+            ]
+          });
+        }).toThrow();
+      })
+    });
+  });
 });
