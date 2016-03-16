@@ -2958,25 +2958,17 @@ describe('Model', function () {
 
   describe('subclassing', function() {
     var Parent = Model.extend('Parent', function() {
-      this.prototype.init = ()=> {};
-
       this.getSubclass = function(attrs) {
         return attrs.type;
       };
     });
 
-    var Child = Parent.extend('Child', function() {
-      this.prototype.init = ()=> {};
-    });
-
-    var AnotherChild = Parent.extend('AnotherChild', function() {
-      this.prototype.init = ()=> {};
-    });
+    var Child = Parent.extend('Child');
+    var AnotherChild = Parent.extend('AnotherChild');
 
     var Composition = Model.extend('Composition', function() {
       this.hasMany('things', 'Parent');
     });
-
 
     describe('.resolveSubclass', function() {
       it('can resolve subclases', function() {
@@ -3015,6 +3007,7 @@ describe('Model', function () {
             }
           ]
         });
+
         expect(loaded.things[0] instanceof Child).toBe(true);
         expect(loaded.things[1] instanceof AnotherChild).toBe(true);
       });
