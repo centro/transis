@@ -1,6 +1,6 @@
 import * as util from "./util";
 
-var objectId = 0, changedObjects = {}, delayCallbacks = [], flushTimer;
+var objectId = 0, changedObjects = {}, flushChanges = {}, delayCallbacks = [], flushTimer;
 
 // Public: `Transis.Object` is the foundation of the `Transis` library. It implements a basic object
 // system and observable properties.
@@ -44,6 +44,10 @@ TransisObject.displayName = 'Transis.Object';
 // Internal: Processes a property change by traversing the property dependency graph and forwarding
 // changes to proxy objects.
 function didChange(object, name) {
+  if (flushChanges[object.objectId + name]) { return; }
+
+  flushChanges[object.objectId + name] = true;
+
   (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
   changedObjects[object.objectId] = object;
   uncache.call(object, name);
@@ -60,9 +64,7 @@ function didChange(object, name) {
 
   if (object.__proxies__ && name.indexOf('.') === -1) {
     for (let k in object.__proxies__) {
-      util.detectRecursion(object, function() {
-        didChange(object.__proxies__[k].object, `${object.__proxies__[k].name}.${name}`);
-      });
+      didChange(object.__proxies__[k].object, `${object.__proxies__[k].name}.${name}`);
     }
   }
 }
@@ -94,7 +96,7 @@ function flush() {
   }
 
   changedObjects = {};
-
+  flushChanges = {};
   flushTimer = null;
 
   let f;
