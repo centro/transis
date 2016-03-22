@@ -50,7 +50,7 @@ function didChange(object, name) {
 
   (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
   changedObjects[object.objectId] = object;
-  uncache.call(object, name);
+  if (object.__cache__) { delete object.__cache__[name]; }
 
   if (object.__deps__) {
     let deps = object.__deps__[name];
@@ -102,12 +102,6 @@ function flush() {
   let f;
   while ((f = delayCallbacks.shift())) { f(); }
 }
-
-// Internal: Caches the given name/value pair on the receiver.
-function cache(name, value) { (this.__cache__ = this.__cache__ || {})[name] = value; }
-
-// Internal: Removes the given name from the cache.
-function uncache(name) { if (this.__cache__) { delete this.__cache__[name]; } }
 
 // Internal: Indicates whether the current name has a value cached.
 function isCached(name) { return this.__cache__ ? this.__cache__.hasOwnProperty(name) : false; }
@@ -412,7 +406,7 @@ TransisObject.prototype._getProp = function(name) {
 
   value = (value === undefined) ? desc.default : value;
 
-  if (desc.cache) { cache.call(this, name, value); }
+  if (desc.cache) { (this.__cache__ = this.__cache__ || {})[name] = value; }
 
   return value;
 };
