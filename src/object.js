@@ -72,27 +72,22 @@ function didChange(object, name) {
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  var ids = Object.keys(changedObjects), f;
-
-  for (let j = 0, m = ids.length; j < m; j++) {
-    let object  = changedObjects[ids[j]];
-    let changes = Object.keys(object.__changedProps__);
-
-    for (let i = 0, n = changes.length; i < n; i++) {
-      didChange(object, changes[i]);
+  for (let id in changedObjects) {
+    for (let k in changedObjects[id].__changedProps__) {
+      didChange(changedObjects[id], k);
     }
   }
 
   for (let id in changedObjects) {
     let object  = changedObjects[id];
-    let changes = Object.keys(object.__changedProps__);
+    let changes = object.__changedProps__;
     let star    = false;
 
     object.__changedProps__ = {};
 
-    for (let i = 0, n = changes.length; i < n; i++) {
-      if (changes[i].indexOf('.') === -1) { star = true; }
-      object.notify(changes[i]);
+    for (let k in changes) {
+      if (k.indexOf('.') === -1) { star = true; }
+      object.notify(k);
     }
 
     if (star) { object.notify('*'); }
@@ -102,7 +97,8 @@ function flush() {
 
   flushTimer = null;
 
-  while (f = delayCallbacks.shift()) { f(); }
+  let f;
+  while ((f = delayCallbacks.shift())) { f(); }
 }
 
 // Internal: Caches the given name/value pair on the receiver.
