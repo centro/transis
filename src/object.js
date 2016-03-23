@@ -1,6 +1,6 @@
 import * as util from "./util";
 
-var objectId = 0, changedObjects = {}, flushChanges = {}, delayCallbacks = [], flushTimer;
+var objectId = 0, changedObjects = {}, stack = new Array(1000), delayCallbacks = [], flushTimer;
 
 // Public: `Transis.Object` is the foundation of the `Transis` library. It implements a basic object
 // system and observable properties.
@@ -41,30 +41,42 @@ function TransisObject() {
 
 TransisObject.displayName = 'Transis.Object';
 
-// Internal: Processes a property change by traversing the property dependency graph and forwarding
-// changes to proxy objects.
-function didChange(object, name) {
-  if (flushChanges[object.objectId + name]) { return; }
+// Internal: Processes recorded property changes by traversing the property dependency graph and
+// forwarding changes to proxy objects.
+function processChangedObjects() {
+  let sp = -1
+  let seen = {};
 
-  flushChanges[object.objectId + name] = true;
-
-  (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
-  changedObjects[object.objectId] = object;
-  if (object.__cache__) { delete object.__cache__[name]; }
-
-  if (object.__deps__) {
-    let deps = object.__deps__[name];
-
-    if (deps) {
-      for (let i = 0, n = deps.length; i < n; i++) {
-        didChange(object, deps[i]);
-      }
+  for (let id in changedObjects) {
+    for (let k in changedObjects[id].__changedProps__) {
+      stack[++sp] = [changedObjects[id], k];
     }
   }
 
-  if (object.__proxies__ && name.indexOf('.') === -1) {
-    for (let k in object.__proxies__) {
-      didChange(object.__proxies__[k].object, `${object.__proxies__[k].name}.${name}`);
+  while (sp >= 0) {
+    let pair = stack[sp--];
+    let object = pair[0];
+    let name = pair[1];
+    let deps;
+
+    if (seen[object.objectId + name]) { continue; }
+
+    seen[object.objectId + name] = true;
+
+    (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
+    changedObjects[object.objectId] = object;
+    if (object.__cache__) { delete object.__cache__[name]; }
+
+    if ((deps = object.__deps__ && object.__deps__[name])) {
+      for (let i = 0, n = deps.length; i < n; i++) {
+        stack[++sp] = [object, deps[i]]
+      }
+    }
+
+    if (object.__proxies__ && name.indexOf('.') === -1) {
+      for (let k in object.__proxies__) {
+        stack[++sp] = [object.__proxies__[k].object, `${object.__proxies__[k].name}.${name}`]
+      }
     }
   }
 }
@@ -74,11 +86,7 @@ function didChange(object, name) {
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  for (let id in changedObjects) {
-    for (let k in changedObjects[id].__changedProps__) {
-      didChange(changedObjects[id], k);
-    }
-  }
+  processChangedObjects();
 
   for (let id in changedObjects) {
     let object  = changedObjects[id];
@@ -96,7 +104,6 @@ function flush() {
   }
 
   changedObjects = {};
-  flushChanges = {};
   flushTimer = null;
 
   let f;
