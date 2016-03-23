@@ -46,6 +46,17 @@ describe('Array', function() {
       expect(a1.at(2)).toBe(3);
     });
 
+    it('returns a Transis.Array from an arguments object', function() {
+      var args = (function() { return arguments; })(1, 2, 3);
+      var a1 = TransisArray.from(args);
+
+      expect(a1 instanceof TransisArray).toBe(true);
+      expect(a1.length).toBe(3);
+      expect(a1.at(0)).toBe(1);
+      expect(a1.at(1)).toBe(2);
+      expect(a1.at(2)).toBe(3);
+    });
+
     it('returns a Transis.Array when providing optional mapFn on integers', function() {
       var a1 = TransisArray.from([1,2,3], x => x + x);
 
