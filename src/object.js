@@ -1,6 +1,6 @@
 import * as util from "./util";
 
-var objectId = 0, changedObjects = {}, stack = new Array(1000), delayCallbacks = [], flushTimer;
+var objectId = 0, changedObjects = {}, delayCallbacks = [], flushTimer;
 
 // Public: `Transis.Object` is the foundation of the `Transis` library. It implements a basic object
 // system and observable properties.
@@ -44,20 +44,21 @@ TransisObject.displayName = 'Transis.Object';
 // Internal: Processes recorded property changes by traversing the property dependency graph and
 // forwarding changes to proxy objects.
 function processChangedObjects() {
-  let sp = -1
   let seen = {};
+  let head;
 
   for (let id in changedObjects) {
     for (let k in changedObjects[id].__changedProps__) {
-      stack[++sp] = [changedObjects[id], k];
+      head = {object: changedObjects[id], name: k, next: head};
     }
   }
 
-  while (sp >= 0) {
-    let pair = stack[sp--];
-    let object = pair[0];
-    let name = pair[1];
+  while (head) {
+    let object = head.object;
+    let name = head.name;
     let deps;
+
+    head = head.next;
 
     if (seen[object.objectId + name]) { continue; }
 
@@ -69,13 +70,17 @@ function processChangedObjects() {
 
     if ((deps = object.__deps__ && object.__deps__[name])) {
       for (let i = 0, n = deps.length; i < n; i++) {
-        stack[++sp] = [object, deps[i]]
+        head = {object, name: deps[i], next: head};
       }
     }
 
     if (object.__proxies__ && name.indexOf('.') === -1) {
       for (let k in object.__proxies__) {
-        stack[++sp] = [object.__proxies__[k].object, `${object.__proxies__[k].name}.${name}`]
+        head = {
+          object: object.__proxies__[k].object,
+          name: `${object.__proxies__[k].name}.${name}`,
+          next: head
+        };
       }
     }
   }
