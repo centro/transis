@@ -2126,19 +2126,37 @@ describe('Model', function () {
       });
 
       it('does not undo changes to the owned association specified in the except option as a string', function() {
-        var li = this.invoice.lineItems.at(0);
-
         this.invoice.billingAddress.name = 'Bob Smith';
         this.invoice.undoChanges({except: 'billingAddress'});
         expect(this.invoice.billingAddress.name).toBe('Bob Smith');
       });
 
-      it('does not undo changes to owned associations specified in the exception option as an array', function() {
-        var li = this.invoice.lineItems.at(0);
+      it('undoes only the assocations specified in the only option as a string', function() {
+        this.invoice.lineItems.pop();
+        expect(this.invoice.lineItems.length).toEqual(2);
+        this.invoice.billingAddress.name = "Tom Smith";
 
+        this.invoice.undoChanges({only: 'lineItems'});
+
+        expect(this.invoice.billingAddress.name).toBe('Tom Smith');
+        expect(this.invoice.lineItems.length).toEqual(3);
+      });
+
+      it('does not undo changes to owned associations specified in the exception option as an array', function() {
         this.invoice.billingAddress.name = 'Bob Smith';
         this.invoice.undoChanges({except: ['billingAddress']});
         expect(this.invoice.billingAddress.name).toBe('Bob Smith');
+      });
+
+      it('undoes only the assocations specified in the only option as an array', function() {
+        this.invoice.lineItems.pop();
+        expect(this.invoice.lineItems.length).toEqual(2);
+        this.invoice.billingAddress.name = 'Tom Smith';
+
+        this.invoice.undoChanges({only: ['lineItems']});
+
+        expect(this.invoice.billingAddress.name).toBe('Tom Smith');
+        expect(this.invoice.lineItems.length).toEqual(3);
       });
 
       it('re-runs validations', function() {

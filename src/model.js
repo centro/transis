@@ -1033,6 +1033,8 @@ var Model = TransisObject.extend(function() {
   // opts - An object containing zero or more of the following keys:
   //   except - Either a string or an array of strings of owned association names to skip over when
   //            undoing changes on owned associations.
+  //   only -   Either a string or an array of strings of owned association names that limit the undoing of changes
+  //            to only the provided associations.
   //
   // Returns the receiver.
   this.prototype.undoChanges = function(opts = {}) {
@@ -1058,6 +1060,9 @@ var Model = TransisObject.extend(function() {
         if (!desc.owner) { continue; }
         if (opts.except === name) { continue; }
         if (Array.isArray(opts.except) && opts.except.indexOf(name) >= 0) { continue; }
+
+        if (opts.only && opts.only !== name) { continue; }
+        if (Array.isArray(opts.only) && opts.only.indexOf(name) === -1) { continue; }
 
         if (desc.type === 'hasOne') {
           this[name] && this[name].undoChanges();
