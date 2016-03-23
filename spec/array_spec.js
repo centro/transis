@@ -35,6 +35,57 @@ describe('Array', function() {
     });
   });
 
+  describe('.from', function() {
+    it('returns a Transis.Array from an array-like object', function() {
+      var a1 = TransisArray.from([1,2,3]);
+
+      expect(a1 instanceof TransisArray).toBe(true);
+      expect(a1.length).toBe(3);
+      expect(a1.at(0)).toBe(1);
+      expect(a1.at(1)).toBe(2);
+      expect(a1.at(2)).toBe(3);
+    });
+
+    it('returns a Transis.Array from an arguments object', function() {
+      var args = (function() { return arguments; })(1, 2, 3);
+      var a1 = TransisArray.from(args);
+
+      expect(a1 instanceof TransisArray).toBe(true);
+      expect(a1.length).toBe(3);
+      expect(a1.at(0)).toBe(1);
+      expect(a1.at(1)).toBe(2);
+      expect(a1.at(2)).toBe(3);
+    });
+
+    it('returns a Transis.Array when providing optional mapFn on integers', function() {
+      var a1 = TransisArray.from([1,2,3], x => x + x);
+
+      expect(a1 instanceof TransisArray).toBe(true);
+      expect(a1.length).toBe(3);
+      expect(a1.at(0)).toBe(2);
+      expect(a1.at(1)).toBe(4);
+      expect(a1.at(2)).toBe(6);
+    });
+
+    it('returns a Transis.Array when providing optional mapFn on objects', function() {
+      var a1 = [{name: 'foo'}, {name: 'bar'}];
+      var a2 = TransisArray.from(a1, x => x.name);
+
+      expect(a2 instanceof TransisArray).toBe(true);
+      expect(a2.length).toBe(2);
+      expect(a2.at(0)).toBe('foo');
+      expect(a2.at(1)).toBe('bar');
+    });
+
+    it('returns a Transis.Array with the correct context', function() {
+      var a1 = [1,2];
+      var mapFn = function() {return this};
+      var a2 = TransisArray.from(a1, mapFn, 'context');
+
+      expect(a2).toEqual([ 'context', 'context']);
+    });
+  });
+
   describe('size prop', function() {
     beforeEach(function() {
       this.a = A(1,2,3);

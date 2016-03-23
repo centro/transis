@@ -49,10 +49,15 @@ TransisArray.of = function() {
 // Public: Creates a new `Transis.Array` from the given array-like object. Useful for converting a
 // regular array to a `Transis.Array`.
 //
-// a - An array-like object.
+// a       - An array-like object.
+// mapFn   - Map function to call on every element of the array (optional).
+// thisArg - Value to use as this when executing mapFn (optional).
 //
 // Returns a new `Transis.Array`.
-TransisArray.from = function(a) { return TransisArray.of.apply(null, a); };
+TransisArray.from = function(a, mapFn, thisArg) {
+  let arr = TransisArray.of.apply(null, a);
+  return mapFn ? arr.map(x => mapFn.call(thisArg || this, x)) : arr;
+};
 
 (function() {
   this.displayName = 'Transis.Array';
