@@ -50,6 +50,7 @@ function processChangedObjects() {
   for (let id in changedObjects) {
     for (let k in changedObjects[id].__changedProps__) {
       head = {object: changedObjects[id], name: k, next: head};
+      seen[changedObjects[id].objectId + k] = true;
     }
   }
 
@@ -60,27 +61,28 @@ function processChangedObjects() {
 
     head = head.next;
 
-    if (seen[object.objectId + name]) { continue; }
-
-    seen[object.objectId + name] = true;
-
     (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
     changedObjects[object.objectId] = object;
     if (object.__cache__) { delete object.__cache__[name]; }
 
     if ((deps = object.__deps__ && object.__deps__[name])) {
       for (let i = 0, n = deps.length; i < n; i++) {
-        head = {object, name: deps[i], next: head};
+        if (!seen[object.objectId + deps[i]]) {
+          head = {object, name: deps[i], next: head};
+          seen[object.objectId + deps[i]] = true;
+        }
       }
     }
 
     if (object.__proxies__ && name.indexOf('.') === -1) {
       for (let k in object.__proxies__) {
-        head = {
-          object: object.__proxies__[k].object,
-          name: `${object.__proxies__[k].name}.${name}`,
-          next: head
-        };
+        let proxyObject = object.__proxies__[k].object;
+        let proxyName = `${object.__proxies__[k].name}.${name}`;
+
+        if (!seen[proxyObject.objectId + proxyName]) {
+          head = {object: proxyObject, name: proxyName, next: head};
+          seen[proxyObject.objectId + proxyName] = true;
+        }
       }
     }
   }
