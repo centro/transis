@@ -2143,9 +2143,10 @@ describe('Model', function () {
       });
 
       it('does not undo changes to owned associations specified in the exception option as an array', function() {
-        this.invoice.billingAddress.name = 'Bob Smith';
-        this.invoice.undoChanges({except: ['billingAddress']});
-        expect(this.invoice.billingAddress.name).toBe('Bob Smith');
+        expect(this.invoice.lineItems.length).toBe(3);
+        this.invoice.lineItems.pop();
+        this.invoice.undoChanges({except: ['lineItems']});
+        expect(this.invoice.lineItems.length).toBe(2);
       });
 
       it('undoes only the assocations specified in the only option as an array', function() {

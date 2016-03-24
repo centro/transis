@@ -1040,7 +1040,23 @@ var Model = TransisObject.extend(function() {
   this.prototype.undoChanges = function(opts = {}) {
     var associations = this.associations;
 
+    const shouldUndo = (name) => {
+      if(!opts) return true;
+
+      if (opts.except === name) { return false; }
+      if (Array.isArray(opts.except) && opts.except.indexOf(name) >= 0) { return false; }
+
+      if (Array.isArray(opts.only)) {
+        if (opts.only.indexOf(name) === -1) { return false; }
+      }
+      else if (opts.only && opts.only !== name) { return false; }
+
+      return true;
+    };
+
     for (let prop in this.ownChanges) {
+      if (!shouldUndo(prop)) { continue; }
+
       if (associations[prop] && associations[prop].type === 'hasMany') {
         let removed = this.ownChanges[prop].removed.slice();
         let added   = this.ownChanges[prop].added.slice();
@@ -1058,11 +1074,7 @@ var Model = TransisObject.extend(function() {
         let desc = associations[name];
 
         if (!desc.owner) { continue; }
-        if (opts.except === name) { continue; }
-        if (Array.isArray(opts.except) && opts.except.indexOf(name) >= 0) { continue; }
-
-        if (opts.only && opts.only !== name) { continue; }
-        if (Array.isArray(opts.only) && opts.only.indexOf(name) === -1) { continue; }
+        if (!shouldUndo(name)) { continue; }
 
         if (desc.type === 'hasOne') {
           this[name] && this[name].undoChanges();
