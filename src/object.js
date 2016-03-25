@@ -41,28 +41,52 @@ function TransisObject() {
 
 TransisObject.displayName = 'Transis.Object';
 
-// Internal: Processes a property change by traversing the property dependency graph and forwarding
-// changes to proxy objects.
-function didChange(object, name) {
-  (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
-  changedObjects[object.objectId] = object;
-  uncache.call(object, name);
+// Internal: Processes recorded property changes by traversing the property dependency graph and
+// forwarding changes to proxy objects.
+function processChangedObjects() {
+  let seen = {};
+  let head;
 
-  if (object.__deps__) {
-    let deps = object.__deps__[name];
-
-    if (deps) {
-      for (let i = 0, n = deps.length; i < n; i++) {
-        didChange(object, deps[i]);
-      }
+  for (let id in changedObjects) {
+    for (let k in changedObjects[id].__changedProps__) {
+      head = {object: changedObjects[id], name: k, next: head};
+      seen[changedObjects[id].objectId + k] = true;
     }
   }
 
-  if (object.__proxies__ && name.indexOf('.') === -1) {
-    for (let k in object.__proxies__) {
-      util.detectRecursion(object, function() {
-        didChange(object.__proxies__[k].object, `${object.__proxies__[k].name}.${name}`);
-      });
+  while (head) {
+    let {name, object, object: {objectId, __deps__, __proxies__}} = head;
+    let deps = __deps__ && __deps__[name];
+
+    head = head.next;
+
+    (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
+    changedObjects[objectId] = object;
+    if (object.__cache__) { delete object.__cache__[name]; }
+
+    if (deps) {
+      for (let i = 0, n = deps.length; i < n; i++) {
+        let seenKey = objectId + deps[i];
+
+        if (!seen[seenKey]) {
+          head = {object, name: deps[i], next: head};
+          seen[seenKey] = true;
+        }
+      }
+    }
+
+    if (__proxies__ && name.indexOf('.') === -1) {
+      for (let k in __proxies__) {
+        let proxy = __proxies__[k];
+        let proxyObject = proxy.object;
+        let proxyName = `${proxy.name}.${name}`;
+        let proxySeenKey = proxyObject.objectId + proxyName;
+
+        if (!seen[proxySeenKey]) {
+          head = {object: proxyObject, name: proxyName, next: head};
+          seen[proxySeenKey] = true;
+        }
+      }
     }
   }
 }
@@ -72,44 +96,29 @@ function didChange(object, name) {
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  var ids = Object.keys(changedObjects), f;
-
-  for (let j = 0, m = ids.length; j < m; j++) {
-    let object  = changedObjects[ids[j]];
-    let changes = Object.keys(object.__changedProps__);
-
-    for (let i = 0, n = changes.length; i < n; i++) {
-      didChange(object, changes[i]);
-    }
-  }
+  processChangedObjects();
 
   for (let id in changedObjects) {
     let object  = changedObjects[id];
-    let changes = Object.keys(object.__changedProps__);
+    let changes = object.__changedProps__;
     let star    = false;
 
     object.__changedProps__ = {};
 
-    for (let i = 0, n = changes.length; i < n; i++) {
-      if (changes[i].indexOf('.') === -1) { star = true; }
-      object.notify(changes[i]);
+    for (let k in changes) {
+      if (k.indexOf('.') === -1) { star = true; }
+      object.notify(k);
     }
 
     if (star) { object.notify('*'); }
   }
 
   changedObjects = {};
-
   flushTimer = null;
 
-  while (f = delayCallbacks.shift()) { f(); }
+  let f;
+  while ((f = delayCallbacks.shift())) { f(); }
 }
-
-// Internal: Caches the given name/value pair on the receiver.
-function cache(name, value) { (this.__cache__ = this.__cache__ || {})[name] = value; }
-
-// Internal: Removes the given name from the cache.
-function uncache(name) { if (this.__cache__) { delete this.__cache__[name]; } }
 
 // Internal: Indicates whether the current name has a value cached.
 function isCached(name) { return this.__cache__ ? this.__cache__.hasOwnProperty(name) : false; }
@@ -414,7 +423,7 @@ TransisObject.prototype._getProp = function(name) {
 
   value = (value === undefined) ? desc.default : value;
 
-  if (desc.cache) { cache.call(this, name, value); }
+  if (desc.cache) { (this.__cache__ = this.__cache__ || {})[name] = value; }
 
   return value;
 };
