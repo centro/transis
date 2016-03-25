@@ -1031,14 +1031,32 @@ var Model = TransisObject.extend(function() {
   // loaded.
   //
   // opts - An object containing zero or more of the following keys:
-  //   except - Either a string or an array of strings of owned association names to skip over when
-  //            undoing changes on owned associations.
+  //   except - Either a string or an array of strings of attributes or owned association names to skip over when
+  //            undoing changes.
+  //   only -   Either a string or an array of strings of attributes or owned association names that limit the undoing of changes
+  //            to only the provided names.
   //
   // Returns the receiver.
   this.prototype.undoChanges = function(opts = {}) {
     var associations = this.associations;
 
+    const shouldUndo = (name) => {
+      if(!opts) return true;
+
+      if (opts.except === name) { return false; }
+      if (Array.isArray(opts.except) && opts.except.indexOf(name) >= 0) { return false; }
+
+      if (Array.isArray(opts.only)) {
+        if (opts.only.indexOf(name) === -1) { return false; }
+      }
+      else if (opts.only && opts.only !== name) { return false; }
+
+      return true;
+    };
+
     for (let prop in this.ownChanges) {
+      if (!shouldUndo(prop)) { continue; }
+
       if (associations[prop] && associations[prop].type === 'hasMany') {
         let removed = this.ownChanges[prop].removed.slice();
         let added   = this.ownChanges[prop].added.slice();
@@ -1056,8 +1074,7 @@ var Model = TransisObject.extend(function() {
         let desc = associations[name];
 
         if (!desc.owner) { continue; }
-        if (opts.except === name) { continue; }
-        if (Array.isArray(opts.except) && opts.except.indexOf(name) >= 0) { continue; }
+        if (!shouldUndo(name)) { continue; }
 
         if (desc.type === 'hasOne') {
           this[name] && this[name].undoChanges();
