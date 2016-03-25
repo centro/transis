@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.5.0]
+### Fixed
+- Optimize flush calls. This greatly improves processing time when loading a lot of data at once. [#26](https://github.com/centro/transis/pull/26)
+
+### Added
+- Update undoChanges method to accept an only option. [#25](https://github.com/centro/transis/pull/25)
+
 ## [0.4.0]
 ### Fixed
 - Allows parent classes to resolve subclasses when loading data. [#24](https://github.com/centro/transis/pull/24)

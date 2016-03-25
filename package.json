@@ -1,6 +1,6 @@
 {
   "name": "transis",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A javascript data modeling library useful for creating rich client-side experiences.",
   "main": "dist/index.js",
   "repository": "https://github.com/centro/transis.git",
