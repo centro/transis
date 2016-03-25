@@ -1031,10 +1031,10 @@ var Model = TransisObject.extend(function() {
   // loaded.
   //
   // opts - An object containing zero or more of the following keys:
-  //   except - Either a string or an array of strings of owned association names to skip over when
-  //            undoing changes on owned associations.
-  //   only -   Either a string or an array of strings of owned association names that limit the undoing of changes
-  //            to only the provided associations.
+  //   except - Either a string or an array of strings of attributes or owned association names to skip over when
+  //            undoing changes.
+  //   only -   Either a string or an array of strings of attributes or owned association names that limit the undoing of changes
+  //            to only the provided names.
   //
   // Returns the receiver.
   this.prototype.undoChanges = function(opts = {}) {

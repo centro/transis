@@ -1000,7 +1000,11 @@ If we also make changes directly to the owner object, those changes are also lis
 object.
 
 Finally we can see that by calling `undoChanges` on the invoice, we also undo any changes on its
-owned line items
+owned line items.
+
+Note: `undoChanges` can be scoped using the options `only` and `except` by providing a string or array of names.
+      `invoice.undoChanges({only: 'lineItems'}));` Only undoes changes for lineItems and ignores the `name` attribute.
+      `invoice.undoChanges({except: 'lineItems'}));` Undoes all changes except for the `lineItems` assocation.
 
 In addition to tracking attribute changes, Transis will also track changes made to `hasMany`
 associations. So adding or removing an object from a `hasMany` array can also be undone:
