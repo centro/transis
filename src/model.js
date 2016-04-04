@@ -6,7 +6,11 @@ import Validations from "./validations";
 import * as attrs from "./attrs";
 import * as util from "./util";
 
-var registeredAttrs = {}, subclasses = {}, loads = [];
+let registeredAttrs = {};
+let subclasses = {};
+let loads = [];
+let gets = {attrs: {}, associations: {}};
+let instrument = false;
 
 const NEW     = 'new';
 const EMPTY   = 'empty';
@@ -264,7 +268,14 @@ var Model = TransisObject.extend(function() {
     this.prop(name, {
       attr: true,
       converter,
-      get: function() { return this[`__${name}`]; },
+      get: function() {
+        if (instrument) {
+          let fullName = `${this.constructor.displayName}#${name}`;
+          gets.attrs[fullName] = gets.attrs[fullName] || 0;
+          gets.attrs[fullName]++;
+        }
+        return this[`__${name}`];
+      },
       set: function(v) {
         this[`__${name}`] = converter.coerce(v);
         this[`${name}BeforeCoercion`] = v;
@@ -311,7 +322,14 @@ var Model = TransisObject.extend(function() {
     }
 
     this.prop(name, {
-      get: function() { return this[`__${name}`]; },
+      get: function() {
+        if (instrument) {
+          let fullName = `${this.constructor.displayName}#${name}`;
+          gets.associations[fullName] = gets.associations[fullName] || 0;
+          gets.associations[fullName]++;
+        }
+        return this[`__${name}`];
+      },
       set: function(v) { hasOneSet.call(this, desc, v, true); }
     });
 
@@ -363,6 +381,12 @@ var Model = TransisObject.extend(function() {
 
     this.prop(name, {
       get: function() {
+        if (instrument) {
+          let fullName = `${this.constructor.displayName}#${name}`;
+          gets.associations[fullName] = gets.associations[fullName] || 0;
+          gets.associations[fullName]++;
+        }
+
         if (this[k]) { return this[k]; }
         desc.klass = resolve(desc.klass);
         return this[k] = hasManyArray(this, desc);
@@ -642,6 +666,57 @@ var Model = TransisObject.extend(function() {
   // Public: Clears all models from the id map. This will subsequently cause the model layer to go
   // to the mapper for any model that had previously been loaded.
   this.clearIdMap = function() { IdMap.clear(); return this; };
+
+  // Public: Provides `Transis.Model` instrumentation support. Turning instrumentation on (via the
+  // `instrument.start` method) causes Transis to record all attr and association property gets.
+  // This can be useful to get an idea of your view's data needs.
+  this.instrument = {
+    // Public: Begin instrumentation. After this method is called, all `Transis.Model` subclasses
+    // will record all attr and association property gets.
+    start: function() {
+      gets.attrs = {};
+      gets.associations = {};
+      instrument = true;
+    },
+
+    // Public: Stop instrumentation.
+    stop: function() {
+      instrument = false;
+    },
+
+    // Public: Returns the statistics gathered during the last instrumentation run.
+    getLast: function() {
+      return gets;
+    },
+
+    // Public: Prints the attr gets to the console.
+    printAttrs: function() {
+      let rows = Object.keys(gets.attrs).map(function(name) {
+        return {Attr: name, Count: gets.attrs[name]};
+      });
+      console.table(rows);
+    },
+
+    // Public: Prints the association gets to the console.
+    printAssociations: function() {
+      let rows = Object.keys(gets.associations).map(function(name) {
+        return {Association: name, Count: gets.associations[name]};
+      });
+      console.table(rows);
+    },
+
+    // Public: Prints both the attr and association gets to the console.
+    print: function() {
+      let rows = [];
+      for (let name in gets.attrs) {
+        rows.push({Name: name, Type: 'attr', Count: gets.attrs[name]});
+      }
+      for (let name in gets.associations) {
+        rows.push({Name: name, Type: 'association', Count: gets.associations[name]});
+      }
+      console.table(rows);
+    }
+  };
 
   // Internal: Invokes the given method on the receiver's mapper, ensuring that it returns a
   // Thennable (Promise-like) object.
