@@ -56,4 +56,4 @@ const runitTotal = runBenchmark();
 console.log(`${Date.now() - start} ms`);
 
 // SANITY CHECK: Print out number and verify it matches expected result
-console.log('total', runitTotal, runitTotal === 1000000000);
+console.log('total', runitTotal, runitTotal === 100000000);
