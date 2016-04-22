@@ -17,10 +17,7 @@ const BENCH_TYPE = process.env.BENCH_TYPE;
 console.log('BENCH_TYPE', BENCH_TYPE);
 
 const BasicModel = transis.Model.extend('BasicModel', function() {
-  this.attr('str', 'string');
-  this.attr('strWithDefault', 'string', {default: 'zzz'});
   this.attr('num', 'number');
-  this.attr('date', 'date');
 });
 
 const makeObj =
