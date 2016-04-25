@@ -16,14 +16,35 @@ const BENCH_TYPE = process.env.BENCH_TYPE;
 
 console.log('BENCH_TYPE', BENCH_TYPE);
 
-const BasicModel = transis.Model.extend('BasicModel', function() {
+
+const TransisModel = transis.Model.extend('TransisModel', function() {
   this.attr('num', 'number');
 });
 
+
+const JSModel = function(obj) {
+  this._num = obj.num;
+}
+
+Object.defineProperty(JSModel.prototype, 'num', {
+  get() { return this._num; }
+});
+
+
+class ClassModel {
+  constructor(obj) {
+    this._num = obj.num;
+  }
+  get num() { return this._num; }
+}
+
+
 const makeObj =
-  BENCH_TYPE==='model'
-    ? (() => new BasicModel({num: 10}))
-    : (() => ({num: 10}))
+    BENCH_TYPE === 'model' ? () => new TransisModel({num: 10})
+  : BENCH_TYPE === 'proto' ? () => new JSModel({num: 10})
+  : BENCH_TYPE === 'class' ? () => new ClassModel({num: 10})
+  : BENCH_TYPE === 'obj'   ? () => ({ get num(){ return 10; } })
+  : null;
 
 const benchmark = (m)=> m.num
 
