@@ -126,6 +126,23 @@ function isCached(name) { return this.__cache__ ? this.__cache__.hasOwnProperty(
 // Internal: Returns the cached value for the given name.
 function getCached(name) { return this.__cache__ ? this.__cache__[name] : undefined; }
 
+// Internal: Returns the getter function for a property. Certain property types
+// are optimizable and perform better with specialized getter functions.
+function createPropGetter(descriptor, name) {
+  if(descriptor.attr) {
+    // Optimization: Internalize string used as keys.  This makes attribute access
+    // significantly faster on Chrome (70x) and Firefox (6x).
+    const privateName = eval(`'__${name}'`);
+
+    return descriptor.default === undefined
+      ? function() { return this[privateName]; }
+      : function() { return this[privateName] == null ? descriptor.default : this[privateName]; }
+  }
+  else {
+    return function() { return this._getProp(name); }
+  }
+}
+
 // Internal: Defines a property on the given object. See the docs for `Transis.prop`.
 //
 // Returns nothing.
@@ -163,7 +180,7 @@ function defineProp(object, name, opts = {}) {
   });
 
   Object.defineProperty(object, name, {
-    get: function() { return this._getProp(name); },
+    get: createPropGetter(descriptor, name),
     set: descriptor.readonly ? undefined : function(value) { this._setProp(name, value); },
     configurable: false,
     enumerable: true
