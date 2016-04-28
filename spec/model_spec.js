@@ -949,6 +949,18 @@ describe('Model', function () {
         expect(QueryTest.mapper.query).toHaveBeenCalledWith({foo: 9, bar: 'baz'});
       });
 
+      it('passes the options passed to the buildQuery method to the mapper', function() {
+        const a = QueryTest.buildQuery({a: 1, b: 2});
+        a.query();
+        expect(QueryTest.mapper.query).toHaveBeenCalledWith({a: 1, b: 2});
+      });
+
+      it('merges the given options to the options passed to buildQuery', function() {
+        const a = QueryTest.buildQuery({a: 1, b: 2});
+        a.query({b: 3, c: 4});
+        expect(QueryTest.mapper.query).toHaveBeenCalledWith({a: 1, b: 3, c: 4});
+      });
+
       it('sets the isBusy property', function() {
         expect(this.a.isBusy).toBe(false);
         this.a.query();
