@@ -535,8 +535,12 @@ var Model = TransisObject.extend(function() {
   //
   //   Returns a new `Promise` that is resolved to the return value of the callback if it is called.
   //
+  // baseOpts - An object to pass along to the mapper method when the query is executed with the
+  //            `#query` method. Any options passed to the `#query` method will be merged in with
+  //            the options given here (default: `{}`).
+  //
   // Returns a new `Transis.Array` decorated with the properties and methods described above.
-  this.buildQuery = function() {
+  this.buildQuery = function(baseOpts = {}) {
     var modelClass = this, promise = Promise.resolve(), a = TransisArray.of(), queued;
 
     a.props({
@@ -546,7 +550,9 @@ var Model = TransisObject.extend(function() {
       meta: {}
     });
 
-    a.query = function(opts = {}) {
+    a.query = function(queryOpts = {}) {
+      const opts = Object.assign({}, baseOpts, queryOpts);
+
       if (this.isBusy) {
         if (!queued) {
           promise = promise.then(() => {
