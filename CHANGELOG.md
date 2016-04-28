@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.6.0]
+### Added
+- Update Model.buildQuery to accept options that get forwarded to mapper when query is called. [#29](https://github.com/centro/transis/pull/29)
+
 ## [0.5.0]
 ### Fixed
 - Optimize flush calls. This greatly improves processing time when loading a lot of data at once. [#26](https://github.com/centro/transis/pull/26)
