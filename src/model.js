@@ -414,7 +414,11 @@ var Model = TransisObject.extend(function() {
       LoadKlass = this;
     }
 
-    model = IdMap.get(LoadKlass, id) || new LoadKlass;
+    model = IdMap.get(LoadKlass, id)
+    if(!model) {
+      model = new LoadKlass;
+      model.__init__ = false;
+    }
 
     delete attrs.id;
 
@@ -474,6 +478,7 @@ var Model = TransisObject.extend(function() {
       }
     }
 
+    model.__init__ = true;
     model.sourceState = LOADED;
     model._clearChanges();
     model._clearErrors();

@@ -41,63 +41,11 @@ function TransisObject() {
 
 TransisObject.displayName = 'Transis.Object';
 
-// Internal: Processes recorded property changes by traversing the property dependency graph and
-// forwarding changes to proxy objects.
-function processChangedObjects() {
-  let seen = {};
-  let head;
-
-  for (let id in changedObjects) {
-    for (let k in changedObjects[id].__changedProps__) {
-      head = {object: changedObjects[id], name: k, next: head};
-      seen[changedObjects[id].objectId + k] = true;
-    }
-  }
-
-  while (head) {
-    let {name, object, object: {objectId, __deps__, __proxies__}} = head;
-    let deps = __deps__ && __deps__[name];
-
-    head = head.next;
-
-    (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
-    changedObjects[objectId] = object;
-    if (object.__cache__) { delete object.__cache__[name]; }
-
-    if (deps) {
-      for (let i = 0, n = deps.length; i < n; i++) {
-        let seenKey = objectId + deps[i];
-
-        if (!seen[seenKey]) {
-          head = {object, name: deps[i], next: head};
-          seen[seenKey] = true;
-        }
-      }
-    }
-
-    if (__proxies__ && name.indexOf('.') === -1) {
-      for (let k in __proxies__) {
-        let proxy = __proxies__[k];
-        let proxyObject = proxy.object;
-        let proxyName = `${proxy.name}.${name}`;
-        let proxySeenKey = proxyObject.objectId + proxyName;
-
-        if (!seen[proxySeenKey]) {
-          head = {object: proxyObject, name: proxyName, next: head};
-          seen[proxySeenKey] = true;
-        }
-      }
-    }
-  }
-}
-
 // Internal: Flushes the current change queue. This notifies observers of the changed props as well
 // as observers of any props that depend on the changed props. Observers are only invoked once per
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  processChangedObjects();
-
   for (let id in changedObjects) {
     let object  = changedObjects[id];
     let changes = object.__changedProps__;
@@ -106,7 +54,7 @@ function flush() {
     object.__changedProps__ = {};
 
     for (let k in changes) {
-      if (k.indexOf('.') === -1) { star = true; }
+      if (!/\./.test(k)) { star = true; }
       object.notify(k);
     }
 
@@ -125,6 +73,7 @@ function isCached(name) { return this.__cache__ ? this.__cache__.hasOwnProperty(
 
 // Internal: Returns the cached value for the given name.
 function getCached(name) { return this.__cache__ ? this.__cache__[name] : undefined; }
+
 
 // Internal: Defines a property on the given object. See the docs for `Transis.prop`.
 //
@@ -281,7 +230,10 @@ TransisObject.toString = function() { return this.displayName || this.name || '(
 //
 // props - An object containing properties to set. Only properties defined via `Transis.Object.prop`
 //         are settable.
-TransisObject.prototype.init = function(props) { if (props) { this.set(props); } };
+TransisObject.prototype.init = function(props) {
+  if (props) this.set(props);
+  this.__init__ = true;
+};
 
 // Public: Defines an observable property directly on the receiver. See the `Transis.Object.prop`
 // method for available options.
@@ -371,11 +323,17 @@ TransisObject.prototype.notify = function(event, ...args) {
 //
 // Returns the receiver.
 TransisObject.prototype.didChange = function(name) {
-  (this.__changedProps__ = this.__changedProps__ || {})[name] = true;
+  const {__changedProps__} = this;
+  if(__changedProps__ && __changedProps__[name]) return this;
+
+  (this.__changedProps__ = __changedProps__ || {})[name] = true;
+
   changedObjects[this.objectId] = this;
+  if(this.__deps__) this._processChangedDeps(this.__deps__[name]);
+  if(!/\./.test(name) && this.__proxies__) this._processChangedProxies(this.__proxies__, name);
 
   // ensure that observers get triggered after promise callbacks
-  if (!flushTimer) { flushTimer = setTimeout(function() { Promise.resolve().then(flush); }); }
+  flushTimer = flushTimer || setTimeout(function() { Promise.resolve().then(flush); });
 
   return this;
 };
@@ -452,7 +410,7 @@ TransisObject.prototype._setProp = function(name, value) {
   if (descriptor.set) { descriptor.set.call(this, value); }
   else { this[key] = value; }
 
-  this.didChange(name);
+  if(this.__init__) this.didChange(name);
 
   return old;
 };
@@ -470,6 +428,35 @@ TransisObject.prototype._deregisterProxy = function(object, name) {
   if (this.__proxies__) { delete this.__proxies__[`${object.objectId},${name}`]; }
   return this;
 };
+
+TransisObject.prototype._processChangedProxies = function (proxies, name) {
+  var proxy;
+  for(var key in proxies) {
+    proxy = proxies[key];
+    proxy.object.didChange(`${proxy.name}.${name}`);
+  }
+}
+
+TransisObject.prototype._invalidateCache = function (deps) {
+  if(this.__cache__) {
+    for(var i = 0; i < deps.length; ++i){
+      delete this.__cache__[deps[i]];
+    }
+  }
+}
+
+TransisObject.prototype._didChangeDeps = function (deps) {
+  for(var i = 0; i < deps.length; ++i){
+    this.didChange(deps[i]);
+  }
+}
+
+TransisObject.prototype._processChangedDeps = function (deps) {
+  if(deps) {
+    this._invalidateCache(deps);
+    this._didChangeDeps(deps);
+  }
+}
 
 TransisObject.displayName = 'Transis.Object';
 
