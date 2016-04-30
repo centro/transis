@@ -46,10 +46,11 @@ TransisObject.displayName = 'Transis.Object';
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  for (let id in changedObjects) {
-    let object  = changedObjects[id];
-    let changes = object.__changedProps__;
-    let star    = false;
+  let id, object, changes, star;
+  for (id in changedObjects) {
+    object  = changedObjects[id];
+    changes = object.__changedProps__;
+    star    = false;
 
     object.__changedProps__ = {};
 
