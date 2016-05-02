@@ -46,16 +46,15 @@ TransisObject.displayName = 'Transis.Object';
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  let id, object, changes, star;
-  for (id in changedObjects) {
-    object  = changedObjects[id];
-    changes = object.__changedProps__;
-    star    = false;
+  for (let id in changedObjects) {
+    let object  = changedObjects[id];
+    let changes = object.__changedProps__;
+    let star    = false;
 
     object.__changedProps__ = {};
 
     for (let k in changes) {
-      if (!/\./.test(k)) { star = true; }
+      if (k.indexOf('.') === -1) { star = true; }
       object.notify(k);
     }
 
@@ -324,17 +323,23 @@ TransisObject.prototype.notify = function(event, ...args) {
 //
 // Returns the receiver.
 TransisObject.prototype.didChange = function(name) {
-  const {__changedProps__} = this;
+  const {__changedProps__, __deps__, __proxies__} = this;
   if(__changedProps__ && __changedProps__[name]) return this;
 
   (this.__changedProps__ = __changedProps__ || {})[name] = true;
 
   changedObjects[this.objectId] = this;
-  if(this.__deps__) this._processChangedDeps(this.__deps__[name]);
-  if(!/\./.test(name) && this.__proxies__) this._processChangedProxies(this.__proxies__, name);
+
+  if(__deps__) {
+    this._processChangedDeps(__deps__[name]);
+  }
+
+  if(name.indexOf('.') === -1 && __proxies__) {
+    this._processChangedProxies(__proxies__, name);
+  }
 
   // ensure that observers get triggered after promise callbacks
-  flushTimer = flushTimer || setTimeout(function() { Promise.resolve().then(flush); });
+  if (!flushTimer) { flushTimer = setTimeout(function() { Promise.resolve().then(flush); }); }
 
   return this;
 };
@@ -430,6 +435,7 @@ TransisObject.prototype._deregisterProxy = function(object, name) {
   return this;
 };
 
+// Internal: Forwards a change to an array of proxy objects.
 TransisObject.prototype._processChangedProxies = function (proxies, name) {
   var proxy;
   for(var key in proxies) {
@@ -438,24 +444,24 @@ TransisObject.prototype._processChangedProxies = function (proxies, name) {
   }
 }
 
-TransisObject.prototype._invalidateCache = function (deps) {
+// Internal: Invalidates cached values for an array of names
+TransisObject.prototype._invalidateCache = function (names) {
   if(this.__cache__) {
-    for(var i = 0; i < deps.length; ++i){
-      delete this.__cache__[deps[i]];
+    for(var i = 0; i < names.length; ++i){
+      delete this.__cache__[names[i]];
     }
   }
 }
 
-TransisObject.prototype._didChangeDeps = function (deps) {
-  for(var i = 0; i < deps.length; ++i){
-    this.didChange(deps[i]);
-  }
-}
-
+// Internal: For an array of dependent properties, invalidate cached values and
+//           forward changes.
 TransisObject.prototype._processChangedDeps = function (deps) {
   if(deps) {
     this._invalidateCache(deps);
-    this._didChangeDeps(deps);
+
+    for(var i = 0; i < deps.length; ++i){
+      this.didChange(deps[i]);
+    }
   }
 }
 

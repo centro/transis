@@ -398,7 +398,6 @@ var Model = TransisObject.extend(function() {
   // Returns the loaded model instance.
   // Throws `Error` if the given attributes do not contain an `id` attribute.
   this.load = function(attrs) {
-    var name, desc, klass, data;
     var id = attrs.id, associations = this.prototype.associations, associated = {}, model, LoadKlass;
 
     if (id == null) {
@@ -424,8 +423,8 @@ var Model = TransisObject.extend(function() {
     delete attrs.id;
 
     // extract associated attributes
-    for (name in associations) {
-      desc = associations[name];
+    for (let name in associations) {
+      let desc = associations[name];
 
       if (name in attrs) {
         associated[name] = attrs[name]
@@ -456,9 +455,9 @@ var Model = TransisObject.extend(function() {
     if (model.id === undefined) { model.id = id; }
 
     // load and set each association
-    for (name in associated) {
-      klass = resolve(associations[name].klass);
-      data = associated[name];
+    for (let name in associated) {
+      let klass = resolve(associations[name].klass);
+      let data = associated[name];
 
       // clear association
       if (!data) {
