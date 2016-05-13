@@ -17,6 +17,10 @@ describe('Transis.Object', function() {
     this.prop('def', {
       default: 'hello'
     });
+
+    this.prop('funcDef', {
+      default: function() { return []; }
+    });
   });
 
   describe('.extend', function() {
@@ -108,6 +112,25 @@ describe('Transis.Object', function() {
           expect(t.def).toBe('hello');
           t.def = 'goodbye';
           expect(t.def).toBe('goodbye');
+        });
+      });
+
+      describe('with a function as the default option', function() {
+        it('returns the value of calling the function', function() {
+          expect(t.funcDef).toEqual([]);
+        });
+
+        it('invokes the function once per instance', function() {
+          var t2 = new Test;
+          expect(t.funcDef).toBe(t.funcDef);
+          expect(t2.funcDef).toBe(t2.funcDef);
+          expect(t2.funcDef).not.toBe(t.funcDef);
+        });
+
+        it('returns the set value', function() {
+          expect(t.funcDef).toEqual([]);
+          t.funcDef = ['foo'];
+          expect(t.funcDef).toEqual(['foo']);
         });
       });
 
