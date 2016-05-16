@@ -188,6 +188,18 @@ describe('Transis.Object', function() {
         expect(spy).toHaveBeenCalledWith('*');
       });
 
+      it('does not notify observers when the set value is the same as the current value', function() {
+        var spy = jasmine.createSpy();
+
+        t.str = 'xyz';
+        TransisObject.flush();
+
+        t.on('str', spy);
+        t.str = 'xyz';
+        TransisObject.flush();
+        expect(spy).not.toHaveBeenCalled();
+      });
+
       describe('with the readonly option', function() {
         it('generates a readonly property', function() {
           expect(t.ro).toBe(4);

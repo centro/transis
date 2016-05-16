@@ -452,7 +452,9 @@ TransisObject.prototype._setProp = function(name, value) {
   if (descriptor.set) { descriptor.set.call(this, value); }
   else { this[key] = value; }
 
-  this.didChange(name);
+  if (!util.eq(old, this[key])) {
+    this.didChange(name);
+  }
 
   return old;
 };
