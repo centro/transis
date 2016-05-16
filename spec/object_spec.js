@@ -580,4 +580,25 @@ describe('Transis.Object', function() {
       }.bind(this)).not.toThrow();
     });
   });
+
+  describe('#setIfChanged', function() {
+    beforeEach(function() {
+      this.object = new Test({str: 'foo'});
+      TransisObject.flush();
+      this.spy = jasmine.createSpy();
+      this.object.on('str', this.spy);
+    });
+
+    it('notifies observers when the prop value has actually changed', function() {
+      this.object.setIfChanged('str', 'bar');
+      TransisObject.flush();
+      expect(this.spy).toHaveBeenCalled();
+    });
+
+    it('does not notify observers when the prop value has not changed', function() {
+      this.object.setIfChanged('str', 'foo');
+      TransisObject.flush();
+      expect(this.spy).not.toHaveBeenCalled();
+    });
+  });
 });

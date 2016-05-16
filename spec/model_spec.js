@@ -1298,6 +1298,33 @@ describe('Model', function () {
     });
   });
 
+  describe('#setIfChanged', function() {
+    beforeEach(function() {
+      this.model = new BasicModel({num: 9});
+      TransisObject.flush();
+      this.spy = jasmine.createSpy();
+      this.model.on('num', this.spy);
+    });
+
+    it('notifies observers when the attr value has actually changed', function() {
+      this.model.setIfChanged('num', 7);
+      TransisObject.flush();
+      expect(this.spy).toHaveBeenCalled();
+    });
+
+    it('does not notify observers when the attr value has not changed', function() {
+      this.model.setIfChanged('num', 9);
+      TransisObject.flush();
+      expect(this.spy).not.toHaveBeenCalled();
+    });
+
+    it('does not notify observers when the given value coerces to the same value', function() {
+      this.model.setIfChanged('num', '9');
+      TransisObject.flush();
+      expect(this.spy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('#attrs', function() {
     it('returns an object containing the raw values of all attributes', function() {
       var m = new BasicModel({str: 'abc', num: 1, date: new Date(2013, 9, 26)});

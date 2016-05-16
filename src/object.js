@@ -397,6 +397,19 @@ TransisObject.prototype.eq = function(other) { return this === other; };
 // Public: Resolves the given path into a value, relative to the receiver. See `util.getPath`.
 TransisObject.prototype.getPath = function(path) { return util.getPath(this, path); };
 
+// Public: Set the given prop to the given value. If the exising value is equal to the given one
+// (as determined by `util.eq`), then nothing happens and no observers are notified.
+//
+// k - The name of the prop to set.
+// v - The value to set the prop to.
+//
+// Returns nothing.
+TransisObject.prototype.setIfChanged = function(k, v) {
+  if (!util.eq(this[k], v)) {
+    this[k] = v;
+  }
+};
+
 // Internal: Returns the current value of the given property or the default value if it is not
 // defined.
 //

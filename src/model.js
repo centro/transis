@@ -852,6 +852,16 @@ var Model = TransisObject.extend(function() {
   // are marked for destruction will not be validated or affect the `hasErrors` property.
   this.attr('_destroy', 'boolean');
 
+  // Public: Overrides the method provided by `Transis.Object` in order to coerce attr values before
+  // doing the comparison with the existing value.
+  this.prototype.setIfChanged = function(k, v) {
+    if (this.__props__[k] && this.__props__[k].converter) {
+      v = this.__props__[k].converter.coerce(v);
+    }
+
+    return Model.__super__.setIfChanged.call(this, k, v);
+  };
+
   // Public: Returns an object containing the raw values of all the receiver's attributes. Special
   // care is taken with the `_destroy` attribute, its only included if its been set.
   this.prototype.attrs = function() {
