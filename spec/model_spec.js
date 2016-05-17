@@ -2438,6 +2438,29 @@ describe('Model', function () {
         expect(this.invoice.previousValueFor('lineItems')).toEqual(lis);
       });
     });
+
+    describe('#_clearChanges', function() {
+      it('notifies ownChanges observers when there are changes', function() {
+        let m = BasicModel.load({id: 1, num: 9});
+        let spy = jasmine.createSpy();
+        m.num = 10;
+        TransisObject.flush();
+        m.on('ownChanges', spy);
+        m._clearChanges();
+        TransisObject.flush();
+        expect(spy).toHaveBeenCalledWith('ownChanges');
+      });
+
+      it('does not notify ownChanges observers when there are no changes', function() {
+        let m = BasicModel.load({id: 2, num: 9});
+        let spy = jasmine.createSpy();
+        TransisObject.flush();
+        m.on('ownChanges', spy);
+        m._clearChanges();
+        TransisObject.flush();
+        expect(spy).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('validations', function() {
@@ -2962,6 +2985,75 @@ describe('Model', function () {
           m.validate('nameContext');
           expect(m.ownErrors.notValidated).toBeUndefined();
         });
+      });
+    });
+
+    describe('#_clearErrors', function() {
+      it('removes the errors for the given prop', function() {
+        let m = new ValidatedFoo({name: 'Foo'});
+        m.validate();
+        expect(m.ownErrors.name).toEqual(['must be lower case']);
+        m._clearErrors('name');
+        expect(m.ownErrors.name).toBe(undefined);
+      });
+
+      it('removes all errors when passed no arguments', function() {
+        let m = new ValidatedFoo({name: 'Foo', num: 3.14});
+
+        m.validate();
+        expect(m.ownErrors).toEqual({name: ['must be lower case'], num: ['is not an integer']});
+        m._clearErrors();
+        expect(m.ownErrors).toEqual({});
+      });
+
+      it('notifies ownErrors observers when the given prop has an error', function() {
+        let m = new ValidatedFoo({name: 'Foo'});
+        let spy = jasmine.createSpy();
+        m.validate();
+        expect(m.ownErrors.name).toEqual(['must be lower case']);
+        TransisObject.flush();
+        m.on('ownErrors', spy);
+        m._clearErrors('name');
+        TransisObject.flush();
+        expect(spy).toHaveBeenCalledWith('ownErrors');
+      });
+
+      it('does not notify ownErrors observers when the given prop has no errors', function() {
+        let m = new ValidatedFoo({name: 'foo'});
+        let spy = jasmine.createSpy();
+        m.validate();
+        expect(m.ownErrors.name).toBe(undefined);
+        TransisObject.flush();
+        m.on('ownErrors', spy);
+        m._clearErrors('name');
+        TransisObject.flush();
+        expect(spy).not.toHaveBeenCalled();
+      });
+
+      it('notifies ownErrors observers when passed no arguments and there are errors', function() {
+        let m = new ValidatedFoo({name: 'Foo', num: 3.14});
+        let spy = jasmine.createSpy();
+
+        m.validate();
+        expect(m.ownErrors).toEqual({name: ['must be lower case'], num: ['is not an integer']});
+        TransisObject.flush();
+        m.on('ownErrors', spy);
+        m._clearErrors();
+        TransisObject.flush();
+        expect(spy).toHaveBeenCalledWith('ownErrors');
+      });
+
+      it('does not notify ownErrors observers when passed no arguments and there are no errors', function() {
+        let m = new ValidatedFoo({name: 'foo', num: 3});
+        let spy = jasmine.createSpy();
+
+        m.validate();
+        expect(m.ownErrors).toEqual({});
+        TransisObject.flush();
+        m.on('ownErrors', spy);
+        m._clearErrors();
+        TransisObject.flush();
+        expect(spy).not.toHaveBeenCalled();
       });
     });
   });

@@ -1228,8 +1228,16 @@ var Model = TransisObject.extend(function() {
   // Internal: Clears validation errors from the `errors` hash. If a name is given, only the errors
   // for the property of that name are cleared, otherwise all errors are cleared.
   this.prototype._clearErrors = function(name) {
-    if (name) { delete this.ownErrors[name]; } else { this.__ownErrors = {}; }
-    this.didChange('ownErrors');
+    if (name) {
+      if (name in this.ownErrors) {
+        delete this.ownErrors[name];
+        this.didChange('ownErrors');
+      }
+    }
+    else if (Object.keys(this.ownErrors).length) {
+      this.__ownErrors = {};
+      this.didChange('ownErrors');
+    }
     return this;
   };
 
@@ -1305,14 +1313,18 @@ var Model = TransisObject.extend(function() {
 
   // Internal: Clears the change record for the property of the given name.
   this.prototype._clearChange = function(name) {
-    delete this.ownChanges[name];
-    this.didChange('ownChanges');
+    if (name in this.ownChanges) {
+      delete this.ownChanges[name];
+      this.didChange('ownChanges');
+    }
   };
 
   // Internal: Clears all change records.
   this.prototype._clearChanges = function() {
-    this.__ownChanges = {};
-    this.didChange('ownChanges');
+    if (Object.keys(this.ownChanges).length) {
+      this.__ownChanges = {};
+      this.didChange('ownChanges');
+    }
   };
 });
 
