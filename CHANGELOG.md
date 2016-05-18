@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.7.0]
+### Changed
+- Avoid notifying observers when setting a prop to the same value. [#31](https://github.com/centro/transis/pull/31)
+- Avoid notifying observers when changes and errors are cleared. [#32](https://github.com/centro/transis/pull/32)
+
 ## [0.6.0]
 ### Added
 - Update Model.buildQuery to accept options that get forwarded to mapper when query is called. [#29](https://github.com/centro/transis/pull/29)
