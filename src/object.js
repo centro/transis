@@ -1,6 +1,6 @@
 import * as util from "./util";
 
-var objectId = 0, changedObjects = {}, delayCallbacks = [], flushTimer;
+var objectId = 0, changedObjects = {}, delayPreFlushCallbacks = [], delayPostFlushCallbacks = [], flushTimer;
 
 // Public: `Transis.Object` is the foundation of the `Transis` library. It implements a basic object
 // system and observable properties.
@@ -97,6 +97,10 @@ function propagateChanges() {
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
+  let f;
+
+  while ((f = delayPreFlushCallbacks.shift())) { f(); }
+
   propagateChanges();
 
   let curChangedObjects = changedObjects;
@@ -115,8 +119,7 @@ function flush() {
     if (star) { object.notify('*'); }
   }
 
-  let f;
-  while ((f = delayCallbacks.shift())) { f(); }
+  while ((f = delayPostFlushCallbacks.shift())) { f(); }
 }
 
 // Internal: Indicates whether the current name has a value cached.
@@ -180,7 +183,16 @@ TransisObject.flush = function() {
 TransisObject.clearChangeQueue = function() {
   clearTimeout(flushTimer);
   changedObjects = {};
-  delayCallbacks = [];
+  return this;
+};
+
+// Public: Register a callback to be invoked immediately before the next flush cycle begins.
+//
+// f - A function.
+//
+// Returns the receiver;
+TransisObject.delayPreFlush = function(f) {
+  delayPreFlushCallbacks.push(f);
   return this;
 };
 
@@ -190,7 +202,7 @@ TransisObject.clearChangeQueue = function() {
 //
 // Returns the receiver;
 TransisObject.delay = function(f) {
-  delayCallbacks.push(f);
+  delayPostFlushCallbacks.push(f);
   return this;
 };
 

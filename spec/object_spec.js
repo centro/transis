@@ -369,24 +369,59 @@ describe('Transis.Object', function() {
     });
   });
 
+  describe('.delayPreFlush', function() {
+    beforeEach(function() {
+      this.calls = [];
+      TransisObject.delayPreFlush(() => {
+        this.calls.push('delay');
+      });
+      this.test = new Test;
+      this.test.on('str', () => {
+        this.calls.push('observer');
+      });
+    });
+
+    it('invokes the given function before the next flush', function() {
+      this.test.str = 'a';
+      TransisObject.flush();
+      expect(this.calls).toEqual(['delay', 'observer']);
+    });
+
+    it('does not invoke the function on subsequent flushes', function() {
+      this.test.str = 'a';
+      TransisObject.flush();
+      expect(this.calls).toEqual(['delay', 'observer']);
+      this.test.str = 'b';
+      TransisObject.flush();
+      expect(this.calls).toEqual(['delay', 'observer', 'observer']);
+    });
+  });
+
   describe('.delay', function() {
     beforeEach(function() {
-      this.spy = jasmine.createSpy();
-      TransisObject.delay(this.spy);
+      this.calls = [];
+      TransisObject.delay(() => {
+        this.calls.push('delay');
+      });
+      this.test = new Test;
+      this.test.on('str', () => {
+        this.calls.push('observer');
+      });
     });
 
     it('invokes the given function after the next flush', function() {
-      expect(this.spy).not.toHaveBeenCalled();
+      this.test.str = 'a';
       TransisObject.flush();
-      expect(this.spy).toHaveBeenCalled();
+      expect(this.calls).toEqual(['observer', 'delay']);
     });
 
-    it('does not invoke the given function on subsequent flushes', function() {
-      expect(this.spy.calls.count()).toBe(0);
+    it('does not invoke the function on subsequent flushes', function() {
+      this.test.str = 'a';
       TransisObject.flush();
-      expect(this.spy.calls.count()).toBe(1);
+      expect(this.calls).toEqual(['observer', 'delay']);
+      this.test.str = 'b';
       TransisObject.flush();
-      expect(this.spy.calls.count()).toBe(1);
+      expect(this.calls).toEqual(['observer', 'delay', 'observer']);
     });
   });
 
