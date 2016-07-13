@@ -43,14 +43,15 @@ TransisObject.displayName = 'Transis.Object';
 
 // Internal: Processes recorded property changes by traversing the property dependency graph and
 // forwarding changes to proxy objects.
-function processChangedObjects() {
+function propagateChanges() {
   let seen = {};
   let head;
 
   for (let id in changedObjects) {
-    for (let k in changedObjects[id].__changedProps__) {
-      head = {object: changedObjects[id], name: k, next: head};
-      seen[changedObjects[id].objectId + k] = true;
+    let {object, props} = changedObjects[id];
+    for (let k in props) {
+      head = {object, name: k, next: head};
+      seen[id + k] = true;
     }
   }
 
@@ -60,8 +61,8 @@ function processChangedObjects() {
 
     head = head.next;
 
-    (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
-    changedObjects[objectId] = object;
+    changedObjects[objectId] = changedObjects[objectId] || {object, props: {}};
+    changedObjects[objectId].props[name] = true;
     if (object.__cache__) { delete object.__cache__[name]; }
 
     if (deps) {
@@ -96,25 +97,23 @@ function processChangedObjects() {
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  processChangedObjects();
+  propagateChanges();
 
-  for (let id in changedObjects) {
-    let object  = changedObjects[id];
-    let changes = object.__changedProps__;
-    let star    = false;
+  let curChangedObjects = changedObjects;
+  changedObjects = {};
+  flushTimer = null;
 
-    object.__changedProps__ = {};
+  for (let id in curChangedObjects) {
+    let {object, props} = curChangedObjects[id];
+    let star = false;
 
-    for (let k in changes) {
+    for (let k in props) {
       if (k.indexOf('.') === -1) { star = true; }
       object.notify(k);
     }
 
     if (star) { object.notify('*'); }
   }
-
-  changedObjects = {};
-  flushTimer = null;
 
   let f;
   while ((f = delayCallbacks.shift())) { f(); }
@@ -371,8 +370,8 @@ TransisObject.prototype.notify = function(event, ...args) {
 //
 // Returns the receiver.
 TransisObject.prototype.didChange = function(name) {
-  (this.__changedProps__ = this.__changedProps__ || {})[name] = true;
-  changedObjects[this.objectId] = this;
+  changedObjects[this.objectId] = changedObjects[this.objectId] || {object: this, props: {}};
+  changedObjects[this.objectId].props[name] = true;
 
   // ensure that observers get triggered after promise callbacks
   if (!flushTimer) { flushTimer = setTimeout(function() { Promise.resolve().then(flush); }); }

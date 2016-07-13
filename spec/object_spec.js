@@ -554,6 +554,29 @@ describe('Transis.Object', function() {
       expect(spy1).toHaveBeenCalled();
       expect(spy2).toHaveBeenCalled();
     });
+
+    it('queues changes made within observer callbacks until the next flush cycle', function() {
+      let t = new Test;
+      let strObserverCalled = false;
+      let defObserverCalled = false;
+
+      t.on('str', function() {
+        strObserverCalled = true;
+        t.def = 'blah';
+      });
+
+      t.on('def', function() {
+        defObserverCalled = true;
+      });
+
+      t.str = 'a';
+
+      TransisObject.flush();
+      expect(strObserverCalled).toBe(true);
+      expect(defObserverCalled).toBe(false);
+      TransisObject.flush();
+      expect(defObserverCalled).toBe(true);
+    });
   });
 
   describe('#notify', function() {
