@@ -35,6 +35,6 @@
     "karma-safari-launcher": "1.0.0",
     "karma-webpack": "1.7.0",
     "phantomjs-prebuilt": "2.1.7",
-    "webpack": "1.12.6"
+    "webpack": "1.13.1"
   }
 }
