@@ -175,3 +175,25 @@ describe('parseDuration', function() {
   });
 });
 
+describe('parseEmail', function() {
+  it('handles valid emails', function() {
+    expect(parsers.parseEmail("something@something.com")).toEqual("something@something.com");
+    expect(parsers.parseEmail("someone@localhost.localdomain")).toEqual("someone@localhost.localdomain");
+    expect(parsers.parseEmail("someone@subdomain.foo.com")).toEqual("someone@subdomain.foo.com");
+    expect(parsers.parseEmail("a/b@domain.com")).toEqual("a/b@domain.com");
+    expect(parsers.parseEmail("foo+bar@foobar.com")).toEqual("foo+bar@foobar.com");
+  });
+
+  it('returns null for invalid emails', function() {
+    expect(parsers.parseEmail("foobar")).toBeNull();
+    expect(parsers.parseEmail("a")).toBeNull();
+    expect(parsers.parseEmail("a@b")).toBeNull();
+    expect(parsers.parseEmail("foo.com")).toBeNull();
+    expect(parsers.parseEmail("@foo.com")).toBeNull();
+    expect(parsers.parseEmail("a b@foo.com")).toBeNull();
+    expect(parsers.parseEmail("foo@bar.com.")).toBeNull();
+    expect(parsers.parseEmail("foo@bar_com")).toBeNull();
+    expect(parsers.parseEmail("foo@b:ar.com")).toBeNull();
+  });
+});
+
