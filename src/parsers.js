@@ -73,7 +73,7 @@ export function parseDateTime(s) {
   return (n = Date.parse(s)) ? new Date(n) : null;
 }
 
-const EMAIL_FORMAT = /^([^@\s]+)@([-a-z0-9]+\.+[a-z]{2,})$/i;
+const EMAIL_FORMAT = /^([^@\s]+)@[-a-z0-9.]+\.+[a-z]{2,}$/i;
 
 // Public: Parses a string containing an email.
 //
