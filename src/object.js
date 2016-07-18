@@ -41,6 +41,11 @@ function TransisObject() {
 
 TransisObject.displayName = 'Transis.Object';
 
+function registerChange(object, prop) {
+  changedObjects[object.objectId] = changedObjects[object.objectId] || {object, props: {}};
+  changedObjects[object.objectId].props[prop] = true;
+}
+
 // Internal: Processes recorded property changes by traversing the property dependency graph and
 // forwarding changes to proxy objects.
 function propagateChanges() {
@@ -61,8 +66,8 @@ function propagateChanges() {
 
     head = head.next;
 
-    changedObjects[objectId] = changedObjects[objectId] || {object, props: {}};
-    changedObjects[objectId].props[name] = true;
+    registerChange(object, name);
+
     if (object.__cache__) { delete object.__cache__[name]; }
 
     if (deps) {
@@ -382,8 +387,7 @@ TransisObject.prototype.notify = function(event, ...args) {
 //
 // Returns the receiver.
 TransisObject.prototype.didChange = function(name) {
-  changedObjects[this.objectId] = changedObjects[this.objectId] || {object: this, props: {}};
-  changedObjects[this.objectId].props[name] = true;
+  registerChange(this, name);
 
   // ensure that observers get triggered after promise callbacks
   if (!flushTimer) { flushTimer = setTimeout(function() { Promise.resolve().then(flush); }); }
