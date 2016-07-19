@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.8.0]
+### Changed
+- React mixin performance enhancement. [#35](https://github.com/centro/transis/pull/35)
+- Upgrade dependencies. [#37](https://github.com/centro/transis/pull/37)
+
+### Fixed
+- Update email parser to handle emails with subdomains. [#36](https://github.com/centro/transis/pull/36)
+
 ## [0.7.0]
 ### Changed
 - Avoid notifying observers when setting a prop to the same value. [#31](https://github.com/centro/transis/pull/31)
