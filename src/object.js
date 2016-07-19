@@ -1,6 +1,6 @@
 import * as util from "./util";
 
-var objectId = 0, changedObjects = {}, delayCallbacks = [], flushTimer;
+var objectId = 0, changedObjects = {}, delayPreFlushCallbacks = [], delayPostFlushCallbacks = [], flushTimer;
 
 // Public: `Transis.Object` is the foundation of the `Transis` library. It implements a basic object
 // system and observable properties.
@@ -41,16 +41,22 @@ function TransisObject() {
 
 TransisObject.displayName = 'Transis.Object';
 
+function registerChange(object, prop) {
+  changedObjects[object.objectId] = changedObjects[object.objectId] || {object, props: {}};
+  changedObjects[object.objectId].props[prop] = true;
+}
+
 // Internal: Processes recorded property changes by traversing the property dependency graph and
 // forwarding changes to proxy objects.
-function processChangedObjects() {
+function propagateChanges() {
   let seen = {};
   let head;
 
   for (let id in changedObjects) {
-    for (let k in changedObjects[id].__changedProps__) {
-      head = {object: changedObjects[id], name: k, next: head};
-      seen[changedObjects[id].objectId + k] = true;
+    let {object, props} = changedObjects[id];
+    for (let k in props) {
+      head = {object, name: k, next: head};
+      seen[id + k] = true;
     }
   }
 
@@ -60,8 +66,8 @@ function processChangedObjects() {
 
     head = head.next;
 
-    (object.__changedProps__ = object.__changedProps__ || {})[name] = true;
-    changedObjects[objectId] = object;
+    registerChange(object, name);
+
     if (object.__cache__) { delete object.__cache__[name]; }
 
     if (deps) {
@@ -96,16 +102,21 @@ function processChangedObjects() {
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  processChangedObjects();
+  let f;
 
-  for (let id in changedObjects) {
-    let object  = changedObjects[id];
-    let changes = object.__changedProps__;
-    let star    = false;
+  while ((f = delayPreFlushCallbacks.shift())) { f(); }
 
-    object.__changedProps__ = {};
+  propagateChanges();
 
-    for (let k in changes) {
+  let curChangedObjects = changedObjects;
+  changedObjects = {};
+  flushTimer = null;
+
+  for (let id in curChangedObjects) {
+    let {object, props} = curChangedObjects[id];
+    let star = false;
+
+    for (let k in props) {
       if (k.indexOf('.') === -1) { star = true; }
       object.notify(k);
     }
@@ -113,11 +124,7 @@ function flush() {
     if (star) { object.notify('*'); }
   }
 
-  changedObjects = {};
-  flushTimer = null;
-
-  let f;
-  while ((f = delayCallbacks.shift())) { f(); }
+  while ((f = delayPostFlushCallbacks.shift())) { f(); }
 }
 
 // Internal: Indicates whether the current name has a value cached.
@@ -181,7 +188,16 @@ TransisObject.flush = function() {
 TransisObject.clearChangeQueue = function() {
   clearTimeout(flushTimer);
   changedObjects = {};
-  delayCallbacks = [];
+  return this;
+};
+
+// Public: Register a callback to be invoked immediately before the next flush cycle begins.
+//
+// f - A function.
+//
+// Returns the receiver;
+TransisObject.delayPreFlush = function(f) {
+  delayPreFlushCallbacks.push(f);
   return this;
 };
 
@@ -191,7 +207,7 @@ TransisObject.clearChangeQueue = function() {
 //
 // Returns the receiver;
 TransisObject.delay = function(f) {
-  delayCallbacks.push(f);
+  delayPostFlushCallbacks.push(f);
   return this;
 };
 
@@ -371,8 +387,7 @@ TransisObject.prototype.notify = function(event, ...args) {
 //
 // Returns the receiver.
 TransisObject.prototype.didChange = function(name) {
-  (this.__changedProps__ = this.__changedProps__ || {})[name] = true;
-  changedObjects[this.objectId] = this;
+  registerChange(this, name);
 
   // ensure that observers get triggered after promise callbacks
   if (!flushTimer) { flushTimer = setTimeout(function() { Promise.resolve().then(flush); }); }

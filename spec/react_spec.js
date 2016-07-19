@@ -38,6 +38,13 @@ describe('PropsMixin', function() {
       TransisObject.flush();
       expect(this.component.forceUpdate).not.toHaveBeenCalled();
     });
+
+    it('attaches observers that only call forceUpdate once per flush cycle', function() {
+      this.model.foo = 1;
+      this.model.bar = 2;
+      TransisObject.flush();
+      expect(this.component.forceUpdate.calls.count()).toBe(1);
+    });
   });
 
   describe('componentWillUnmount', function() {
@@ -135,6 +142,13 @@ describe('StateMixin', function() {
         this.appState.b.foo = 9;
         TransisObject.flush();
         expect(this.component.forceUpdate).toHaveBeenCalled();
+      });
+
+      it('attaches observers that only invoke forceUpdate once per flush cycle', function() {
+        this.appState.b.foo = 9;
+        this.appState.b.bar = 8;
+        TransisObject.flush();
+        expect(this.component.forceUpdate.calls.count()).toBe(1);
       });
 
       it('removes property observers from state property objects when swapped out', function() {
