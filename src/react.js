@@ -14,7 +14,6 @@ function componentCmp(a, b) {
 
 function preFlush() {
   updateLog = {};
-  updateQueue = {};
   TransisObject.delay(postFlush);
 }
 
@@ -23,6 +22,7 @@ function postFlush() {
 
   for (let id in updateQueue) {
     components.push(updateQueue[id]);
+    delete updateQueue[id];
   }
 
   // Sort the components by their assigned _transisId. Since components get mounted from the top
