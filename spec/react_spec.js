@@ -45,6 +45,12 @@ describe('PropsMixin', function() {
       TransisObject.flush();
       expect(this.component.forceUpdate.calls.count()).toBe(1);
     });
+
+    it('handles notifications that occur outside of a flush cycle', function() {
+      this.model.notify('foo');
+      TransisObject.flush();
+      expect(this.component.forceUpdate.calls.count()).toBe(1);
+    });
   });
 
   describe('componentWillUnmount', function() {
