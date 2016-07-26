@@ -136,6 +136,19 @@ describe('Array', function() {
       TransisObject.flush();
       expect(spy).not.toHaveBeenCalled();
     });
+
+    it('does not notify observers when a splice replaces the first element with an equal element', function() {
+      var a = A(1,2,3,4), spy = jasmine.createSpy();
+
+      a.on('first', spy);
+      a.splice(0, 1, 1);
+      TransisObject.flush();
+      expect(spy).not.toHaveBeenCalled();
+
+      a.splice(0, 3, 1, 20, 30);
+      TransisObject.flush();
+      expect(spy).not.toHaveBeenCalled();
+    });
   });
 
   describe('@ prop', function() {
@@ -153,6 +166,12 @@ describe('Array', function() {
       this.a.pop();
       TransisObject.flush();
       expect(this.spy.calls.count()).toBe(2);
+    });
+
+    it('does not notify observers when the array is spliced with equal contents', function() {
+      this.a.replace(A(1,2,3));
+      TransisObject.flush();
+      expect(this.spy).not.toHaveBeenCalledWith('@');
     });
   });
 
