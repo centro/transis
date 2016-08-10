@@ -1106,6 +1106,8 @@ Transis also supports validation contexts. Multiple contextual validations can b
 Each contextual validation may be executed depending on the context provided. Contextual validations will only be applied
 when a matching context value is provided to the `Transis.Model.validate` method.
 
+All validations with no context defined will run no matter the context. Validations with a context defined will only run in the specified context.
+
 ```javascript
 var Invoice = Transis.Model.extend('Invoice', function() {
   this.attr('name', 'string');
