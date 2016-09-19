@@ -114,6 +114,64 @@ function hasManyArray(owner, desc) {
   return a;
 }
 
+function queryArray(modelClass, baseOpts) {
+  let a = TransisArray.of(), promise = Promise.resolve(), queued;
+
+  a.props({
+    modelClass: {get: function() { return modelClass; }},
+    isBusy: {default: false},
+    error: {},
+    meta: {}
+  });
+
+  a.query = function(queryOpts = {}) {
+    const opts = Object.assign({}, baseOpts, queryOpts);
+
+    if (this.isBusy) {
+      if (!queued) {
+        promise = promise.then(() => {
+          this.query(queued);
+          queued = undefined;
+          return promise;
+        });
+      }
+
+      queued = opts;
+    }
+    else {
+      this.isBusy = true;
+      promise = modelClass._callMapper('query', [opts]).then(
+        (result) => {
+          try {
+            if (Array.isArray(result)) {
+              this.replace(modelClass.loadAll(result));
+            }
+            else if (result.results) {
+              this.replace(modelClass.loadAll(result.results));
+              this.meta = result.meta;
+            }
+          }
+          catch (e) { console.error(e); throw e; }
+          this.isBusy = false;
+          this.error = undefined;
+        },
+        (e) => {
+          this.isBusy = false;
+          this.error = e;
+          return Promise.reject(e);
+        }
+      );
+    }
+
+    return this;
+  };
+
+  a.then = function(f1, f2) { return promise.then(f1, f2); };
+  a.catch = function(f) { return promise.catch(f); };
+
+  return a;
+}
+
 // Internal: Sets the given object on a `hasOne` property.
 //
 // desc - An association descriptor.
@@ -540,63 +598,7 @@ var Model = TransisObject.extend(function() {
   //            the options given here (default: `{}`).
   //
   // Returns a new `Transis.Array` decorated with the properties and methods described above.
-  this.buildQuery = function(baseOpts = {}) {
-    var modelClass = this, promise = Promise.resolve(), a = TransisArray.of(), queued;
-
-    a.props({
-      modelClass: {get: function() { return modelClass; }},
-      isBusy: {default: false},
-      error: {},
-      meta: {}
-    });
-
-    a.query = function(queryOpts = {}) {
-      const opts = Object.assign({}, baseOpts, queryOpts);
-
-      if (this.isBusy) {
-        if (!queued) {
-          promise = promise.then(() => {
-            this.query(queued);
-            queued = undefined;
-            return promise;
-          });
-        }
-
-        queued = opts;
-      }
-      else {
-        this.isBusy = true;
-        promise = modelClass._callMapper('query', [opts]).then(
-          (result) => {
-            try {
-              if (Array.isArray(result)) {
-                this.replace(modelClass.loadAll(result));
-              }
-              else if (result.results) {
-                this.replace(modelClass.loadAll(result.results));
-                this.meta = result.meta;
-              }
-            }
-            catch (e) { console.error(e); throw e; }
-            this.isBusy = false;
-            this.error = undefined;
-          },
-          (e) => {
-            this.isBusy = false;
-            this.error = e;
-            return Promise.reject(e);
-          }
-        );
-      }
-
-      return this;
-    };
-
-    a.then = function(f1, f2) { return promise.then(f1, f2); };
-    a.catch = function(f) { return promise.catch(f); };
-
-    return a;
-  };
+  this.buildQuery = function(baseOpts = {}) { return queryArray(this, baseOpts); };
 
   // Public: Creates a new `Transis.QueryArray` and invokes its `query` method with the given
   // options.
