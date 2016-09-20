@@ -114,18 +114,26 @@ function hasManyArray(owner, desc) {
   return a;
 }
 
-function queryArray(modelClass, baseOpts) {
+function queryArray(modelClass, baseOpts = {}) {
   let a = TransisArray.of(), promise = Promise.resolve(), queued;
+  const pageSize = baseOpts.pageSize;
+  const isPaged = !!pageSize;
 
   a.props({
     modelClass: {get: function() { return modelClass; }},
+    baseOpts: {},
     isBusy: {default: false},
+    isPaged: {on: ['baseOpts'], get: (baseOpts) => typeof baseOpts.pageSize === 'number'},
     error: {},
     meta: {}
   });
 
+  a.baseOpts = baseOpts;
+
   a.query = function(queryOpts = {}) {
-    const opts = Object.assign({}, baseOpts, queryOpts);
+    const opts = Object.assign({}, this.baseOpts, queryOpts);
+
+    if (this.isPaged) { opts.page = opts.page || 1; }
 
     if (this.isBusy) {
       if (!queued) {
@@ -142,18 +150,33 @@ function queryArray(modelClass, baseOpts) {
       this.isBusy = true;
       promise = modelClass._callMapper('query', [opts]).then(
         (result) => {
+          const results = Array.isArray(result) ? result : result.results;
+          const meta = Array.isArray(result) ? {} : result.meta;
+
+          this.isBusy = false;
+          this.meta = meta;
+          this.error = undefined;
+
+          if (!results) {
+            throw new Error(`${this}#query: mapper failed to return any results`);
+          }
+
+          if (isPaged && typeof meta.totalCount !== 'number') {
+            throw new Error(`${this}#query: mapper failed to return total count for paged query`);
+          }
+
           try {
-            if (Array.isArray(result)) {
-              this.replace(modelClass.loadAll(result));
+            const models = modelClass.loadAll(results);
+
+            if (isPaged) {
+              this.length = meta.totalCount;
+              this.splice.apply(this, [(opts.page - 1) * this.baseOpts.pageSize, models.length].concat(models));
             }
-            else if (result.results) {
-              this.replace(modelClass.loadAll(result.results));
-              this.meta = result.meta;
+            else {
+              this.replace(models);
             }
           }
           catch (e) { console.error(e); throw e; }
-          this.isBusy = false;
-          this.error = undefined;
         },
         (e) => {
           this.isBusy = false;
@@ -168,6 +191,18 @@ function queryArray(modelClass, baseOpts) {
 
   a.then = function(f1, f2) { return promise.then(f1, f2); };
   a.catch = function(f) { return promise.catch(f); };
+
+  if (isPaged) {
+    a.at = function(i) {
+      const r = TransisArray.prototype.at.apply(this, arguments);
+
+      if (arguments.length === 1 && pageSize && !r) {
+        this.query({page: Math.floor(i / pageSize) + 1});
+      }
+
+      return r;
+    };
+  }
 
   return a;
 }
