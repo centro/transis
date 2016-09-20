@@ -136,6 +136,8 @@ function queryArray(modelClass, baseOpts = {}) {
     if (this.isPaged) { opts.page = opts.page || 1; }
 
     if (this.isBusy) {
+      if (util.eq(opts, this.__currentOpts__)) { return this; }
+
       if (!queued) {
         promise = promise.then(() => {
           this.query(queued);
@@ -148,12 +150,14 @@ function queryArray(modelClass, baseOpts = {}) {
     }
     else {
       this.isBusy = true;
+      this.__currentOpts__ = opts;
       promise = modelClass._callMapper('query', [opts]).then(
         (result) => {
           const results = Array.isArray(result) ? result : result.results;
           const meta = Array.isArray(result) ? {} : result.meta;
 
           this.isBusy = false;
+          delete this.__currentOpts__;
           this.meta = meta;
           this.error = undefined;
 
@@ -180,6 +184,7 @@ function queryArray(modelClass, baseOpts = {}) {
         },
         (e) => {
           this.isBusy = false;
+          delete this.__currentOpts__;
           this.error = e;
           return Promise.reject(e);
         }

@@ -1096,6 +1096,19 @@ describe('Model', function () {
         });
       });
 
+      it('does not queue the latest call to query when the array is busy and the options are identical to the current query', function(done) {
+        this.a.query({foo: 1});
+        expect(this.a.isBusy).toBe(true);
+        this.a.query({foo: 1});
+        expect(QueryTest.mapper.query.calls.count()).toBe(1);
+        expect(QueryTest.mapper.query).toHaveBeenCalledWith({foo: 1});
+        this.resolve([]);
+        this.delay(() => {
+          expect(QueryTest.mapper.query.calls.count()).toBe(1);
+          done();
+        });
+      });
+
       it('properly resolves the promise when the query is queued', function(done) {
         var spy1 = jasmine.createSpy(), spy2 = jasmine.createSpy();
 
