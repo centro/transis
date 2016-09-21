@@ -114,6 +114,8 @@ function hasManyArray(owner, desc) {
   return a;
 }
 
+// Internal: Returns a new Transis Array that is decorated with query props and methods. See the
+// documentation for `Model.buildQuery`.
 function queryArray(modelClass, baseOpts = {}) {
   let a = TransisArray.of(), promise = Promise.resolve(), queued;
   const pageSize = baseOpts.pageSize;
@@ -594,7 +596,9 @@ var Model = TransisObject.extend(function() {
   // The array returned by this method is decorated with the following additional properties:
   //
   //   modelClass - The `Transis.Model` subclass that `buildQuery` was invoked on.
+  //   baseOpts   - The options passed to this method. These options will be sent with every query.
   //   isBusy     - Boolean property indicating whether a query is in progress.
+  //   isPaged    - Indicates whether the query array pages its results.
   //   error      - An error message set on the array when the mapper fails to fulfill its promise.
   //   meta       - Metadata provided by the mapper. May be used for paging results.
   //
@@ -609,6 +613,28 @@ var Model = TransisObject.extend(function() {
   //
   //   If the this method is called while the array is currently busy, then the call to the mapper
   //   is queued until the current query completes.
+  //
+  //   Passing the `pageSize` option to `buildQuery` turns the query into a paged query. Paged
+  //   queries load a page of results at a time instead of simply replacing their contents on each
+  //   call to `#query`. In order for this to work the mapper must resolve its promise with an
+  //   object that contains a `results` key pointing to an array of records and a `meta` key that
+  //   points to an object containing a `totalCount` key. The length of the query array will be set
+  //   to the value of `totalCount` and the results will be spliced into the array at the offset
+  //   indicated by the `page` option. Any models from pages loaded previously will remain in the
+  //   array.
+  //
+  //   When an item is accessed via the `#at` method from a page that has yet to be fetched, the
+  //   query array will automatically invoke the mapper to fetch that page. This effectively gives
+  //   you a sparse array that will automatically lazily load its contents when then are needed.
+  //   This behavior works very well with a virtualized list component.
+  //
+  //   Here is an example of the object expected from the mapper:
+  //
+  //   {
+  //     meta: {totalCount: 321},
+  //     results: [{id: 1}, {id: 2}, {id: 3}]
+  //   }
+  //
   //
   //   opts - An object to pass along to the mapper (default: `{}`).
   //
@@ -635,7 +661,9 @@ var Model = TransisObject.extend(function() {
   //
   // baseOpts - An object to pass along to the mapper method when the query is executed with the
   //            `#query` method. Any options passed to the `#query` method will be merged in with
-  //            the options given here (default: `{}`).
+  //            the options given here (default: `{}`). The `pageSize` option in particular is
+  //            special as it makes the resulting query array a paged query. See the discussion
+  //            above.
   //
   // Returns a new `Transis.Array` decorated with the properties and methods described above.
   this.buildQuery = function(baseOpts = {}) { return queryArray(this, baseOpts); };
