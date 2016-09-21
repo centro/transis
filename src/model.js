@@ -114,15 +114,99 @@ function hasManyArray(owner, desc) {
   return a;
 }
 
+// Internal: Provides the implementation of the query array's `query` method.
+function queryArrayQuery(queryOpts = {}) {
+  const opts = Object.assign({}, this.baseOpts, queryOpts);
+
+  if (this.isPaged) { opts.page = opts.page || 1; }
+
+  if (this.isBusy) {
+    if (util.eq(opts, this.__currentOpts__)) { return this; }
+
+    if (!this.__queued__) {
+      this.__promise__ = this.__promise__.then(() => {
+        this.query(this.__queued__);
+        this.__queued__ = undefined;
+        return this.__promise__;
+      });
+    }
+
+    this.__queued__ = opts;
+  }
+  else {
+    this.isBusy = true;
+    this.__currentOpts__ = opts;
+    this.__promise__ = this.__modelClass__._callMapper('query', [opts]).then(
+      (result) => {
+        const results = Array.isArray(result) ? result : result.results;
+        const meta = Array.isArray(result) ? {} : result.meta;
+
+        this.isBusy = false;
+        delete this.__currentOpts__;
+        this.meta = meta;
+        this.error = undefined;
+
+        if (!results) {
+          throw new Error(`${this}#query: mapper failed to return any results`);
+        }
+
+        if (this.isPaged && typeof meta.totalCount !== 'number') {
+          throw new Error(`${this}#query: mapper failed to return total count for paged query`);
+        }
+
+        try {
+          const models = this.__modelClass__.loadAll(results);
+
+          if (this.isPaged) {
+            this.length = meta.totalCount;
+            this.splice.apply(this, [(opts.page - 1) * this.baseOpts.pageSize, models.length].concat(models));
+          }
+          else {
+            this.replace(models);
+          }
+        }
+        catch (e) { console.error(e); throw e; }
+      },
+      (e) => {
+        this.isBusy = false;
+        delete this.__currentOpts__;
+        this.error = e;
+        return Promise.reject(e);
+      }
+    );
+  }
+
+  return this;
+}
+
+// Internal: Provides the implementation of the query array's `then` method.
+function queryArrayThen(f1, f2) { return this.__promise__.then(f1, f2); }
+
+// Internal: Provides the implementation of the query array's `catch` method.
+function queryArrayCatch(f) { return this.__promise__.catch(f); }
+
+// Internal: Provides the implementation of the query array's `at` method.
+function queryArrayAt(i) {
+  const r = TransisArray.prototype.at.apply(this, arguments);
+  const pageSize = this.baseOpts && this.baseOpts.pageSize;
+
+  if (arguments.length === 1 && !r && pageSize) {
+    this.query({page: Math.floor(i / pageSize) + 1});
+  }
+
+  return r;
+}
+
 // Internal: Returns a new Transis Array that is decorated with query props and methods. See the
 // documentation for `Model.buildQuery`.
 function queryArray(modelClass, baseOpts = {}) {
-  let a = TransisArray.of(), promise = Promise.resolve(), queued;
-  const pageSize = baseOpts.pageSize;
-  const isPaged = !!pageSize;
+  let a = TransisArray.of();
+
+  a.__modelClass__ = modelClass;
+  a.__promise__ = Promise.resolve();
 
   a.props({
-    modelClass: {get: function() { return modelClass; }},
+    modelClass: {get: function() { return this.__modelClass__; }},
     baseOpts: {},
     isBusy: {default: false},
     isPaged: {on: ['baseOpts'], get: (baseOpts) => typeof baseOpts.pageSize === 'number'},
@@ -131,85 +215,10 @@ function queryArray(modelClass, baseOpts = {}) {
   });
 
   a.baseOpts = baseOpts;
-
-  a.query = function(queryOpts = {}) {
-    const opts = Object.assign({}, this.baseOpts, queryOpts);
-
-    if (this.isPaged) { opts.page = opts.page || 1; }
-
-    if (this.isBusy) {
-      if (util.eq(opts, this.__currentOpts__)) { return this; }
-
-      if (!queued) {
-        promise = promise.then(() => {
-          this.query(queued);
-          queued = undefined;
-          return promise;
-        });
-      }
-
-      queued = opts;
-    }
-    else {
-      this.isBusy = true;
-      this.__currentOpts__ = opts;
-      promise = modelClass._callMapper('query', [opts]).then(
-        (result) => {
-          const results = Array.isArray(result) ? result : result.results;
-          const meta = Array.isArray(result) ? {} : result.meta;
-
-          this.isBusy = false;
-          delete this.__currentOpts__;
-          this.meta = meta;
-          this.error = undefined;
-
-          if (!results) {
-            throw new Error(`${this}#query: mapper failed to return any results`);
-          }
-
-          if (isPaged && typeof meta.totalCount !== 'number') {
-            throw new Error(`${this}#query: mapper failed to return total count for paged query`);
-          }
-
-          try {
-            const models = modelClass.loadAll(results);
-
-            if (isPaged) {
-              this.length = meta.totalCount;
-              this.splice.apply(this, [(opts.page - 1) * this.baseOpts.pageSize, models.length].concat(models));
-            }
-            else {
-              this.replace(models);
-            }
-          }
-          catch (e) { console.error(e); throw e; }
-        },
-        (e) => {
-          this.isBusy = false;
-          delete this.__currentOpts__;
-          this.error = e;
-          return Promise.reject(e);
-        }
-      );
-    }
-
-    return this;
-  };
-
-  a.then = function(f1, f2) { return promise.then(f1, f2); };
-  a.catch = function(f) { return promise.catch(f); };
-
-  if (isPaged) {
-    a.at = function(i) {
-      const r = TransisArray.prototype.at.apply(this, arguments);
-
-      if (arguments.length === 1 && pageSize && !r) {
-        this.query({page: Math.floor(i / pageSize) + 1});
-      }
-
-      return r;
-    };
-  }
+  a.query = queryArrayQuery;
+  a.then = queryArrayThen;
+  a.catch = queryArrayCatch;
+  a.at = queryArrayAt;
 
   return a;
 }
@@ -666,7 +675,29 @@ var Model = TransisObject.extend(function() {
   //            above.
   //
   // Returns a new `Transis.Array` decorated with the properties and methods described above.
-  this.buildQuery = function(baseOpts = {}) { return queryArray(this, baseOpts); };
+  this.buildQuery = function(baseOpts = {}) {
+    let a = TransisArray.of();
+
+    a.__modelClass__ = this;
+    a.__promise__ = Promise.resolve();
+
+    a.props({
+      modelClass: {get: function() { return this.__modelClass__; }},
+      baseOpts: {},
+      isBusy: {default: false},
+      isPaged: {on: ['baseOpts'], get: (baseOpts) => typeof baseOpts.pageSize === 'number'},
+      error: {},
+      meta: {}
+    });
+
+    a.baseOpts = baseOpts;
+    a.query = queryArrayQuery;
+    a.then = queryArrayThen;
+    a.catch = queryArrayCatch;
+    a.at = queryArrayAt;
+
+    return a;
+  };
 
   // Public: Creates a new `Transis.QueryArray` and invokes its `query` method with the given
   // options.
