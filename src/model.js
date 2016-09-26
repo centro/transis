@@ -197,32 +197,6 @@ function queryArrayAt(i) {
   return r;
 }
 
-// Internal: Returns a new Transis Array that is decorated with query props and methods. See the
-// documentation for `Model.buildQuery`.
-function queryArray(modelClass, baseOpts = {}) {
-  let a = TransisArray.of();
-
-  a.__modelClass__ = modelClass;
-  a.__promise__ = Promise.resolve();
-
-  a.props({
-    modelClass: {get: function() { return this.__modelClass__; }},
-    baseOpts: {},
-    isBusy: {default: false},
-    isPaged: {on: ['baseOpts'], get: (baseOpts) => typeof baseOpts.pageSize === 'number'},
-    error: {},
-    meta: {}
-  });
-
-  a.baseOpts = baseOpts;
-  a.query = queryArrayQuery;
-  a.then = queryArrayThen;
-  a.catch = queryArrayCatch;
-  a.at = queryArrayAt;
-
-  return a;
-}
-
 // Internal: Sets the given object on a `hasOne` property.
 //
 // desc - An association descriptor.
