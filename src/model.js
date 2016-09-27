@@ -114,6 +114,89 @@ function hasManyArray(owner, desc) {
   return a;
 }
 
+// Internal: Provides the implementation of the query array's `query` method.
+function queryArrayQuery(queryOpts = {}) {
+  const opts = Object.assign({}, this.baseOpts, queryOpts);
+
+  if (this.isPaged) { opts.page = opts.page || 1; }
+
+  if (this.isBusy) {
+    if (util.eq(opts, this.__currentOpts__)) { return this; }
+
+    if (!this.__queued__) {
+      this.__promise__ = this.__promise__.then(() => {
+        this.query(this.__queued__);
+        this.__queued__ = undefined;
+        return this.__promise__;
+      });
+    }
+
+    this.__queued__ = opts;
+  }
+  else {
+    this.isBusy = true;
+    this.__currentOpts__ = opts;
+    this.__promise__ = this.__modelClass__._callMapper('query', [opts]).then(
+      (result) => {
+        const results = Array.isArray(result) ? result : result.results;
+        const meta = Array.isArray(result) ? {} : result.meta;
+
+        this.isBusy = false;
+        delete this.__currentOpts__;
+        this.meta = meta;
+        this.error = undefined;
+
+        if (!results) {
+          throw new Error(`${this}#query: mapper failed to return any results`);
+        }
+
+        if (this.isPaged && typeof meta.totalCount !== 'number') {
+          throw new Error(`${this}#query: mapper failed to return total count for paged query`);
+        }
+
+        try {
+          const models = this.__modelClass__.loadAll(results);
+
+          if (this.isPaged) {
+            this.length = meta.totalCount;
+            this.splice.apply(this, [(opts.page - 1) * this.baseOpts.pageSize, models.length].concat(models));
+          }
+          else {
+            this.replace(models);
+          }
+        }
+        catch (e) { console.error(e); throw e; }
+      },
+      (e) => {
+        this.isBusy = false;
+        delete this.__currentOpts__;
+        this.error = e;
+        return Promise.reject(e);
+      }
+    );
+  }
+
+  return this;
+}
+
+// Internal: Provides the implementation of the query array's `then` method.
+function queryArrayThen(f1, f2) { return this.__promise__.then(f1, f2); }
+
+// Internal: Provides the implementation of the query array's `catch` method.
+function queryArrayCatch(f) { return this.__promise__.catch(f); }
+
+// Internal: Provides the implementation of the query array's `at` method.
+function queryArrayAt(i) {
+  const r = TransisArray.prototype.at.apply(this, arguments);
+  const pageSize = this.baseOpts && this.baseOpts.pageSize;
+
+  if (arguments.length === 1 && !r && pageSize) {
+    this.query({page: Math.floor(i / pageSize) + 1});
+  }
+
+  return r;
+}
+
 // Internal: Sets the given object on a `hasOne` property.
 //
 // desc - An association descriptor.
@@ -496,7 +579,9 @@ var Model = TransisObject.extend(function() {
   // The array returned by this method is decorated with the following additional properties:
   //
   //   modelClass - The `Transis.Model` subclass that `buildQuery` was invoked on.
+  //   baseOpts   - The options passed to this method. These options will be sent with every query.
   //   isBusy     - Boolean property indicating whether a query is in progress.
+  //   isPaged    - Indicates whether the query array pages its results.
   //   error      - An error message set on the array when the mapper fails to fulfill its promise.
   //   meta       - Metadata provided by the mapper. May be used for paging results.
   //
@@ -511,6 +596,28 @@ var Model = TransisObject.extend(function() {
   //
   //   If the this method is called while the array is currently busy, then the call to the mapper
   //   is queued until the current query completes.
+  //
+  //   Passing the `pageSize` option to `buildQuery` turns the query into a paged query. Paged
+  //   queries load a page of results at a time instead of simply replacing their contents on each
+  //   call to `#query`. In order for this to work the mapper must resolve its promise with an
+  //   object that contains a `results` key pointing to an array of records and a `meta` key that
+  //   points to an object containing a `totalCount` key. The length of the query array will be set
+  //   to the value of `totalCount` and the results will be spliced into the array at the offset
+  //   indicated by the `page` option. Any models from pages loaded previously will remain in the
+  //   array.
+  //
+  //   When an item is accessed via the `#at` method from a page that has yet to be fetched, the
+  //   query array will automatically invoke the mapper to fetch that page. This effectively gives
+  //   you a sparse array that will automatically lazily load its contents when then are needed.
+  //   This behavior works very well with a virtualized list component.
+  //
+  //   Here is an example of the object expected from the mapper:
+  //
+  //   {
+  //     meta: {totalCount: 321},
+  //     results: [{id: 1}, {id: 2}, {id: 3}]
+  //   }
+  //
   //
   //   opts - An object to pass along to the mapper (default: `{}`).
   //
@@ -537,63 +644,31 @@ var Model = TransisObject.extend(function() {
   //
   // baseOpts - An object to pass along to the mapper method when the query is executed with the
   //            `#query` method. Any options passed to the `#query` method will be merged in with
-  //            the options given here (default: `{}`).
+  //            the options given here (default: `{}`). The `pageSize` option in particular is
+  //            special as it makes the resulting query array a paged query. See the discussion
+  //            above.
   //
   // Returns a new `Transis.Array` decorated with the properties and methods described above.
   this.buildQuery = function(baseOpts = {}) {
-    var modelClass = this, promise = Promise.resolve(), a = TransisArray.of(), queued;
+    let a = TransisArray.of();
+
+    a.__modelClass__ = this;
+    a.__promise__ = Promise.resolve();
 
     a.props({
-      modelClass: {get: function() { return modelClass; }},
+      modelClass: {get: function() { return this.__modelClass__; }},
+      baseOpts: {},
       isBusy: {default: false},
+      isPaged: {on: ['baseOpts'], get: (baseOpts) => typeof baseOpts.pageSize === 'number'},
       error: {},
       meta: {}
     });
 
-    a.query = function(queryOpts = {}) {
-      const opts = Object.assign({}, baseOpts, queryOpts);
-
-      if (this.isBusy) {
-        if (!queued) {
-          promise = promise.then(() => {
-            this.query(queued);
-            queued = undefined;
-            return promise;
-          });
-        }
-
-        queued = opts;
-      }
-      else {
-        this.isBusy = true;
-        promise = modelClass._callMapper('query', [opts]).then(
-          (result) => {
-            try {
-              if (Array.isArray(result)) {
-                this.replace(modelClass.loadAll(result));
-              }
-              else if (result.results) {
-                this.replace(modelClass.loadAll(result.results));
-                this.meta = result.meta;
-              }
-            }
-            catch (e) { console.error(e); throw e; }
-            this.isBusy = false;
-            this.error = undefined;
-          },
-          (e) => {
-            this.isBusy = false;
-            this.error = e;
-            return Promise.reject(e);
-          }
-        );
-      }
-
-      return this;
-    };
-
-    a.then = function(f1, f2) { return promise.then(f1, f2); };
-    a.catch = function(f) { return promise.catch(f); };
+    a.baseOpts = baseOpts;
+    a.query = queryArrayQuery;
+    a.then = queryArrayThen;
+    a.catch = queryArrayCatch;
+    a.at = queryArrayAt;
 
     return a;
   };

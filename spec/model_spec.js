@@ -913,6 +913,25 @@ describe('Model', function () {
     it('decorates the returned array with a catch method', function() {
       expect(typeof this.a.catch).toBe('function');
     });
+
+    it('decorates the returned array with an isPaged property set to false', function() {
+      expect(this.a.isPaged).toBe(false);
+    });
+
+    it('decorates the returned array with a baseOpts property set to the given options', function() {
+      let a = BasicModel.buildQuery({a: 1, b: 2});
+      expect(a.baseOpts).toEqual({a: 1, b: 2});
+    });
+
+    describe('with a pageSize option', function() {
+      beforeEach(function() {
+        this.a = BasicModel.buildQuery({pageSize: 10});
+      });
+
+      it('decorates the returned array with an isPaged property set to true', function() {
+        expect(this.a.isPaged).toBe(true);
+      });
+    });
   });
 
   describe('query array', function() {
@@ -959,6 +978,19 @@ describe('Model', function () {
         const a = QueryTest.buildQuery({a: 1, b: 2});
         a.query({b: 3, c: 4});
         expect(QueryTest.mapper.query).toHaveBeenCalledWith({a: 1, b: 3, c: 4});
+      });
+
+      it('uses the newly set baseOpts', function(done) {
+        const a = QueryTest.buildQuery({a: 1, b: 2});
+        a.query({b: 3, c: 4});
+        expect(QueryTest.mapper.query).toHaveBeenCalledWith({a: 1, b: 3, c: 4});
+        this.resolve([]);
+        this.delay(() => {
+          a.baseOpts = {a: 10, b: 20};
+          a.query({b: 3, c: 4});
+          expect(QueryTest.mapper.query).toHaveBeenCalledWith({a: 10, b: 3, c: 4});
+          done();
+        });
       });
 
       it('sets the isBusy property', function() {
@@ -1064,6 +1096,19 @@ describe('Model', function () {
         });
       });
 
+      it('does not queue the latest call to query when the array is busy and the options are identical to the current query', function(done) {
+        this.a.query({foo: 1});
+        expect(this.a.isBusy).toBe(true);
+        this.a.query({foo: 1});
+        expect(QueryTest.mapper.query.calls.count()).toBe(1);
+        expect(QueryTest.mapper.query).toHaveBeenCalledWith({foo: 1});
+        this.resolve([]);
+        this.delay(() => {
+          expect(QueryTest.mapper.query.calls.count()).toBe(1);
+          done();
+        });
+      });
+
       it('properly resolves the promise when the query is queued', function(done) {
         var spy1 = jasmine.createSpy(), spy2 = jasmine.createSpy();
 
@@ -1105,6 +1150,82 @@ describe('Model', function () {
         expect(function() {
           Foo.buildQuery().query();
         }).toThrow(new Error("Foo._callMapper: mapper's `query` method did not return a Promise"));
+      });
+
+      describe('with the pageSize option', function() {
+        beforeEach(function() {
+          this.a = QueryTest.buildQuery({pageSize: 3});
+        });
+
+        it('forwards the pageSize option on to the mapper and a default page of 1', function() {
+          this.a.query();
+          expect(QueryTest.mapper.query).toHaveBeenCalledWith({pageSize: 3, page: 1});
+        });
+
+        it('forwards the page option on to the mapper', function() {
+          this.a.query({page: 4});
+          expect(QueryTest.mapper.query).toHaveBeenCalledWith({pageSize: 3, page: 4});
+        });
+
+        it('sets the length of the array to the value of the meta.totalCount value resolved by the mapper', function(done) {
+          expect(this.a.length).toBe(0);
+          this.a.query();
+          this.resolve({meta: {totalCount: 21}, results: [{id: 1}, {id: 2}, {id: 3}]});
+          this.delay(() => {
+            expect(this.a.length).toBe(21);
+            done();
+          });
+        });
+
+        it('splices the results into the array instead of replacing', function(done) {
+          this.a.query();
+          this.resolve({meta: {totalCount: 7}, results: [{id: 1}, {id: 2}, {id: 3}]});
+          this.delay(() => {
+            expect(this.a.length).toBe(7);
+            expect(this.a.map(x => x.id)).toEqual([1, 2, 3, undefined, undefined, undefined, undefined]);
+
+            this.a.query({page: 2});
+            this.resolve({meta: {totalCount: 7}, results: [{id: 4}, {id: 5}, {id: 6}]});
+            this.delay(() => {
+              expect(this.a.length).toBe(7);
+              expect(this.a.map(x => x.id)).toEqual([1, 2, 3, 4, 5, 6, undefined]);
+
+              this.a.query({page: 3});
+              this.resolve({meta: {totalCount: 7}, results: [{id: 7}]});
+              this.delay(() => {
+                expect(this.a.length).toBe(7);
+                expect(this.a.map(x => x.id)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+
+                done();
+              });
+            });
+          });
+        });
+
+        it('automatically fetches pages when items are accessed through the #at method', function(done) {
+          expect(this.a.at(0)).toBe(undefined);
+          expect(QueryTest.mapper.query).toHaveBeenCalledWith({pageSize: 3, page: 1});
+          this.resolve({meta: {totalCount: 7}, results: [{id: 1}, {id: 2}, {id: 3}]});
+
+          this.delay(() => {
+            expect(this.a.length).toBe(7);
+            expect(this.a.at(0)).toBe(QueryTest.local(1));
+            expect(this.a.at(1)).toBe(QueryTest.local(2));
+            expect(this.a.at(2)).toBe(QueryTest.local(3));
+
+            expect(this.a.at(3)).toBe(undefined);
+            expect(QueryTest.mapper.query).toHaveBeenCalledWith({pageSize: 3, page: 2});
+            this.resolve({meta: {totalCount: 7}, results: [{id: 4}, {id: 5}, {id: 6}]});
+
+            this.delay(() => {
+              expect(this.a.length).toBe(7);
+              expect(this.a.at(3)).toBe(QueryTest.local(4));
+              expect(this.a.at(4)).toBe(QueryTest.local(5));
+              expect(this.a.at(5)).toBe(QueryTest.local(6));
+              done();
+            });
+          });
+        });
       });
     });
 
