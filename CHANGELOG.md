@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.9.0]
+### Added
+- Add support for paged query arrays. [#41](https://github.com/centro/transis/pull/41)
+
 ## [0.8.1]
 ### Fixed
 - Fix React mixin to handle manual property change notifications. [#38](https://github.com/centro/transis/pull/38)
