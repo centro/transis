@@ -1019,6 +1019,18 @@ describe('Model', function () {
         });
       });
 
+      it('sets the currentOpts property to the baseOpts merged with the given opts', function(done) {
+        const a = QueryTest.buildQuery({a: 1, b: 2});
+        a.query({b: 3, c: 4});
+        expect(a.currentOpts).toEqual({a: 1, b: 3, c: 4});
+        this.resolve([]);
+        this.delay(() => {
+          a.query({d: 9});
+          expect(a.currentOpts).toEqual({a: 1, b: 2, d: 9});
+          done();
+        });
+      });
+
       it('sets the error property when the promise is rejected', function(done) {
         this.a.query();
         this.reject('foobar');
