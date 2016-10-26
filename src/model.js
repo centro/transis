@@ -121,7 +121,7 @@ function queryArrayQuery(queryOpts = {}) {
   if (this.isPaged) { opts.page = opts.page || 1; }
 
   if (this.isBusy) {
-    if (util.eq(opts, this.__currentOpts__)) { return this; }
+    if (util.eq(opts, this.currentOpts)) { return this; }
 
     if (!this.__queued__) {
       this.__promise__ = this.__promise__.then(() => {
@@ -135,14 +135,13 @@ function queryArrayQuery(queryOpts = {}) {
   }
   else {
     this.isBusy = true;
-    this.__currentOpts__ = opts;
+    this.currentOpts = opts;
     this.__promise__ = this.__modelClass__._callMapper('query', [opts]).then(
       (result) => {
         const results = Array.isArray(result) ? result : result.results;
         const meta = Array.isArray(result) ? {} : result.meta;
 
         this.isBusy = false;
-        delete this.__currentOpts__;
         this.meta = meta;
         this.error = undefined;
 
@@ -169,7 +168,6 @@ function queryArrayQuery(queryOpts = {}) {
       },
       (e) => {
         this.isBusy = false;
-        delete this.__currentOpts__;
         this.error = e;
         return Promise.reject(e);
       }
@@ -578,12 +576,13 @@ var Model = TransisObject.extend(function() {
   //
   // The array returned by this method is decorated with the following additional properties:
   //
-  //   modelClass - The `Transis.Model` subclass that `buildQuery` was invoked on.
-  //   baseOpts   - The options passed to this method. These options will be sent with every query.
-  //   isBusy     - Boolean property indicating whether a query is in progress.
-  //   isPaged    - Indicates whether the query array pages its results.
-  //   error      - An error message set on the array when the mapper fails to fulfill its promise.
-  //   meta       - Metadata provided by the mapper. May be used for paging results.
+  //   modelClass  - The `Transis.Model` subclass that `buildQuery` was invoked on.
+  //   baseOpts    - The options passed to this method. These options will be sent with every query.
+  //   currentOpts - The most recent options passed to the mapper.
+  //   isBusy      - Boolean property indicating whether a query is in progress.
+  //   isPaged     - Indicates whether the query array pages its results.
+  //   error       - An error message set on the array when the mapper fails to fulfill its promise.
+  //   meta        - Metadata provided by the mapper. May be used for paging results.
   //
   // And with these additional methods:
   //
@@ -658,6 +657,7 @@ var Model = TransisObject.extend(function() {
     a.props({
       modelClass: {get: function() { return this.__modelClass__; }},
       baseOpts: {},
+      currentOpts: {},
       isBusy: {default: false},
       isPaged: {on: ['baseOpts'], get: (baseOpts) => typeof baseOpts.pageSize === 'number'},
       error: {},
