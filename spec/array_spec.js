@@ -843,6 +843,16 @@ describe('Array', function() {
       TransisObject.flush();
       expect(spy).not.toHaveBeenCalled();
     });
+
+    it('allows more than one proxied attr', function() {
+      this.anotherTo = new TransisObject;
+      this.a.proxy(this.anotherTo, 'aThings');
+      var spy = jasmine.createSpy();
+      this.anotherTo.on('aThings.x', spy);
+      this.a.push(new Test({ x: 5 }))
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledWith('aThings.x');
+    });
   });
 
   describe('#forEachCons', function() {
