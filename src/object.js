@@ -482,6 +482,17 @@ TransisObject.prototype._registerProxy = function(object, name) {
   return this;
 };
 
+// Public: Exposes the internal `_registerProxy` method
+TransisObject.prototype.proxy = function(to, name) {
+  if (this instanceof TransisObject &&
+    to instanceof TransisObject &&
+    typeof name === 'string'
+  ) {
+    this._registerProxy(to, name);
+  }
+  return this;
+}
+
 // Internal: Deregisters a proxy object previously registered with `#_registerProxy`.
 TransisObject.prototype._deregisterProxy = function(object, name) {
   if (this.__proxies__) { delete this.__proxies__[`${object.objectId},${name}`]; }
