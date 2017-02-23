@@ -651,7 +651,7 @@ describe('Transis.Object', function() {
     });
   });
 
-  describe('#proxy', function() {
+  describe('#proxy & #unproxy', function() {
     const ProxyTestModel = TransisObject.extend(function() {
       this.prop('trigger')
     })
@@ -668,6 +668,13 @@ describe('Transis.Object', function() {
       this.twinA.trigger = true;
       TransisObject.flush();
       expect(this.spy).toHaveBeenCalled();
+    });
+
+    it('unproxies `trigger` prop changes to the target object', function() {
+      this.twinA.unproxy(this.twinB, 'twin');
+      this.twinA.trigger = true;
+      TransisObject.flush();
+      expect(this.spy).not.toHaveBeenCalled();
     });
   });
 });

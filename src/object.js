@@ -482,6 +482,12 @@ TransisObject.prototype._registerProxy = function(object, name) {
   return this;
 };
 
+// Internal: Deregisters a proxy object previously registered with `#_registerProxy`.
+TransisObject.prototype._deregisterProxy = function(object, name) {
+  if (this.__proxies__) { delete this.__proxies__[`${object.objectId},${name}`]; }
+  return this;
+};
+
 // Public: Registers a proxy object. All prop changes on the receiver will be proxied to the
 // given proxy object with the given name as a prefix for the property name.
 //
@@ -499,12 +505,22 @@ TransisObject.prototype.proxy = function(to, name) {
   return this;
 }
 
-// Internal: Deregisters a proxy object previously registered with `#_registerProxy`.
-TransisObject.prototype._deregisterProxy = function(object, name) {
-  if (this.__proxies__) { delete this.__proxies__[`${object.objectId},${name}`]; }
-  return this;
-};
 
+// Public: Deregisters a proxy object previously registered with `#proxy`.
+//
+// to - the object for which was registered as the proxy object
+// name - The given name of the current object on the proxy object
+//
+// Returns the receiver.
+TransisObject.prototype.unproxy = function(to, name) {
+  if (this instanceof TransisObject &&
+    to instanceof TransisObject &&
+    typeof name === 'string'
+  ) {
+    this._deregisterProxy(to, name);
+  }
+  return this;
+}
 TransisObject.displayName = 'Transis.Object';
 
 export default TransisObject;
