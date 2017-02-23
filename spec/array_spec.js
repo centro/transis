@@ -858,10 +858,26 @@ describe('Array', function() {
       expect(spy1).toHaveBeenCalledWith('things.x');
       expect(spy2).toHaveBeenCalledWith('things.x');
     });
-  });
 
-  describe('#unproxy', function() {
+    describe('#unproxy', function() {
+      beforeEach(function() {
+        this.spy1 = jasmine.createSpy();
+        this.to.on('things.x', this.spy1);
 
+        this.anotherTo = new TransisObject;
+        this.a.proxy(this.anotherTo, 'things');
+        this.spy2 = jasmine.createSpy();
+        this.anotherTo.on('things.x', this.spy2);
+      })
+
+      it('unproxies one specific proxy at a time based on `to` and `name`', function() {
+        this.a.unproxy(this.anotherTo, 'things')
+        this.a[0].x = 5;
+        TransisObject.flush();
+        expect(this.spy1).toHaveBeenCalledWith('things.x');
+        expect(this.spy2).not.toHaveBeenCalledWith('things.x');
+      });
+    });
   });
 
   describe('#forEachCons', function() {
