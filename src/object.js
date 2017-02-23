@@ -482,7 +482,13 @@ TransisObject.prototype._registerProxy = function(object, name) {
   return this;
 };
 
-// Public: Exposes the internal `_registerProxy` method
+// Public: Registers a proxy object. All prop changes on the receiver will be proxied to the
+// given proxy object with the given name as a prefix for the property name.
+//
+// to - the object for proxying changes to
+// name - The given name of the current object
+//
+// Returns the receiver.
 TransisObject.prototype.proxy = function(to, name) {
   if (this instanceof TransisObject &&
     to instanceof TransisObject &&
