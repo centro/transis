@@ -845,13 +845,18 @@ describe('Array', function() {
     });
 
     it('allows more than one proxied attr', function() {
+      var spy1 = jasmine.createSpy();
+      this.to.on('thing.x', spy1);
+
       this.anotherTo = new TransisObject;
-      this.a.proxy(this.anotherTo, 'aThings');
-      var spy = jasmine.createSpy();
-      this.anotherTo.on('aThings.x', spy);
-      this.a.push(new Test({ x: 5 }))
+      this.a.proxy(this.anotherTo, 'things');
+      var spy2 = jasmine.createSpy();
+      this.anotherTo.on('things.x', spy2);
+
+      this.a[0].x = 5;
       TransisObject.flush();
-      expect(spy).toHaveBeenCalledWith('aThings.x');
+      expect(spy1).toHaveBeenCalledWith('things.x');
+      expect(spy2).toHaveBeenCalledWith('things.x');
     });
   });
 
