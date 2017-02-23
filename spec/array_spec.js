@@ -844,6 +844,20 @@ describe('Array', function() {
       expect(spy).not.toHaveBeenCalled();
     });
 
+    it('causes the array to proxy changes for attributes: `.@` (and therefore also `.sizes` and `.first`)', function() {
+      var spyAt = jasmine.createSpy();
+      this.to.on('things.@', spyAt);
+
+      expect(this.a.size).toBe(3);
+      this.a.splice(0, 1);
+
+      expect(spyAt).not.toHaveBeenCalled();
+
+      TransisObject.flush();
+      expect(this.a.size).toBe(2);
+      expect(spyAt).toHaveBeenCalled();
+    });
+
     it('allows more than one proxied attr', function() {
       var spy1 = jasmine.createSpy();
       this.to.on('things.x', spy1);
