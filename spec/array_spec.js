@@ -846,7 +846,7 @@ describe('Array', function() {
 
     it('allows more than one proxied attr', function() {
       var spy1 = jasmine.createSpy();
-      this.to.on('thing.x', spy1);
+      this.to.on('things.x', spy1);
 
       this.anotherTo = new TransisObject;
       this.a.proxy(this.anotherTo, 'things');
@@ -858,6 +858,10 @@ describe('Array', function() {
       expect(spy1).toHaveBeenCalledWith('things.x');
       expect(spy2).toHaveBeenCalledWith('things.x');
     });
+  });
+
+  describe('#unproxy', function() {
+
   });
 
   describe('#forEachCons', function() {

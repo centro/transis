@@ -496,8 +496,7 @@ TransisObject.prototype._deregisterProxy = function(object, name) {
 //
 // Returns the receiver.
 TransisObject.prototype.proxy = function(to, name) {
-  if (this instanceof TransisObject &&
-    to instanceof TransisObject &&
+  if (to instanceof TransisObject &&
     typeof name === 'string'
   ) {
     this._registerProxy(to, name);

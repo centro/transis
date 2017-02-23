@@ -111,22 +111,22 @@ TransisArray.from = function(a, mapFn, thisArg) {
     if (i === 0) { this.didChange('first'); }
     this.didChange('@');
 
-    if (this.__proxy__) {
-      removed.forEach(function(x) {
+    for (let key in this.__proxies__) {
+      let proxy = this.__proxies__[key];
+      removed.forEach(x => {
         if (x instanceof TransisObject || x instanceof TransisArray) {
-          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
+          x._deregisterProxy(proxy.object, proxy.name)
         }
-      }, this);
+      });
 
-      added.forEach(function(x) {
+      added.forEach(x => {
         if (x instanceof TransisObject || x instanceof TransisArray) {
-          x._registerProxy(this.__proxy__.to, this.__proxy__.name);
+          x._registerProxy(proxy.object, proxy.name)
         }
-      }, this);
+      });
 
-      this.__proxy__.to.didChange(this.__proxy__.name);
+      proxy.object.didChange(proxy.name);
     }
-
     return TransisArray.from(removed);
   };
 
@@ -358,9 +358,8 @@ TransisArray.from = function(a, mapFn, thisArg) {
   //
   // Returns the receiver.
   this.prototype.proxy = function(to, name) {
-    if (this.__proxy__) { this.unproxy(); }
-
-    this.__proxy__ = {to, name};
+    this.__proxies__ = this.__proxies__ || {};
+    this.__proxies__[`${to.objectId},${name}`] = {object: to, name};
 
     this.forEach(function(x) {
       if (x instanceof TransisObject || x instanceof TransisArray) {
@@ -372,14 +371,19 @@ TransisArray.from = function(a, mapFn, thisArg) {
   };
 
   // Public: Stop proxying prop changes.
-  this.prototype.unproxy = function() {
-    if (this.__proxy__) {
-      this.forEach(function(x) {
+  // to   - The object to stop proxying changes to.
+  // name - The name to use as a prefix on the proxied prop name.
+  //
+  // Returns the receiver.
+  this.prototype.unproxy = function(to, name) {
+    const proxy = this.__proxies__[`${to.objectId},${name}`];
+    if (proxy) {
+      this.forEach(x => {
         if (x instanceof TransisObject || x instanceof TransisArray) {
-          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
+          x._deregisterProxy(proxy.object, proxy.name)
         }
-      }, this);
-      delete this.__proxy__;
+      })
+      delete this.__proxies__[`${to.objectId},${name}`];
     }
 
     return this;
