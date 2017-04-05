@@ -436,6 +436,21 @@ TransisObject.prototype._getProp = function(name) {
     value = this[`__${name}`];
   }
 
+  if (value === undefined) {
+    if (typeof desc.default === 'function') {
+      let defaultName = `__${name}_default`;
+
+      if (!(defaultName in this)) {
+        this[defaultName] = desc.default();
+      }
+
+      value = this[defaultName];
+    }
+    else {
+      value = desc.default;
+    }
+  }
+
   value = (value === undefined) ? desc.default : value;
 
   if (desc.cache) { (this.__cache__ = this.__cache__ || {})[name] = value; }
