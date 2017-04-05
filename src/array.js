@@ -105,11 +105,12 @@ TransisArray.from = function(a, mapFn, thisArg) {
   // passed the number of elements to remove and an array of items to add whereas the `splice`
   // method is more flexible in the arguments that it accepts.
   this.prototype._splice = function(i, n, added) {
-    var removed = splice.apply(this, [i, n].concat(added));
+    let removed = splice.apply(this, [i, n].concat(added));
+    let mutated = !util.eq(removed, added);
 
     if (n !== added.length) { this.didChange('size'); }
-    if (i === 0) { this.didChange('first'); }
-    this.didChange('@');
+    if (i === 0 && !util.eq(this[0], removed[0])) { this.didChange('first'); }
+    if (mutated) { this.didChange('@'); }
 
     if (this.__proxy__) {
       removed.forEach(function(x) {
@@ -124,7 +125,9 @@ TransisArray.from = function(a, mapFn, thisArg) {
         }
       }, this);
 
-      this.__proxy__.to.didChange(this.__proxy__.name);
+      if (mutated) {
+        this.__proxy__.to.didChange(this.__proxy__.name);
+      }
     }
 
     return TransisArray.from(removed);
