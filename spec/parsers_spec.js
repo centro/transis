@@ -61,6 +61,7 @@ describe('parseDate', function() {
   it('returns null when given an invalid date string', function() {
     expect(parsers.parseDate('foo')).toBeNull();
     expect(parsers.parseDate('2/4/5/6')).toBeNull();
+    expect(parsers.parseDate('1512')).toBeNull();
     expect(parsers.parseDate('2')).toBeNull();
     expect(parsers.parseDate('')).toBeNull();
   });
@@ -74,6 +75,13 @@ describe('parseDate', function() {
   });
 
   it('returns a Date object when given a property formatted date string', function() {
+    expect(parsers.parseDate('092511')).toEqual(new Date(2011, 8, 25));
+    expect(parsers.parseDate('09252011')).toEqual(new Date(2011, 8, 25));
+    expect(parsers.parseDate('040190')).toEqual(new Date(1990, 3, 1));
+    expect(parsers.parseDate('04011990')).toEqual(new Date(1990, 3, 1));
+    expect(parsers.parseDate('5.3.13')).toEqual(new Date(2013, 4, 3));
+    expect(parsers.parseDate('05+03+13')).toEqual(new Date(2013, 4, 3));
+    expect(parsers.parseDate('05+03!13')).toEqual(new Date(2013, 4, 3));
     expect(parsers.parseDate('5/3/13')).toEqual(new Date(2013, 4, 3));
     expect(parsers.parseDate('05/03/13')).toEqual(new Date(2013, 4, 3));
     expect(parsers.parseDate('5-3-13')).toEqual(new Date(2013, 4, 3));
