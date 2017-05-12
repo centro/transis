@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.11.0]
+### Added
+- Add support for more flexible date parsing. [#46](https://github.com/centro/transis/pull/46)
+
 ## [0.10.0]
 ### Added
 - Add support for the `currentOpts` prop on query arrays. [#43](https://github.com/centro/transis/pull/43)
