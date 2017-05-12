@@ -11,7 +11,7 @@ export function parseNumber(s) {
   return parseFloat(s, 10);
 }
 
-const MDY_DATE_RE     = /^\s*(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\s*$/;
+const MDY_DATE_RE     = /^\s*(\d{1,2})\D?(\d{1,2})(?:\D?(\d{2,4}))?\s*$/;
 const ISO8601_DATE_RE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
 
 // Public: Parses a string containing a percent.
@@ -27,8 +27,10 @@ export function parsePercent(s) {
 // Public: Parses a string containing a date in the following formats:
 //   - YYYY-MM-DD (ISO8601)
 //   - MM/DD
-//   - MM/DD/YY
-//   - MM/DD/YYYY
+//   - MM?DD?YY, where ? is a non-digit character
+//   - MM?DD?YYYY, where ? is a non-digit character
+//   - MMDDYY
+//   - MMDDYYYY
 //
 // s - The string to parse.
 //
