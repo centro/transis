@@ -31,7 +31,7 @@ function postFlush() {
   // and then force update one of its ancestors, which may unnecessarily render the component
   // again.
   components.sort(componentCmp).forEach(function(component) {
-    if (!updateLog[component._transisId] && component.isMounted()) {
+    if (!updateLog[component._transisId]) {
       component.forceUpdate();
     }
   });
@@ -41,6 +41,10 @@ function postFlush() {
 
 function queueUpdate(component) {
   updateQueue[component._transisId] = component;
+}
+
+function unqueueUpdate(component) {
+  delete updateQueue[component._transisId];
 }
 
 function logUpdate(component) {
@@ -71,6 +75,7 @@ export var PropsMixin = function(props) {
     },
 
     componentWillUnmount: function() {
+      unqueueUpdate(this);
       for (let k in props) {
         props[k].forEach(function(prop) {
           if (this.props[k]) { this.props[k].off(prop, this._transisQueueUpdate); }

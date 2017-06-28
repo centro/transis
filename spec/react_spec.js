@@ -14,7 +14,6 @@ describe('PropsMixin', function() {
     this.component = Object.assign({
       props: {model: this.model},
       forceUpdate: jasmine.createSpy('forceUpdate'),
-      isMounted: jasmine.createSpy('isMounted').and.returnValue(true)
     }, PropsMixin({model: ['foo', 'bar']}));
   });
 
@@ -115,7 +114,6 @@ describe('StateMixin', function() {
       setState: jasmine.createSpy('setState').and.callFake(function(state) {
         Object.assign(this.state, state);
       }),
-      isMounted: jasmine.createSpy('isMounted').and.returnValue(true)
     };
   });
 
