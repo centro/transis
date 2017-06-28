@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.11.1]
+### Fixed
+- Fix use of the deprecated `isMounted` call in React mixin. [#47](https://github.com/centro/transis/pull/47)
+
 ## [0.11.0]
 ### Added
 - Add support for more flexible date parsing. [#46](https://github.com/centro/transis/pull/46)
