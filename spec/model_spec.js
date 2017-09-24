@@ -74,7 +74,6 @@ describe('Model', function () {
     this.hasMany('as', 'CircularA', {inverse: 'bs', owner: true});
   });
 
-
   beforeEach(function() {
     BasicModel.mapper = TestMapper;
   });
@@ -3281,6 +3280,66 @@ describe('Model', function () {
           });
         }).toThrow();
       })
+    });
+  });
+
+  describe('instrument', function() {
+    beforeEach(function() {
+      this.post = new Post;
+    });
+
+    afterEach(function() {
+      Model.instrument.stop();
+    });
+
+    describe('start', function() {
+      beforeEach(function() {
+        Model.instrument.start();
+      });
+
+      it('records attr gets', function() {
+        this.post.title;
+        this.post.title;
+        this.post.body;
+        this.post.body;
+        this.post.body;
+        expect(Model.instrument.getLast().attrs['Post#title']).toBe(2);
+        expect(Model.instrument.getLast().attrs['Post#body']).toBe(3);
+      });
+
+      it('records hasOne gets', function() {
+        this.post.author;
+        this.post.author;
+        this.post.author;
+        this.post.author;
+        expect(Model.instrument.getLast().associations['Post#author']).toBe(4);
+      });
+
+      it('records hasMany gets', function() {
+        this.post.tags;
+        this.post.tags;
+        expect(Model.instrument.getLast().associations['Post#tags']).toBe(2);
+      });
+    });
+
+    describe('stop', function() {
+      beforeEach(function() {
+        Model.instrument.start();
+        this.post.title;
+        this.post.body;
+        Model.instrument.stop();
+      });
+
+      it('stops recording get', function() {
+        expect(Model.instrument.getLast().attrs['Post#title']).toBe(1);
+        expect(Model.instrument.getLast().attrs['Post#body']).toBe(1);
+        this.post.title;
+        this.post.title;
+        this.post.body;
+        this.post.body;
+        expect(Model.instrument.getLast().attrs['Post#title']).toBe(1);
+        expect(Model.instrument.getLast().attrs['Post#body']).toBe(1);
+      });
     });
   });
 });
