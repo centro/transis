@@ -650,4 +650,91 @@ describe('Transis.Object', function() {
       }.bind(this)).not.toThrow();
     });
   });
+
+  describe('#proxy', function() {
+    it('sets up the receiver to proxy notifications to the given proxy object', function() {
+      var t = new Test;
+      var proxy = new TransisObject;
+      var spy = jasmine.createSpy();
+
+      t.proxy(proxy, 'test');
+
+      proxy.on('test.str', spy);
+
+      t.str = 'a';
+      TransisObject.flush();
+
+      expect(spy).toHaveBeenCalledWith('test.str');
+    });
+
+    it('works when multiple proxies are registered', function() {
+      var t = new Test;
+      var proxy1 = new TransisObject;
+      var proxy2 = new TransisObject;
+      var spy1 = jasmine.createSpy();
+      var spy2 = jasmine.createSpy();
+
+      t.proxy(proxy1, 'test');
+      t.proxy(proxy2, 'test');
+
+      proxy1.on('test.str', spy1);
+      proxy2.on('test.str', spy2);
+
+      t.str = 'a';
+      TransisObject.flush();
+
+      expect(spy1).toHaveBeenCalledWith('test.str');
+      expect(spy2).toHaveBeenCalledWith('test.str');
+    });
+  });
+
+  describe('#unproxy', function() {
+    it('removes a previously registered proxy', function() {
+      var t = new Test;
+      var proxy = new TransisObject;
+      var spy = jasmine.createSpy();
+
+      t.proxy(proxy, 'test');
+
+      proxy.on('test.str', spy);
+
+      t.str = 'a';
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      t.unproxy(proxy, 'test');
+
+      t.str = 'b';
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('works when multiple proxies are registered', function() {
+      var t = new Test;
+      var proxy1 = new TransisObject;
+      var proxy2 = new TransisObject;
+      var spy1 = jasmine.createSpy();
+      var spy2 = jasmine.createSpy();
+
+      t.proxy(proxy1, 'test');
+      t.proxy(proxy2, 'test');
+
+      proxy1.on('test.str', spy1);
+      proxy2.on('test.str', spy2);
+
+      t.str = 'a';
+      TransisObject.flush();
+
+      expect(spy1).toHaveBeenCalledTimes(1);
+      expect(spy2).toHaveBeenCalledTimes(1);
+
+      t.unproxy(proxy1, 'test');
+
+      t.str = 'b';
+      TransisObject.flush();
+
+      expect(spy1).toHaveBeenCalledTimes(1);
+      expect(spy2).toHaveBeenCalledTimes(2);
+    });
+  });
 });

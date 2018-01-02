@@ -114,13 +114,13 @@ TransisArray.from = function(a, mapFn, thisArg) {
     if (this.__proxy__) {
       removed.forEach(function(x) {
         if (x instanceof TransisObject || x instanceof TransisArray) {
-          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
+          x.unproxy(this.__proxy__.to, this.__proxy__.name);
         }
       }, this);
 
       added.forEach(function(x) {
         if (x instanceof TransisObject || x instanceof TransisArray) {
-          x._registerProxy(this.__proxy__.to, this.__proxy__.name);
+          x.proxy(this.__proxy__.to, this.__proxy__.name);
         }
       }, this);
 
@@ -364,7 +364,7 @@ TransisArray.from = function(a, mapFn, thisArg) {
 
     this.forEach(function(x) {
       if (x instanceof TransisObject || x instanceof TransisArray) {
-        x._registerProxy(to, name);
+        x.proxy(to, name);
       }
     });
 
@@ -376,7 +376,7 @@ TransisArray.from = function(a, mapFn, thisArg) {
     if (this.__proxy__) {
       this.forEach(function(x) {
         if (x instanceof TransisObject || x instanceof TransisArray) {
-          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
+          x.unproxy(this.__proxy__.to, this.__proxy__.name);
         }
       }, this);
       delete this.__proxy__;
