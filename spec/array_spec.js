@@ -805,6 +805,16 @@ describe('Array', function() {
       expect(spy).toHaveBeenCalledWith('things.x');
     });
 
+    it('causes the array to begin proxying its own prop changes to the given object', function() {
+      var spy = jasmine.createSpy();
+      this.to.on('things.size', spy);
+
+      this.a.pop();
+
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledWith('things.size');
+    });
+
     it('handles added objects', function() {
       var spy = jasmine.createSpy(), t = new Test({x: 10});
       this.a.push(t);
@@ -842,6 +852,79 @@ describe('Array', function() {
       A(new Test({x: 1})).proxy(to, 'foos');
       TransisObject.flush();
       expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('works with multiple proxies', function() {
+      var other = new TransisObject;
+      var xspy1 = jasmine.createSpy();
+      var xspy2 = jasmine.createSpy();
+      var sspy1 = jasmine.createSpy();
+      var sspy2 = jasmine.createSpy();
+
+      this.a.proxy(other, 'things');
+
+      this.to.on('things.x', xspy1);
+      this.to.on('things', sspy1);
+      other.on('things.x', xspy2);
+      other.on('things', sspy2);
+
+      this.a[0].x = 10;
+
+      TransisObject.flush();
+      expect(xspy1).toHaveBeenCalledWith('things.x');
+      expect(xspy2).toHaveBeenCalledWith('things.x');
+
+      this.a.pop();
+
+      TransisObject.flush();
+      expect(sspy1).toHaveBeenCalledWith('things');
+      expect(sspy2).toHaveBeenCalledWith('things');
+    });
+  });
+
+  describe('#unproxy', function() {
+    var Test = TransisObject.extend(function() {
+      this.prop('x');
+    });
+
+    beforeEach(function() {
+      this.to = new TransisObject;
+      this.a  = A(new Test({x: 1}), new Test({x: 2}), new Test({x: 3}));
+      this.a.proxy(this.to, 'things');
+      this.spy = jasmine.createSpy();
+      this.to.on('things.x', this.spy);
+    });
+
+    it('stops proxying changes to the array elements', function() {
+      this.a[0].x = 9;
+
+      TransisObject.flush();
+      expect(this.spy).toHaveBeenCalledTimes(1);
+
+      this.a.unproxy(this.to, 'things');
+
+      this.a[0].x = 10;
+
+      TransisObject.flush();
+      expect(this.spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops proxying changes its own props', function() {
+      var spy = jasmine.createSpy();
+
+      this.to.on('things.size', spy);
+
+      this.a.pop();
+
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      this.a.unproxy(this.to, 'things');
+
+      this.a.pop();
+
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledTimes(1);
     });
   });
 
