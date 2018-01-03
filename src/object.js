@@ -72,7 +72,13 @@ function propagateChanges() {
 
     registerChange(object, name);
 
-    if (object.__cache__) { delete object.__cache__[name]; }
+    if (object.__cache__) {
+      let val = object.__cache__[name];
+      if (val && typeof val.unproxy === 'function') {
+        val.unproxy(object, name);
+      }
+      delete object.__cache__[name];
+    }
 
     if (deps) {
       for (let i = 0, n = deps.length; i < n; i++) {
@@ -177,6 +183,9 @@ function defineProp(object, name, opts = {}) {
       (object.__deps__[first] = object.__deps__[first] || []).push(name);
       (object.__deps__[`${first}@`] = object.__deps__[`${first}@`] || []).push(name);
       (object.__deps__[`${first}.${last}@`] = object.__deps__[`${first}.${last}@`] || []).push(name);
+    }
+    else {
+      (object.__deps__[`${prop}@`] = object.__deps__[`${prop}@`] || []).push(name);
     }
   });
 
@@ -464,7 +473,17 @@ TransisObject.prototype._getProp = function(name) {
 
   value = (value === undefined) ? desc.default : value;
 
-  if (desc.cache) { (this.__cache__ = this.__cache__ || {})[name] = value; }
+  if (desc.cache) {
+    this.__cache__ = this.__cache__ || {};
+
+    if (this.__deps__ && this.__deps__[name]) {
+      if (value && typeof value.proxy === 'function') {
+        value.proxy(this, name);
+      }
+    }
+
+    this.__cache__[name] = value;
+  }
 
   return value;
 };
