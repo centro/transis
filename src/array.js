@@ -127,7 +127,7 @@ TransisArray.from = function(a, mapFn, thisArg) {
           }
         }, this);
 
-        object.didChange(name);
+        object.didChange(`${name}@`);
       }
     }
 

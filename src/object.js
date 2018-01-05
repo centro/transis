@@ -122,7 +122,12 @@ function flush() {
 
     for (let k in props) {
       if (k.indexOf('.') === -1) { star = true; }
-      object.notify(k);
+      object.notify(
+        // strip '@' suffix if present
+        k.length > 1 && k[k.length - 1] === '@' && k[k.length - 2] !== '.' ?
+          k.slice(0, k.length - 1) :
+          k
+      );
     }
 
     if (star) { object.notify('*'); }
@@ -165,11 +170,13 @@ function defineProp(object, name, opts = {}) {
     (object.__deps__[prop] = object.__deps__[prop] || []).push(name);
 
     if (prop.indexOf('.') !== -1) {
-      let segments = prop.split('.'), first = segments[0];
+      let segments = prop.split('.'), first = segments[0], last = segments[1];
       if (segments.length > 2) {
         throw new Error(`Transis.Object.defineProp: dependent property paths of more than two segments are not allowed: \`${prop}\``);
       }
       (object.__deps__[first] = object.__deps__[first] || []).push(name);
+      (object.__deps__[`${first}@`] = object.__deps__[`${first}@`] || []).push(name);
+      (object.__deps__[`${first}.${last}@`] = object.__deps__[`${first}.${last}@`] || []).push(name);
     }
   });
 
