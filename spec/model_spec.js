@@ -3192,7 +3192,7 @@ describe('Model', function () {
   });
 
   describe('promise/observer callback ordering', function() {
-    it('executes promise callbacks before observer callbacks', function(done) {
+    it('executes promise callbacks after observer callbacks', function(done) {
       spyOn(BasicModel.mapper, 'get').and.callFake(function() {
         return new Promise(function(resolve) {
           setTimeout(function() { resolve({id: 1, str: 'a'}); }, 1);
@@ -3206,7 +3206,7 @@ describe('Model', function () {
       m.then(function() { calls.push('promise'); });
 
       setTimeout(function() {
-        expect(calls).toEqual(['promise', 'observer']);
+        expect(calls).toEqual(['observer', 'promise']);
         done();
       }, 100);
     });

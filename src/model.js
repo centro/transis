@@ -45,6 +45,33 @@ function checkAssociatedType(desc, o) {
   }
 }
 
+// Internal: Wraps the given promise so that subsequent chained promises are called after the next
+// flush cycle has been run.
+function wrapPromise(promise) {
+  return promise.then(
+    function(value) {
+      return new Promise(
+        function(resolve, reject) {
+          TransisObject.delay(function() {
+            resolve(value);
+          });
+          TransisObject._queueFlush();
+        }
+      );
+    },
+    function(reason) {
+      return new Promise(
+        function(resolve, reject) {
+          TransisObject.delay(function() {
+            reject(reason);
+          });
+          TransisObject._queueFlush();
+        }
+      );
+    }
+  );
+}
+
 // Internal: The overridden `_splice` method used on `hasMany` arrays. This method syncs changes to
 // the array to the inverse side of the association and maintains a list of changes made.
 function hasManySplice(i, n, added) {
@@ -136,7 +163,7 @@ function queryArrayQuery(queryOpts = {}) {
   else {
     this.isBusy = true;
     this.currentOpts = opts;
-    this.__promise__ = this.__modelClass__._callMapper('query', [opts]).then(
+    this.__promise__ = wrapPromise(this.__modelClass__._callMapper('query', [opts]).then(
       (result) => {
         const results = Array.isArray(result) ? result : result.results;
         const meta = Array.isArray(result) ? {} : result.meta;
@@ -171,7 +198,7 @@ function queryArrayQuery(queryOpts = {}) {
         this.error = e;
         return Promise.reject(e);
       }
-    );
+    ));
   }
 
   return this;
@@ -652,7 +679,7 @@ var Model = TransisObject.extend(function() {
     let a = TransisArray.of();
 
     a.__modelClass__ = this;
-    a.__promise__ = Promise.resolve();
+    a.__promise__ = wrapPromise(Promise.resolve());
 
     a.props({
       modelClass: {get: function() { return this.__modelClass__; }},
@@ -705,7 +732,7 @@ var Model = TransisObject.extend(function() {
 
     if (model.isEmpty || opts.refresh) {
       model.isBusy = true;
-      model.__promise__ = this._callMapper('get', [id, getOpts])
+      model.__promise__ = wrapPromise(this._callMapper('get', [id, getOpts])
         .then((result) => {
           model.isBusy = false;
           try { this.load(result); }
@@ -714,7 +741,7 @@ var Model = TransisObject.extend(function() {
           model.isBusy = false;
           model._loadErrors(errors);
           return Promise.reject(errors);
-        });
+        }));
     }
 
     return model;
@@ -769,7 +796,7 @@ var Model = TransisObject.extend(function() {
   this.prototype.init = function(props) {
     this.sourceState = NEW;
     this.isBusy      = false;
-    this.__promise__ = Promise.resolve();
+    this.__promise__ = wrapPromise(Promise.resolve());
     this._clearChanges();
 
     Model.__super__.init.call(this, props);
@@ -973,7 +1000,7 @@ var Model = TransisObject.extend(function() {
 
     this.isBusy = true;
 
-    this.__promise__ = this.constructor._callMapper(this.isNew ? 'create' : 'update', [this, opts])
+    this.__promise__ = wrapPromise(this.constructor._callMapper(this.isNew ? 'create' : 'update', [this, opts])
       .then((attrs) => {
         this.isBusy = false;
         try { this.load(attrs); }
@@ -982,7 +1009,7 @@ var Model = TransisObject.extend(function() {
         this.isBusy = false;
         this._loadErrors(errors);
         return Promise.reject(errors);
-      });
+      }));
 
     return this;
   };
@@ -1006,14 +1033,14 @@ var Model = TransisObject.extend(function() {
     else {
       this.isBusy = true;
 
-      this.__promise__ = this.constructor._callMapper('delete', [this, opts])
+      this.__promise__ = wrapPromise(this.constructor._callMapper('delete', [this, opts])
         .then(() => {
           mapperDeleteSuccess.call(this);
         }, (errors) => {
           this.isBusy = false;
           this._loadErrors(errors);
           return Promise.reject(errors);
-        });
+        }));
     }
 
     return this;

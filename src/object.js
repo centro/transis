@@ -46,6 +46,10 @@ function registerChange(object, prop) {
   changedObjects[object.objectId].props[prop] = true;
 }
 
+function queueFlush() {
+  if (!flushTimer) { flushTimer = setTimeout(flush); }
+}
+
 // Internal: Processes recorded property changes by traversing the property dependency graph and
 // forwarding changes to proxy objects.
 function propagateChanges() {
@@ -177,6 +181,9 @@ function defineProp(object, name, opts = {}) {
   });
 }
 
+// Internal: Queues up a flush to run on the next clock tick if one hasn't been queued up already.
+TransisObject._queueFlush = queueFlush;
+
 // Public: Flush the pending change queue. This should only be used in specs.
 TransisObject.flush = function() {
   clearTimeout(flushTimer);
@@ -187,6 +194,7 @@ TransisObject.flush = function() {
 // Public: Clears the pending change queue. This should only be used in specs.
 TransisObject.clearChangeQueue = function() {
   clearTimeout(flushTimer);
+  flushTimer = null;
   changedObjects = {};
   return this;
 };
@@ -388,10 +396,7 @@ TransisObject.prototype.notify = function(event, ...args) {
 // Returns the receiver.
 TransisObject.prototype.didChange = function(name) {
   registerChange(this, name);
-
-  // ensure that observers get triggered after promise callbacks
-  if (!flushTimer) { flushTimer = setTimeout(function() { Promise.resolve().then(flush); }); }
-
+  queueFlush();
   return this;
 };
 
