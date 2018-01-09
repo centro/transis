@@ -5,8 +5,7 @@
   "main": "dist/index.js",
   "repository": "https://github.com/centro/transis.git",
   "scripts": {
-    "test": "make",
-    "prepublish": "make clean transis"
+    "test": "make"
   },
   "keywords": [
     "model",
