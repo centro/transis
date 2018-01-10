@@ -305,10 +305,10 @@ function hasOneSet(desc, v, sync) {
   }
 
   if (prev) {
-    prev._deregisterProxy(this, name);
+    prev.unproxy(this, name);
   }
   if (v) {
-    v._registerProxy(this, name);
+    v.proxy(this, name);
   }
 }
 
@@ -745,7 +745,7 @@ var Model = _object2.default.extend(function () {
   //
   //   When an item is accessed via the `#at` method from a page that has yet to be fetched, the
   //   query array will automatically invoke the mapper to fetch that page. This effectively gives
-  //   you a sparse array that will automatically lazily load its contents when then are needed.
+  //   you a sparse array that will automatically lazily load its contents when they are needed.
   //   This behavior works very well with a virtualized list component.
   //
   //   Here is an example of the object expected from the mapper:

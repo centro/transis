@@ -220,6 +220,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    registerChange(object, name);
 
 	    if (object.__cache__) {
+	      var val = object.__cache__[name];
+	      if (val && typeof val.unproxy === 'function') {
+	        val.unproxy(object, name);
+	      }
 	      delete object.__cache__[name];
 	    }
 
@@ -278,7 +282,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (k.indexOf('.') === -1) {
 	        star = true;
 	      }
-	      object.notify(k);
+	      object.notify(
+	      // strip '@' suffix if present
+	      k.length > 1 && k[k.length - 1] === '@' && k[k.length - 2] !== '.' ? k.slice(0, k.length - 1) : k);
 	    }
 
 	    if (star) {
@@ -332,11 +338,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (prop.indexOf('.') !== -1) {
 	      var segments = prop.split('.'),
-	          first = segments[0];
+	          first = segments[0],
+	          last = segments[1];
 	      if (segments.length > 2) {
 	        throw new Error('Transis.Object.defineProp: dependent property paths of more than two segments are not allowed: `' + prop + '`');
 	      }
 	      (object.__deps__[first] = object.__deps__[first] || []).push(name);
+	      (object.__deps__[first + '@'] = object.__deps__[first + '@'] || []).push(name);
+	      (object.__deps__[first + '.' + last + '@'] = object.__deps__[first + '.' + last + '@'] || []).push(name);
+	    } else {
+	      (object.__deps__[prop + '@'] = object.__deps__[prop + '@'] || []).push(name);
 	    }
 	  });
 
@@ -617,6 +628,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return util.getPath(this, path);
 	};
 
+	// Public: Registers a proxy object. All prop changes on the receiver will be proxied to the
+	// given proxy object with the given name as a prefix for the property name.
+	TransisObject.prototype.proxy = function (object, name) {
+	  this.__proxies__ = this.__proxies__ || {};
+	  this.__proxies__[object.objectId + ',' + name] = { object: object, name: name };
+	  return this;
+	};
+
+	// Public: Deregisters a proxy object previously registered with `#proxy`.
+	TransisObject.prototype.unproxy = function (object, name) {
+	  if (this.__proxies__) {
+	    delete this.__proxies__[object.objectId + ',' + name];
+	  }
+	  return this;
+	};
+
 	// Internal: Returns the current value of the given property or the default value if it is not
 	// defined.
 	//
@@ -649,7 +676,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  value = value === undefined ? desc.default : value;
 
 	  if (desc.cache) {
-	    (this.__cache__ = this.__cache__ || {})[name] = value;
+	    this.__cache__ = this.__cache__ || {};
+
+	    if (this.__deps__ && this.__deps__[name]) {
+	      if (value && typeof value.proxy === 'function') {
+	        value.proxy(this, name);
+	      }
+	    }
+
+	    this.__cache__[name] = value;
 	  }
 
 	  return value;
@@ -687,22 +722,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  return old;
-	};
-
-	// Internal: Registers a proxy object. All prop changes on the receiver will be proxied to the
-	// given proxy object with the given name as a prefix for the property name.
-	TransisObject.prototype._registerProxy = function (object, name) {
-	  this.__proxies__ = this.__proxies__ || {};
-	  this.__proxies__[object.objectId + ',' + name] = { object: object, name: name };
-	  return this;
-	};
-
-	// Internal: Deregisters a proxy object previously registered with `#_registerProxy`.
-	TransisObject.prototype._deregisterProxy = function (object, name) {
-	  if (this.__proxies__) {
-	    delete this.__proxies__[object.objectId + ',' + name];
-	  }
-	  return this;
 	};
 
 	TransisObject.displayName = 'Transis.Object';
@@ -1192,6 +1211,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // passed the number of elements to remove and an array of items to add whereas the `splice`
 	  // method is more flexible in the arguments that it accepts.
 	  this.prototype._splice = function (i, n, added) {
+	    var _this2 = this;
+
 	    var removed = splice.apply(this, [i, n].concat(added));
 
 	    if (n !== added.length) {
@@ -1202,20 +1223,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    this.didChange('@');
 
-	    if (this.__proxy__) {
-	      removed.forEach(function (x) {
-	        if (x instanceof _object2.default || x instanceof TransisArray) {
-	          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
-	        }
-	      }, this);
+	    if (this.__proxies__) {
+	      var _loop = function _loop(k) {
+	        var _proxies__$k = _this2.__proxies__[k],
+	            object = _proxies__$k.object,
+	            name = _proxies__$k.name;
 
-	      added.forEach(function (x) {
-	        if (x instanceof _object2.default || x instanceof TransisArray) {
-	          x._registerProxy(this.__proxy__.to, this.__proxy__.name);
-	        }
-	      }, this);
 
-	      this.__proxy__.to.didChange(this.__proxy__.name);
+	        removed.forEach(function (x) {
+	          if (x instanceof _object2.default || x instanceof TransisArray) {
+	            x.unproxy(object, name);
+	          }
+	        }, _this2);
+
+	        added.forEach(function (x) {
+	          if (x instanceof _object2.default || x instanceof TransisArray) {
+	            x.proxy(object, name);
+	          }
+	        }, _this2);
+
+	        object.didChange(name + "@");
+	      };
+
+	      for (var k in this.__proxies__) {
+	        _loop(k);
+	      }
 	    }
 
 	    return TransisArray.from(removed);
@@ -1462,31 +1494,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //
 	  // Returns the receiver.
 	  this.prototype.proxy = function (to, name) {
-	    if (this.__proxy__) {
-	      this.unproxy();
-	    }
-
-	    this.__proxy__ = { to: to, name: name };
+	    _object2.default.prototype.proxy.call(this, to, name);
 
 	    this.forEach(function (x) {
 	      if (x instanceof _object2.default || x instanceof TransisArray) {
-	        x._registerProxy(to, name);
+	        x.proxy(to, name);
 	      }
 	    });
 
 	    return this;
 	  };
 
-	  // Public: Stop proxying prop changes.
-	  this.prototype.unproxy = function () {
-	    if (this.__proxy__) {
-	      this.forEach(function (x) {
-	        if (x instanceof _object2.default || x instanceof TransisArray) {
-	          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
-	        }
-	      }, this);
-	      delete this.__proxy__;
-	    }
+	  // Public: Stop proxying prop changes previously set up by `#proxy`.
+	  this.prototype.unproxy = function (to, name) {
+	    _object2.default.prototype.unproxy.call(this, to, name);
+
+	    this.forEach(function (x) {
+	      if (x instanceof _object2.default || x instanceof TransisArray) {
+	        x.unproxy(to, name);
+	      }
+	    }, this);
 
 	    return this;
 	  };
@@ -1819,10 +1846,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  if (prev) {
-	    prev._deregisterProxy(this, name);
+	    prev.unproxy(this, name);
 	  }
 	  if (v) {
-	    v._registerProxy(this, name);
+	    v.proxy(this, name);
 	  }
 	}
 
@@ -2259,7 +2286,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  //
 	  //   When an item is accessed via the `#at` method from a page that has yet to be fetched, the
 	  //   query array will automatically invoke the mapper to fetch that page. This effectively gives
-	  //   you a sparse array that will automatically lazily load its contents when then are needed.
+	  //   you a sparse array that will automatically lazily load its contents when they are needed.
 	  //   This behavior works very well with a virtualized list component.
 	  //
 	  //   Here is an example of the object expected from the mapper:

@@ -99,6 +99,10 @@ function propagateChanges() {
     registerChange(object, name);
 
     if (object.__cache__) {
+      var val = object.__cache__[name];
+      if (val && typeof val.unproxy === 'function') {
+        val.unproxy(object, name);
+      }
       delete object.__cache__[name];
     }
 
@@ -157,7 +161,9 @@ function flush() {
       if (k.indexOf('.') === -1) {
         star = true;
       }
-      object.notify(k);
+      object.notify(
+      // strip '@' suffix if present
+      k.length > 1 && k[k.length - 1] === '@' && k[k.length - 2] !== '.' ? k.slice(0, k.length - 1) : k);
     }
 
     if (star) {
@@ -211,11 +217,16 @@ function defineProp(object, name) {
 
     if (prop.indexOf('.') !== -1) {
       var segments = prop.split('.'),
-          first = segments[0];
+          first = segments[0],
+          last = segments[1];
       if (segments.length > 2) {
         throw new Error('Transis.Object.defineProp: dependent property paths of more than two segments are not allowed: `' + prop + '`');
       }
       (object.__deps__[first] = object.__deps__[first] || []).push(name);
+      (object.__deps__[first + '@'] = object.__deps__[first + '@'] || []).push(name);
+      (object.__deps__[first + '.' + last + '@'] = object.__deps__[first + '.' + last + '@'] || []).push(name);
+    } else {
+      (object.__deps__[prop + '@'] = object.__deps__[prop + '@'] || []).push(name);
     }
   });
 
@@ -496,6 +507,22 @@ TransisObject.prototype.getPath = function (path) {
   return util.getPath(this, path);
 };
 
+// Public: Registers a proxy object. All prop changes on the receiver will be proxied to the
+// given proxy object with the given name as a prefix for the property name.
+TransisObject.prototype.proxy = function (object, name) {
+  this.__proxies__ = this.__proxies__ || {};
+  this.__proxies__[object.objectId + ',' + name] = { object: object, name: name };
+  return this;
+};
+
+// Public: Deregisters a proxy object previously registered with `#proxy`.
+TransisObject.prototype.unproxy = function (object, name) {
+  if (this.__proxies__) {
+    delete this.__proxies__[object.objectId + ',' + name];
+  }
+  return this;
+};
+
 // Internal: Returns the current value of the given property or the default value if it is not
 // defined.
 //
@@ -528,7 +555,15 @@ TransisObject.prototype._getProp = function (name) {
   value = value === undefined ? desc.default : value;
 
   if (desc.cache) {
-    (this.__cache__ = this.__cache__ || {})[name] = value;
+    this.__cache__ = this.__cache__ || {};
+
+    if (this.__deps__ && this.__deps__[name]) {
+      if (value && typeof value.proxy === 'function') {
+        value.proxy(this, name);
+      }
+    }
+
+    this.__cache__[name] = value;
   }
 
   return value;
@@ -566,22 +601,6 @@ TransisObject.prototype._setProp = function (name, value) {
   }
 
   return old;
-};
-
-// Internal: Registers a proxy object. All prop changes on the receiver will be proxied to the
-// given proxy object with the given name as a prefix for the property name.
-TransisObject.prototype._registerProxy = function (object, name) {
-  this.__proxies__ = this.__proxies__ || {};
-  this.__proxies__[object.objectId + ',' + name] = { object: object, name: name };
-  return this;
-};
-
-// Internal: Deregisters a proxy object previously registered with `#_registerProxy`.
-TransisObject.prototype._deregisterProxy = function (object, name) {
-  if (this.__proxies__) {
-    delete this.__proxies__[object.objectId + ',' + name];
-  }
-  return this;
 };
 
 TransisObject.displayName = 'Transis.Object';
