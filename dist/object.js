@@ -1,6 +1,20 @@
-import * as util from "./util";
+'use strict';
 
-var objectId = 0, changedObjects = {}, delayPreFlushCallbacks = [], delayPostFlushCallbacks = [], flushTimer;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _util = require('./util');
+
+var util = _interopRequireWildcard(_util);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var objectId = 0,
+    changedObjects = {},
+    delayPreFlushCallbacks = [],
+    delayPostFlushCallbacks = [],
+    flushTimer;
 
 // Public: `Transis.Object` is the foundation of the `Transis` library. It implements a basic object
 // system and observable properties.
@@ -35,65 +49,79 @@ var objectId = 0, changedObjects = {}, delayPreFlushCallbacks = [], delayPostFlu
 //
 // See `Transis.Object.prop` for defining observable properties.
 function TransisObject() {
-  Object.defineProperty(this, 'objectId', {value: ++objectId});
+  Object.defineProperty(this, 'objectId', { value: ++objectId });
   this.init.apply(this, arguments);
 };
 
 TransisObject.displayName = 'Transis.Object';
 
 function registerChange(object, prop) {
-  changedObjects[object.objectId] = changedObjects[object.objectId] || {object, props: {}};
+  changedObjects[object.objectId] = changedObjects[object.objectId] || { object: object, props: {} };
   changedObjects[object.objectId].props[prop] = true;
 }
 
 function queueFlush() {
-  if (!flushTimer) { flushTimer = setTimeout(flush); }
+  if (!flushTimer) {
+    flushTimer = setTimeout(flush);
+  }
 }
 
 // Internal: Processes recorded property changes by traversing the property dependency graph and
 // forwarding changes to proxy objects.
 function propagateChanges() {
-  let seen = {};
-  let head;
+  var seen = {};
+  var head = void 0;
 
-  for (let id in changedObjects) {
-    let {object, props} = changedObjects[id];
-    for (let k in props) {
-      head = {object, name: k, next: head};
+  for (var id in changedObjects) {
+    var _changedObjects$id = changedObjects[id],
+        object = _changedObjects$id.object,
+        props = _changedObjects$id.props;
+
+    for (var k in props) {
+      head = { object: object, name: k, next: head };
       seen[id + k] = true;
     }
   }
 
   while (head) {
-    let {name, object, object: {objectId, __deps__, __proxies__}} = head;
-    let deps = __deps__ && __deps__[name];
+    var _head = head,
+        name = _head.name,
+        object = _head.object,
+        _head$object = _head.object,
+        _objectId = _head$object.objectId,
+        __deps__ = _head$object.__deps__,
+        __proxies__ = _head$object.__proxies__;
+
+    var deps = __deps__ && __deps__[name];
 
     head = head.next;
 
     registerChange(object, name);
 
-    if (object.__cache__) { delete object.__cache__[name]; }
+    if (object.__cache__) {
+      delete object.__cache__[name];
+    }
 
     if (deps) {
-      for (let i = 0, n = deps.length; i < n; i++) {
-        let seenKey = objectId + deps[i];
+      for (var i = 0, n = deps.length; i < n; i++) {
+        var seenKey = _objectId + deps[i];
 
         if (!seen[seenKey]) {
-          head = {object, name: deps[i], next: head};
+          head = { object: object, name: deps[i], next: head };
           seen[seenKey] = true;
         }
       }
     }
 
     if (__proxies__ && name.indexOf('.') === -1) {
-      for (let k in __proxies__) {
-        let proxy = __proxies__[k];
-        let proxyObject = proxy.object;
-        let proxyName = `${proxy.name}.${name}`;
-        let proxySeenKey = proxyObject.objectId + proxyName;
+      for (var _k in __proxies__) {
+        var proxy = __proxies__[_k];
+        var proxyObject = proxy.object;
+        var proxyName = proxy.name + '.' + name;
+        var proxySeenKey = proxyObject.objectId + proxyName;
 
         if (!seen[proxySeenKey]) {
-          head = {object: proxyObject, name: proxyName, next: head};
+          head = { object: proxyObject, name: proxyName, next: head };
           seen[proxySeenKey] = true;
         }
       }
@@ -106,41 +134,58 @@ function propagateChanges() {
 // flush, regardless of how many of their dependent props have changed. Additionaly, cached values
 // are cleared where appropriate.
 function flush() {
-  let f;
+  var f = void 0;
 
-  while ((f = delayPreFlushCallbacks.shift())) { f(); }
+  while (f = delayPreFlushCallbacks.shift()) {
+    f();
+  }
 
   propagateChanges();
 
-  let curChangedObjects = changedObjects;
+  var curChangedObjects = changedObjects;
   changedObjects = {};
   flushTimer = null;
 
-  for (let id in curChangedObjects) {
-    let {object, props} = curChangedObjects[id];
-    let star = false;
+  for (var id in curChangedObjects) {
+    var _curChangedObjects$id = curChangedObjects[id],
+        object = _curChangedObjects$id.object,
+        props = _curChangedObjects$id.props;
 
-    for (let k in props) {
-      if (k.indexOf('.') === -1) { star = true; }
+    var star = false;
+
+    for (var k in props) {
+      if (k.indexOf('.') === -1) {
+        star = true;
+      }
       object.notify(k);
     }
 
-    if (star) { object.notify('*'); }
+    if (star) {
+      object.notify('*');
+    }
   }
 
-  while ((f = delayPostFlushCallbacks.shift())) { f(); }
+  while (f = delayPostFlushCallbacks.shift()) {
+    f();
+  }
 }
 
 // Internal: Indicates whether the current name has a value cached.
-function isCached(name) { return this.__cache__ ? this.__cache__.hasOwnProperty(name) : false; }
+function isCached(name) {
+  return this.__cache__ ? this.__cache__.hasOwnProperty(name) : false;
+}
 
 // Internal: Returns the cached value for the given name.
-function getCached(name) { return this.__cache__ ? this.__cache__[name] : undefined; }
+function getCached(name) {
+  return this.__cache__ ? this.__cache__[name] : undefined;
+}
 
 // Internal: Defines a property on the given object. See the docs for `Transis.prop`.
 //
 // Returns nothing.
-function defineProp(object, name, opts = {}) {
+function defineProp(object, name) {
+  var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
   var descriptor = Object.assign({
     name: name,
     get: null,
@@ -148,8 +193,8 @@ function defineProp(object, name, opts = {}) {
     default: undefined,
     on: [],
     cache: false,
-    pure: !!(opts.get && opts.on && !opts.set),
-  }, opts, {readonly: opts.get && !opts.set});
+    pure: !!(opts.get && opts.on && !opts.set)
+  }, opts, { readonly: opts.get && !opts.set });
 
   if (!object.hasOwnProperty('__props__')) {
     object.__props__ = Object.create(object.__props__ || null);
@@ -161,21 +206,26 @@ function defineProp(object, name, opts = {}) {
     object.__deps__ = Object.create(object.__deps__ || null);
   }
 
-  descriptor.on.forEach(function(prop) {
+  descriptor.on.forEach(function (prop) {
     (object.__deps__[prop] = object.__deps__[prop] || []).push(name);
 
     if (prop.indexOf('.') !== -1) {
-      let segments = prop.split('.'), first = segments[0];
+      var segments = prop.split('.'),
+          first = segments[0];
       if (segments.length > 2) {
-        throw new Error(`Transis.Object.defineProp: dependent property paths of more than two segments are not allowed: \`${prop}\``);
+        throw new Error('Transis.Object.defineProp: dependent property paths of more than two segments are not allowed: `' + prop + '`');
       }
       (object.__deps__[first] = object.__deps__[first] || []).push(name);
     }
   });
 
   Object.defineProperty(object, name, {
-    get: function() { return this._getProp(name); },
-    set: descriptor.readonly ? undefined : function(value) { this._setProp(name, value); },
+    get: function get() {
+      return this._getProp(name);
+    },
+    set: descriptor.readonly ? undefined : function (value) {
+      this._setProp(name, value);
+    },
     configurable: false,
     enumerable: true
   });
@@ -185,14 +235,14 @@ function defineProp(object, name, opts = {}) {
 TransisObject._queueFlush = queueFlush;
 
 // Public: Flush the pending change queue. This should only be used in specs.
-TransisObject.flush = function() {
+TransisObject.flush = function () {
   clearTimeout(flushTimer);
   flush();
   return this;
 };
 
 // Public: Clears the pending change queue. This should only be used in specs.
-TransisObject.clearChangeQueue = function() {
+TransisObject.clearChangeQueue = function () {
   clearTimeout(flushTimer);
   flushTimer = null;
   changedObjects = {};
@@ -204,7 +254,7 @@ TransisObject.clearChangeQueue = function() {
 // f - A function.
 //
 // Returns the receiver;
-TransisObject.delayPreFlush = function(f) {
+TransisObject.delayPreFlush = function (f) {
   delayPreFlushCallbacks.push(f);
   return this;
 };
@@ -214,22 +264,30 @@ TransisObject.delayPreFlush = function(f) {
 // f - A function.
 //
 // Returns the receiver;
-TransisObject.delay = function(f) {
+TransisObject.delay = function (f) {
   delayPostFlushCallbacks.push(f);
   return this;
 };
 
 // Public: Creates a subclass of `Transis.Object`.
-TransisObject.extend = function(f) {
-  var subclass = function() { TransisObject.apply(this, arguments); };
+TransisObject.extend = function (f) {
+  var subclass = function subclass() {
+    TransisObject.apply(this, arguments);
+  };
 
-  for (let k in this) { if (this.hasOwnProperty(k)) { subclass[k] = this[k]; } }
+  for (var k in this) {
+    if (this.hasOwnProperty(k)) {
+      subclass[k] = this[k];
+    }
+  }
 
   subclass.prototype = Object.create(this.prototype);
   subclass.prototype.constructor = subclass;
   subclass.__super__ = this.prototype;
 
-  if (typeof f === 'function') { f.call(subclass); }
+  if (typeof f === 'function') {
+    f.call(subclass);
+  }
 
   return subclass;
 };
@@ -280,7 +338,9 @@ TransisObject.extend = function(f) {
 //   // fullName changed: Jane Doe
 //
 // Returns the receiver.
-TransisObject.prop = function(name, opts = {}) {
+TransisObject.prop = function (name) {
+  var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
   defineProp(this.prototype, name, opts);
   return this;
 };
@@ -291,13 +351,17 @@ TransisObject.prop = function(name, opts = {}) {
 //         available options.
 //
 // Returns the receiver.
-TransisObject.props = function(props) {
-  for (let name in props) { this.prop(name, props[name]); }
+TransisObject.props = function (props) {
+  for (var name in props) {
+    this.prop(name, props[name]);
+  }
   return this;
 };
 
 // Public: Returns a string containing the class's name.
-TransisObject.toString = function() { return this.displayName || this.name || '(Unknown)'; };
+TransisObject.toString = function () {
+  return this.displayName || this.name || '(Unknown)';
+};
 
 // Public: The `Transis.Object` initializer. Sets the given props and begins observing dependent
 // property events. This method should never be called directly, its called by the `Transis.Object`
@@ -305,11 +369,17 @@ TransisObject.toString = function() { return this.displayName || this.name || '(
 //
 // props - An object containing properties to set. Only properties defined via `Transis.Object.prop`
 //         are settable.
-TransisObject.prototype.init = function(props) { if (props) { this.set(props); } };
+TransisObject.prototype.init = function (props) {
+  if (props) {
+    this.set(props);
+  }
+};
 
 // Public: Defines an observable property directly on the receiver. See the `Transis.Object.prop`
 // method for available options.
-TransisObject.prototype.prop = function(name, opts = {}) {
+TransisObject.prototype.prop = function (name) {
+  var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
   defineProp(this, name, opts);
   return this;
 };
@@ -323,8 +393,8 @@ TransisObject.prototype.props = TransisObject.props;
 // props - An object containing props to set.
 //
 // Returns nothing.
-TransisObject.prototype.set = function(props) {
-  for (let k in props) {
+TransisObject.prototype.set = function (props) {
+  for (var k in props) {
     if (this.__props__ && this.__props__[k] && !this.__props__[k].readonly) {
       this[k] = props[k];
     }
@@ -339,7 +409,7 @@ TransisObject.prototype.set = function(props) {
 // callback - A function to invoke when the prop changes.
 //
 // Returns the receiver.
-TransisObject.prototype.on = function(prop, callback) {
+TransisObject.prototype.on = function (prop, callback) {
   this.__observers__ = this.__observers__ || {};
   this.__observers__[prop] = this.__observers__[prop] || [];
   this.__observers__[prop].push(callback);
@@ -352,9 +422,9 @@ TransisObject.prototype.on = function(prop, callback) {
 // callback - The function passed to `Transis.Object#on`.
 //
 // Returns the receiver.
-TransisObject.prototype.off = function(prop, callback) {
+TransisObject.prototype.off = function (prop, callback) {
   if (this.__observers__ && this.__observers__[prop]) {
-    for (let i = this.__observers__[prop].length - 1; i >= 0; i--) {
+    for (var i = this.__observers__[prop].length - 1; i >= 0; i--) {
       if (this.__observers__[prop][i] === callback) {
         this.__observers__[prop].splice(i, 1);
       }
@@ -370,14 +440,19 @@ TransisObject.prototype.off = function(prop, callback) {
 // ...args - Zero or more additional arguments to pass along to observers.
 //
 // Returns the receiver.
-TransisObject.prototype.notify = function(event, ...args) {
+TransisObject.prototype.notify = function (event) {
   if (this.__observers__ && this.__observers__[event]) {
-    for (let i = 0, n = this.__observers__[event].length; i < n; i++) {
+    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    for (var i = 0, n = this.__observers__[event].length; i < n; i++) {
       if (this.__observers__[event][i]) {
         try {
-          this.__observers__[event][i](event, ...args);
-        }
-        catch (e) {
+          var _observers__$event;
+
+          (_observers__$event = this.__observers__[event])[i].apply(_observers__$event, [event].concat(args));
+        } catch (e) {
           console.error('Transis.Object#notify: exception caught in observer:', e);
         }
       }
@@ -394,15 +469,15 @@ TransisObject.prototype.notify = function(event, ...args) {
 // name - The name of the prop that has changed.
 //
 // Returns the receiver.
-TransisObject.prototype.didChange = function(name) {
+TransisObject.prototype.didChange = function (name) {
   registerChange(this, name);
   queueFlush();
   return this;
 };
 
 // Public: Returns a string representation of the object.
-TransisObject.prototype.toString = function() {
-  return `#<${this.constructor}:${this.objectId}>`;
+TransisObject.prototype.toString = function () {
+  return '#<' + this.constructor + ':' + this.objectId + '>';
 };
 
 // Public: Indicates whether the receiver is equal to the given object. The default implementation
@@ -412,38 +487,49 @@ TransisObject.prototype.toString = function() {
 // o - An object to compare against the receiver.
 //
 // Returns a `true` if the objects are equal and `false` otherwise.
-TransisObject.prototype.eq = function(other) { return this === other; };
+TransisObject.prototype.eq = function (other) {
+  return this === other;
+};
 
 // Public: Resolves the given path into a value, relative to the receiver. See `util.getPath`.
-TransisObject.prototype.getPath = function(path) { return util.getPath(this, path); };
+TransisObject.prototype.getPath = function (path) {
+  return util.getPath(this, path);
+};
 
 // Internal: Returns the current value of the given property or the default value if it is not
 // defined.
 //
 // Returns the value of the property.
 // Throws `Error` if there is no property with the given name.
-TransisObject.prototype._getProp = function(name) {
-  var desc = this.__props__ && this.__props__[name], value;
+TransisObject.prototype._getProp = function (name) {
+  var _this = this;
+
+  var desc = this.__props__ && this.__props__[name],
+      value;
 
   if (!desc) {
-    throw new Error(`Transis.Object#_getProp: unknown prop name \`${name}\``);
+    throw new Error('Transis.Object#_getProp: unknown prop name `' + name + '`');
   }
 
-  if (desc.cache && isCached.call(this, name)) { return getCached.call(this, name); }
+  if (desc.cache && isCached.call(this, name)) {
+    return getCached.call(this, name);
+  }
 
   if (desc.get && desc.pure) {
-    value = desc.get.apply(null, desc.on.map((path) => this.getPath(path)));
-  }
-  else if (desc.get) {
+    value = desc.get.apply(null, desc.on.map(function (path) {
+      return _this.getPath(path);
+    }));
+  } else if (desc.get) {
     value = desc.get.call(this);
-  }
-  else {
-    value = this[`__${name}`];
+  } else {
+    value = this['__' + name];
   }
 
-  value = (value === undefined) ? desc.default : value;
+  value = value === undefined ? desc.default : value;
 
-  if (desc.cache) { (this.__cache__ = this.__cache__ || {})[name] = value; }
+  if (desc.cache) {
+    (this.__cache__ = this.__cache__ || {})[name] = value;
+  }
 
   return value;
 };
@@ -456,21 +542,24 @@ TransisObject.prototype._getProp = function(name) {
 // Returns the previous value.
 // Throws `Error` if there is no property with the given name.
 // Throws `TypeError` if the property is readonly.
-TransisObject.prototype._setProp = function(name, value) {
+TransisObject.prototype._setProp = function (name, value) {
   var descriptor = this.__props__ && this.__props__[name],
-      key        = `__${name}`,
-      old        = this._getProp(name);
+      key = '__' + name,
+      old = this._getProp(name);
 
   if (!descriptor) {
-    throw new Error(`Transis.Object#_setProp: unknown prop name \`${name}\``);
+    throw new Error('Transis.Object#_setProp: unknown prop name `' + name + '`');
   }
 
   if (descriptor.readonly) {
-    throw new TypeError(`Transis.Object#_setProp: cannot set readonly property \`${name}\` of ${this}`);
+    throw new TypeError('Transis.Object#_setProp: cannot set readonly property `' + name + '` of ' + this);
   }
 
-  if (descriptor.set) { descriptor.set.call(this, value); }
-  else { this[key] = value; }
+  if (descriptor.set) {
+    descriptor.set.call(this, value);
+  } else {
+    this[key] = value;
+  }
 
   if (!util.eq(old, this[key])) {
     this.didChange(name);
@@ -481,18 +570,21 @@ TransisObject.prototype._setProp = function(name, value) {
 
 // Internal: Registers a proxy object. All prop changes on the receiver will be proxied to the
 // given proxy object with the given name as a prefix for the property name.
-TransisObject.prototype._registerProxy = function(object, name) {
+TransisObject.prototype._registerProxy = function (object, name) {
   this.__proxies__ = this.__proxies__ || {};
-  this.__proxies__[`${object.objectId},${name}`] = {object, name};
+  this.__proxies__[object.objectId + ',' + name] = { object: object, name: name };
   return this;
 };
 
 // Internal: Deregisters a proxy object previously registered with `#_registerProxy`.
-TransisObject.prototype._deregisterProxy = function(object, name) {
-  if (this.__proxies__) { delete this.__proxies__[`${object.objectId},${name}`]; }
+TransisObject.prototype._deregisterProxy = function (object, name) {
+  if (this.__proxies__) {
+    delete this.__proxies__[object.objectId + ',' + name];
+  }
   return this;
 };
 
 TransisObject.displayName = 'Transis.Object';
 
-export default TransisObject;
+exports.default = TransisObject;
+module.exports = exports['default'];

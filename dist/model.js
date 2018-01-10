@@ -1,17 +1,51 @@
-import pluralize from "pluralize";
-import IdMap from "./id_map";
-import TransisObject from "./object";
-import TransisArray from "./array";
-import Validations from "./validations";
-import * as attrs from "./attrs";
-import * as util from "./util";
+"use strict";
 
-var registeredAttrs = {}, subclasses = {}, loads = [];
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
-const NEW     = 'new';
-const EMPTY   = 'empty';
-const LOADED  = 'loaded';
-const DELETED = 'deleted';
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _pluralize = require("pluralize");
+
+var _pluralize2 = _interopRequireDefault(_pluralize);
+
+var _id_map = require("./id_map");
+
+var _id_map2 = _interopRequireDefault(_id_map);
+
+var _object = require("./object");
+
+var _object2 = _interopRequireDefault(_object);
+
+var _array = require("./array");
+
+var _array2 = _interopRequireDefault(_array);
+
+var _validations = require("./validations");
+
+var _validations2 = _interopRequireDefault(_validations);
+
+var _attrs = require("./attrs");
+
+var attrs = _interopRequireWildcard(_attrs);
+
+var _util = require("./util");
+
+var util = _interopRequireWildcard(_util);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var registeredAttrs = {},
+    subclasses = {},
+    loads = [];
+
+var NEW = 'new';
+var EMPTY = 'empty';
+var LOADED = 'loaded';
+var DELETED = 'deleted';
 
 // Internal: Returns the `Transis.Model` subclass with the given name.
 //
@@ -22,11 +56,13 @@ const DELETED = 'deleted';
 // Returns the resolved subclass constructor function or `undefined` if a class with the given
 //   name is not known.
 // Throws `Error` if the `raise` argument is `true` and the name cannot not be resolved.
-function resolve(name, raise = true) {
-  var klass = (typeof name === 'function') ? name : subclasses[name];
+function resolve(name) {
+  var raise = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+  var klass = typeof name === 'function' ? name : subclasses[name];
 
   if (!klass && raise) {
-    throw new Error(`Transis.Model.resolve: could not resolve subclass: \`${name}\``);
+    throw new Error("Transis.Model.resolve: could not resolve subclass: `" + name + "`");
   }
 
   return klass;
@@ -41,67 +77,80 @@ function checkAssociatedType(desc, o) {
   var klass = resolve(desc.klass);
 
   if (o && !(o instanceof klass)) {
-    throw new Error(`${desc.debugName}: expected an object of type \`${desc.klass}\` but received \`${o}\` instead`);
+    throw new Error(desc.debugName + ": expected an object of type `" + desc.klass + "` but received `" + o + "` instead");
   }
 }
 
 // Internal: Wraps the given promise so that subsequent chained promises are called after the next
 // flush cycle has been run.
 function wrapPromise(promise) {
-  return promise.then(
-    function(value) {
-      return new Promise(
-        function(resolve, reject) {
-          TransisObject.delay(function() {
-            resolve(value);
-          });
-          TransisObject._queueFlush();
-        }
-      );
-    },
-    function(reason) {
-      return new Promise(
-        function(resolve, reject) {
-          TransisObject.delay(function() {
-            reject(reason);
-          });
-          TransisObject._queueFlush();
-        }
-      );
-    }
-  );
+  return promise.then(function (value) {
+    return new Promise(function (resolve, reject) {
+      _object2.default.delay(function () {
+        resolve(value);
+      });
+      _object2.default._queueFlush();
+    });
+  }, function (reason) {
+    return new Promise(function (resolve, reject) {
+      _object2.default.delay(function () {
+        reject(reason);
+      });
+      _object2.default._queueFlush();
+    });
+  });
 }
 
 // Internal: The overridden `_splice` method used on `hasMany` arrays. This method syncs changes to
 // the array to the inverse side of the association and maintains a list of changes made.
 function hasManySplice(i, n, added) {
-  var owner = this.__owner__, desc = this.__desc__, inverse = desc.inverse, name = desc.name,
-      removed, changes, i;
+  var owner = this.__owner__,
+      desc = this.__desc__,
+      inverse = desc.inverse,
+      name = desc.name,
+      removed,
+      changes,
+      i;
 
-  added.forEach((o) => checkAssociatedType(desc, o));
+  added.forEach(function (o) {
+    return checkAssociatedType(desc, o);
+  });
 
-  removed = TransisArray.prototype._splice.call(this, i, n, added);
+  removed = _array2.default.prototype._splice.call(this, i, n, added);
 
   if (inverse && !this.__handlingInverse__) {
-    removed.forEach(function(model) { model._inverseRemoved(inverse, owner); }, this);
-    added.forEach(function(model) { model._inverseAdded(inverse, owner); }, this);
+    removed.forEach(function (model) {
+      model._inverseRemoved(inverse, owner);
+    }, this);
+    added.forEach(function (model) {
+      model._inverseAdded(inverse, owner);
+    }, this);
   }
 
   if (desc.owner && !loads.length) {
-    changes = owner.ownChanges[name] = owner.ownChanges[name] || {added: [], removed: []};
+    changes = owner.ownChanges[name] = owner.ownChanges[name] || { added: [], removed: [] };
 
-    removed.forEach((m) => {
-      if ((i = changes.added.indexOf(m)) !== -1) { changes.added.splice(i, 1); }
-      else if (changes.removed.indexOf(m) === -1) { changes.removed.push(m); }
+    removed.forEach(function (m) {
+      if ((i = changes.added.indexOf(m)) !== -1) {
+        changes.added.splice(i, 1);
+      } else if (changes.removed.indexOf(m) === -1) {
+        changes.removed.push(m);
+      }
     });
 
-    added.forEach((m) => {
-      if ((i = changes.removed.indexOf(m)) !== -1) { changes.removed.splice(i, 1); }
-      else if (changes.added.indexOf(m) === -1) { changes.added.push(m); }
+    added.forEach(function (m) {
+      if ((i = changes.removed.indexOf(m)) !== -1) {
+        changes.removed.splice(i, 1);
+      } else if (changes.added.indexOf(m) === -1) {
+        changes.added.push(m);
+      }
     });
 
-    if (!changes.added.length && !changes.removed.length) { owner._clearChange(name); }
-    else { owner._setChange(name, changes); }
+    if (!changes.added.length && !changes.removed.length) {
+      owner._clearChange(name);
+    } else {
+      owner._setChange(name, changes);
+    }
   }
 
   return removed;
@@ -131,92 +180,100 @@ function hasManyInverseRemove(model) {
 // `Transis.Array` that overrides the `_splice` method in order to handle syncing the inverse side
 // of the association.
 function hasManyArray(owner, desc) {
-  var a = TransisArray.of();
+  var a = _array2.default.of();
   a.proxy(owner, desc.name);
-  a.__owner__      = owner;
-  a.__desc__       = desc;
-  a._splice        = hasManySplice;
-  a._inverseAdd    = hasManyInverseAdd;
+  a.__owner__ = owner;
+  a.__desc__ = desc;
+  a._splice = hasManySplice;
+  a._inverseAdd = hasManyInverseAdd;
   a._inverseRemove = hasManyInverseRemove;
   return a;
 }
 
 // Internal: Provides the implementation of the query array's `query` method.
-function queryArrayQuery(queryOpts = {}) {
-  const opts = Object.assign({}, this.baseOpts, queryOpts);
+function queryArrayQuery() {
+  var _this = this;
 
-  if (this.isPaged) { opts.page = opts.page || 1; }
+  var queryOpts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+  var opts = Object.assign({}, this.baseOpts, queryOpts);
+
+  if (this.isPaged) {
+    opts.page = opts.page || 1;
+  }
 
   if (this.isBusy) {
-    if (util.eq(opts, this.currentOpts)) { return this; }
+    if (util.eq(opts, this.currentOpts)) {
+      return this;
+    }
 
     if (!this.__queued__) {
-      this.__promise__ = this.__promise__.then(() => {
-        this.query(this.__queued__);
-        this.__queued__ = undefined;
-        return this.__promise__;
+      this.__promise__ = this.__promise__.then(function () {
+        _this.query(_this.__queued__);
+        _this.__queued__ = undefined;
+        return _this.__promise__;
       });
     }
 
     this.__queued__ = opts;
-  }
-  else {
+  } else {
     this.isBusy = true;
     this.currentOpts = opts;
-    this.__promise__ = wrapPromise(this.__modelClass__._callMapper('query', [opts]).then(
-      (result) => {
-        const results = Array.isArray(result) ? result : result.results;
-        const meta = Array.isArray(result) ? {} : result.meta;
+    this.__promise__ = wrapPromise(this.__modelClass__._callMapper('query', [opts]).then(function (result) {
+      var results = Array.isArray(result) ? result : result.results;
+      var meta = Array.isArray(result) ? {} : result.meta;
 
-        this.isBusy = false;
-        this.meta = meta;
-        this.error = undefined;
+      _this.isBusy = false;
+      _this.meta = meta;
+      _this.error = undefined;
 
-        if (!results) {
-          throw new Error(`${this}#query: mapper failed to return any results`);
-        }
-
-        if (this.isPaged && typeof meta.totalCount !== 'number') {
-          throw new Error(`${this}#query: mapper failed to return total count for paged query`);
-        }
-
-        try {
-          const models = this.__modelClass__.loadAll(results);
-
-          if (this.isPaged) {
-            this.length = meta.totalCount;
-            this.splice.apply(this, [(opts.page - 1) * this.baseOpts.pageSize, models.length].concat(models));
-          }
-          else {
-            this.replace(models);
-          }
-        }
-        catch (e) { console.error(e); throw e; }
-      },
-      (e) => {
-        this.isBusy = false;
-        this.error = e;
-        return Promise.reject(e);
+      if (!results) {
+        throw new Error(_this + "#query: mapper failed to return any results");
       }
-    ));
+
+      if (_this.isPaged && typeof meta.totalCount !== 'number') {
+        throw new Error(_this + "#query: mapper failed to return total count for paged query");
+      }
+
+      try {
+        var models = _this.__modelClass__.loadAll(results);
+
+        if (_this.isPaged) {
+          _this.length = meta.totalCount;
+          _this.splice.apply(_this, [(opts.page - 1) * _this.baseOpts.pageSize, models.length].concat(models));
+        } else {
+          _this.replace(models);
+        }
+      } catch (e) {
+        console.error(e);throw e;
+      }
+    }, function (e) {
+      _this.isBusy = false;
+      _this.error = e;
+      return Promise.reject(e);
+    }));
   }
 
   return this;
 }
 
 // Internal: Provides the implementation of the query array's `then` method.
-function queryArrayThen(f1, f2) { return this.__promise__.then(f1, f2); }
+function queryArrayThen(f1, f2) {
+  return this.__promise__.then(f1, f2);
+}
 
 // Internal: Provides the implementation of the query array's `catch` method.
-function queryArrayCatch(f) { return this.__promise__.catch(f); }
+function queryArrayCatch(f) {
+  return this.__promise__.catch(f);
+}
 
 // Internal: Provides the implementation of the query array's `at` method.
 function queryArrayAt(i) {
-  const r = TransisArray.prototype.at.apply(this, arguments);
-  const pageSize = this.baseOpts && this.baseOpts.pageSize;
+  var r = _array2.default.prototype.at.apply(this, arguments);
+  var pageSize = this.baseOpts && this.baseOpts.pageSize;
 
   if (arguments.length === 1 && !r && pageSize) {
-    this.query({page: Math.floor(i / pageSize) + 1});
+    this.query({ page: Math.floor(i / pageSize) + 1 });
   }
 
   return r;
@@ -231,59 +288,83 @@ function queryArrayAt(i) {
 // Returns nothing.
 // Throws `Error` if the given object isn't of the type specified in the association descriptor.
 function hasOneSet(desc, v, sync) {
-  var name  = desc.name, k = `__${name}`, prev = this[k], inv = desc.inverse;
+  var name = desc.name,
+      k = "__" + name,
+      prev = this[k],
+      inv = desc.inverse;
 
   checkAssociatedType(desc, v);
 
   this[k] = v;
 
-  if (sync && inv && prev) { prev._inverseRemoved(inv, this); }
-  if (sync && inv && v) { v._inverseAdded(inv, this); }
+  if (sync && inv && prev) {
+    prev._inverseRemoved(inv, this);
+  }
+  if (sync && inv && v) {
+    v._inverseAdded(inv, this);
+  }
 
-  if (prev) { prev._deregisterProxy(this, name); }
-  if (v) { v._registerProxy(this, name); }
+  if (prev) {
+    prev._deregisterProxy(this, name);
+  }
+  if (v) {
+    v._registerProxy(this, name);
+  }
 }
 
 // Internal: Callback for a successful model deletion. Updates the model's state, removes it from
 // the identity map, and removes removes it from any associations its currently participating in.
 function mapperDeleteSuccess() {
-  IdMap.delete(this);
+  var _this2 = this;
+
+  _id_map2.default.delete(this);
   this.isBusy = false;
   this.sourceState = DELETED;
   this._clearErrors();
 
-  for (let name in this.associations) {
-    let desc = this.associations[name];
-    if (!desc.inverse) { continue; }
-    if (desc.type === 'hasOne') {
-      let m;
-      if (m = this[name]) {
-        m._inverseRemoved(desc.inverse, this);
-      }
+  var _loop = function _loop(name) {
+    var desc = _this2.associations[name];
+    if (!desc.inverse) {
+      return "continue";
     }
-    else if (desc.type === 'hasMany') {
-      this[name].slice(0).forEach((m) => {
-        m._inverseRemoved(desc.inverse, this);
+    if (desc.type === 'hasOne') {
+      var m = void 0;
+      if (m = _this2[name]) {
+        m._inverseRemoved(desc.inverse, _this2);
+      }
+    } else if (desc.type === 'hasMany') {
+      _this2[name].slice(0).forEach(function (m) {
+        m._inverseRemoved(desc.inverse, _this2);
       });
     }
+  };
+
+  for (var name in this.associations) {
+    var _ret = _loop(name);
+
+    if (_ret === "continue") continue;
   }
 }
 
-var Model = TransisObject.extend(function() {
+var Model = _object2.default.extend(function () {
   this.displayName = 'Transis.Model';
 
   // Public: Creates a subclass of `Transis.Model`. This method overrides the `Transis.Object.extend`
   // method in order to force `Model` subclasses to be named.
-  this.extend = function(name, f) {
-    if (typeof name !== 'string') { throw new Error(`${this}.extend: a name is required`); }
+  this.extend = function (name, f) {
+    if (typeof name !== 'string') {
+      throw new Error(this + ".extend: a name is required");
+    }
 
-    var subclass = TransisObject.extend.call(this);
+    var subclass = _object2.default.extend.call(this);
     subclass.displayName = name;
     subclasses[name] = subclass;
 
-    if (typeof f === 'function') { f.call(subclass); }
+    if (typeof f === 'function') {
+      f.call(subclass);
+    }
 
-    if(this.displayName !== 'Transis.Model') {
+    if (this.displayName !== 'Transis.Model') {
       this.subclasses = this.subclasses || [];
       this.subclasses.push(name);
     }
@@ -291,9 +372,9 @@ var Model = TransisObject.extend(function() {
     return subclass;
   };
 
-  this.resolveSubclass = function(name) {
-    if(!this.subclasses || this.subclasses.indexOf(name) < 0) {
-      throw new Error(`${this}.resolveSubclass: could not find subclass ${name}`);
+  this.resolveSubclass = function (name) {
+    if (!this.subclasses || this.subclasses.indexOf(name) < 0) {
+      throw new Error(this + ".resolveSubclass: could not find subclass " + name);
     }
 
     return resolve(name);
@@ -309,8 +390,8 @@ var Model = TransisObject.extend(function() {
   // id - The id of the model.
   //
   // Returns a new instance of the class.
-  this.empty = function(id) {
-    var model = new this({id: id});
+  this.empty = function (id) {
+    var model = new this({ id: id });
     model.sourceState = EMPTY;
     return model;
   };
@@ -327,9 +408,9 @@ var Model = TransisObject.extend(function() {
   //             `.attr` method.
   //
   // Returns the receiver.
-  this.registerAttr = function(name, converter) {
+  this.registerAttr = function (name, converter) {
     if (registeredAttrs[name]) {
-      throw new Error(`${this}.registerAttr: an attribute with the name \`${name}\` has already been defined`);
+      throw new Error(this + ".registerAttr: an attribute with the name `" + name + "` has already been defined");
     }
 
     registeredAttrs[name] = converter;
@@ -360,22 +441,28 @@ var Model = TransisObject.extend(function() {
   //        `{}`).
   //
   // Returns the receiver.
-  this.attr = function(name, type, opts = {}) {
+  this.attr = function (name, type) {
+    var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
     var converter = registeredAttrs[type];
 
     if (!converter) {
-      throw new Error(`${this}.attr: unknown attribute type: \`${type}\``);
+      throw new Error(this + ".attr: unknown attribute type: `" + type + "`");
     }
 
-    if (typeof converter === 'function') { converter = new converter(opts); }
+    if (typeof converter === 'function') {
+      converter = new converter(opts);
+    }
 
     this.prop(name, {
       attr: true,
-      converter,
-      get: function() { return this[`__${name}`]; },
-      set: function(v) {
-        this[`__${name}`] = converter.coerce(v);
-        this[`${name}BeforeCoercion`] = v;
+      converter: converter,
+      get: function get() {
+        return this["__" + name];
+      },
+      set: function set(v) {
+        this["__" + name] = converter.coerce(v);
+        this[name + "BeforeCoercion"] = v;
       },
       default: 'default' in opts ? opts.default : undefined
     });
@@ -396,7 +483,9 @@ var Model = TransisObject.extend(function() {
   //             associated object that points back to the receiver class.
   //
   // Returns the receiver.
-  this.hasOne = function(name, klass, opts = {}) {
+  this.hasOne = function (name, klass) {
+    var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
     var desc;
 
     if (!this.prototype.hasOwnProperty('associations')) {
@@ -404,7 +493,7 @@ var Model = TransisObject.extend(function() {
     }
 
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
-      type: 'hasOne', name, klass, debugName: `${this.toString()}#${name}`
+      type: 'hasOne', name: name, klass: klass, debugName: this.toString() + "#" + name
     });
 
     if (desc.owner) {
@@ -412,15 +501,17 @@ var Model = TransisObject.extend(function() {
         this.prototype.__deps__ = Object.create(this.prototype.__deps__);
       }
 
-      (this.prototype.__deps__[`${name}.errors`] =
-        this.prototype.__deps__[`${name}.errors`] || []).push('errors');
-      (this.prototype.__deps__[`${name}.changes`] =
-        this.prototype.__deps__[`${name}.changes`] || []).push('changes');
+      (this.prototype.__deps__[name + ".errors"] = this.prototype.__deps__[name + ".errors"] || []).push('errors');
+      (this.prototype.__deps__[name + ".changes"] = this.prototype.__deps__[name + ".changes"] || []).push('changes');
     }
 
     this.prop(name, {
-      get: function() { return this[`__${name}`]; },
-      set: function(v) { hasOneSet.call(this, desc, v, true); }
+      get: function get() {
+        return this["__" + name];
+      },
+      set: function set(v) {
+        hasOneSet.call(this, desc, v, true);
+      }
     });
 
     return this;
@@ -447,15 +538,18 @@ var Model = TransisObject.extend(function() {
   // opts  - (see hasOne description)
   //
   // Returns the receiver.
-  this.hasMany = function(name, klass, opts = {}) {
-    var k = `__${name}`, desc;
+  this.hasMany = function (name, klass) {
+    var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    var k = "__" + name,
+        desc;
 
     if (!this.prototype.hasOwnProperty('associations')) {
       this.prototype.associations = Object.create(this.prototype.associations);
     }
 
     this.prototype.associations[name] = desc = Object.assign({}, opts, {
-      type: 'hasMany', name, klass, singular: pluralize(name, 1), debugName: `${this.toString()}#${name}`
+      type: 'hasMany', name: name, klass: klass, singular: (0, _pluralize2.default)(name, 1), debugName: this.toString() + "#" + name
     });
 
     if (desc.owner) {
@@ -463,19 +557,21 @@ var Model = TransisObject.extend(function() {
         this.prototype.__deps__ = Object.create(this.prototype.__deps__);
       }
 
-      (this.prototype.__deps__[`${name}.errors`] =
-        this.prototype.__deps__[`${name}.errors`] || []).push('errors');
-      (this.prototype.__deps__[`${name}.changes`] =
-        this.prototype.__deps__[`${name}.changes`] || []).push('changes');
+      (this.prototype.__deps__[name + ".errors"] = this.prototype.__deps__[name + ".errors"] || []).push('errors');
+      (this.prototype.__deps__[name + ".changes"] = this.prototype.__deps__[name + ".changes"] || []).push('changes');
     }
 
     this.prop(name, {
-      get: function() {
-        if (this[k]) { return this[k]; }
+      get: function get() {
+        if (this[k]) {
+          return this[k];
+        }
         desc.klass = resolve(desc.klass);
         return this[k] = hasManyArray(this, desc);
       },
-      set: function(a) { this[k].replace(a); }
+      set: function set(a) {
+        this[k].replace(a);
+      }
     });
   };
 
@@ -487,12 +583,14 @@ var Model = TransisObject.extend(function() {
   // opts - An `on:` option can be provided to specify the context in which to validate.
   //
   // Returns the receiver.
-  this.validate = function(name, f, opts = {}) {
+  this.validate = function (name, f) {
+    var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
     if (!this.prototype.hasOwnProperty('validators')) {
       this.prototype.validators = Object.create(this.prototype.validators);
     }
 
-    (this.prototype.validators[name] = this.prototype.validators[name] || []).push({validator: f, opts});
+    (this.prototype.validators[name] = this.prototype.validators[name] || []).push({ validator: f, opts: opts });
 
     return this;
   };
@@ -505,50 +603,49 @@ var Model = TransisObject.extend(function() {
   //
   // Returns the loaded model instance.
   // Throws `Error` if the given attributes do not contain an `id` attribute.
-  this.load = function(attrs) {
-    var id = attrs.id, associations = this.prototype.associations, associated = {}, model, LoadKlass;
+  this.load = function (attrs) {
+    var id = attrs.id,
+        associations = this.prototype.associations,
+        associated = {},
+        model,
+        LoadKlass;
 
     if (id == null) {
-      throw new Error(`${this}.load: an \`id\` attribute is required`);
+      throw new Error(this + ".load: an `id` attribute is required");
     }
 
     loads.push(true);
 
     attrs = Object.assign({}, attrs);
-    if(typeof this.getSubclass === 'function') {
+    if (typeof this.getSubclass === 'function') {
       LoadKlass = this.resolveSubclass(this.getSubclass(attrs));
-    }
-    else {
+    } else {
       LoadKlass = this;
     }
 
-    model = IdMap.get(LoadKlass, id) || new LoadKlass;
+    model = _id_map2.default.get(LoadKlass, id) || new LoadKlass();
 
     delete attrs.id;
 
     // extract associated attributes
-    for (let name in associations) {
-      let desc = associations[name];
+    for (var name in associations) {
+      var _desc = associations[name];
 
       if (name in attrs) {
-        associated[name] = attrs[name]
+        associated[name] = attrs[name];
         delete attrs[name];
-      }
-      else if (desc.type === 'hasOne' && `${name}Id` in attrs) {
-        associated[name] = attrs[`${name}Id`];
-        delete attrs[`${name}Id`];
-      }
-      else if (desc.type === 'hasOne' && `${name}_id` in attrs) {
-        associated[name] = attrs[`${name}_id`];
-        delete attrs[`${name}_id`];
-      }
-      else if (desc.type === 'hasMany' && `${desc.singular}Ids` in attrs) {
-        associated[name] = attrs[`${desc.singular}Ids`];
-        delete attrs[`${desc.singular}Ids`];
-      }
-      else if (desc.type === 'hasMany' && `${desc.singular}_ids` in attrs) {
-        associated[name] = attrs[`${desc.singular}_ids`];
-        delete attrs[`${desc.singular}_ids`];
+      } else if (_desc.type === 'hasOne' && name + "Id" in attrs) {
+        associated[name] = attrs[name + "Id"];
+        delete attrs[name + "Id"];
+      } else if (_desc.type === 'hasOne' && name + "_id" in attrs) {
+        associated[name] = attrs[name + "_id"];
+        delete attrs[name + "_id"];
+      } else if (_desc.type === 'hasMany' && _desc.singular + "Ids" in attrs) {
+        associated[name] = attrs[_desc.singular + "Ids"];
+        delete attrs[_desc.singular + "Ids"];
+      } else if (_desc.type === 'hasMany' && _desc.singular + "_ids" in attrs) {
+        associated[name] = attrs[_desc.singular + "_ids"];
+        delete attrs[_desc.singular + "_ids"];
       }
     }
 
@@ -556,30 +653,38 @@ var Model = TransisObject.extend(function() {
     model.set(attrs);
 
     // set id if necessary
-    if (model.id === undefined) { model.id = id; }
+    if (model.id === undefined) {
+      model.id = id;
+    }
 
     // load and set each association
-    for (let name in associated) {
-      let klass = resolve(associations[name].klass);
-      let data = associated[name];
+
+    var _loop2 = function _loop2(_name) {
+      var klass = resolve(associations[_name].klass);
+      var data = associated[_name];
 
       // clear association
       if (!data) {
-        model[name] = null;
-        continue;
+        model[_name] = null;
+        return "continue";
       }
 
-      if (associations[name].type === 'hasOne') {
-        let other = typeof data === 'object' ? klass.load(data) : klass.local(data);
-        model[name] = other;
-      }
-      else if (associations[name].type === 'hasMany') {
-        let others = [];
-        data.forEach((o) => {
-          others.push(typeof o === 'object' ? klass.load(o) : klass.local(o));
+      if (associations[_name].type === 'hasOne') {
+        var other = (typeof data === "undefined" ? "undefined" : _typeof(data)) === 'object' ? klass.load(data) : klass.local(data);
+        model[_name] = other;
+      } else if (associations[_name].type === 'hasMany') {
+        var others = [];
+        data.forEach(function (o) {
+          others.push((typeof o === "undefined" ? "undefined" : _typeof(o)) === 'object' ? klass.load(o) : klass.local(o));
         });
-        model[name] = others;
+        model[_name] = others;
       }
+    };
+
+    for (var _name in associated) {
+      var _ret2 = _loop2(_name);
+
+      if (_ret2 === "continue") continue;
     }
 
     model.sourceState = LOADED;
@@ -596,7 +701,13 @@ var Model = TransisObject.extend(function() {
   // objects - An array containing attribute hashes.
   //
   // Returns an array of loaded model instances.
-  this.loadAll = function(objects) { return objects.map((object) => this.load(object)); };
+  this.loadAll = function (objects) {
+    var _this3 = this;
+
+    return objects.map(function (object) {
+      return _this3.load(object);
+    });
+  };
 
   // Public: Creates a new query array but does not invoke its `query` method. This is useful for
   // cases where you want to initialize an empty query, but not yet run it.
@@ -634,7 +745,7 @@ var Model = TransisObject.extend(function() {
   //
   //   When an item is accessed via the `#at` method from a page that has yet to be fetched, the
   //   query array will automatically invoke the mapper to fetch that page. This effectively gives
-  //   you a sparse array that will automatically lazily load its contents when they are needed.
+  //   you a sparse array that will automatically lazily load its contents when then are needed.
   //   This behavior works very well with a virtualized list component.
   //
   //   Here is an example of the object expected from the mapper:
@@ -675,18 +786,24 @@ var Model = TransisObject.extend(function() {
   //            above.
   //
   // Returns a new `Transis.Array` decorated with the properties and methods described above.
-  this.buildQuery = function(baseOpts = {}) {
-    let a = TransisArray.of();
+  this.buildQuery = function () {
+    var baseOpts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    var a = _array2.default.of();
 
     a.__modelClass__ = this;
     a.__promise__ = wrapPromise(Promise.resolve());
 
     a.props({
-      modelClass: {get: function() { return this.__modelClass__; }},
+      modelClass: { get: function get() {
+          return this.__modelClass__;
+        } },
       baseOpts: {},
       currentOpts: {},
-      isBusy: {default: false},
-      isPaged: {on: ['baseOpts'], get: (baseOpts) => typeof baseOpts.pageSize === 'number'},
+      isBusy: { default: false },
+      isPaged: { on: ['baseOpts'], get: function get(baseOpts) {
+          return typeof baseOpts.pageSize === 'number';
+        } },
       error: {},
       meta: {}
     });
@@ -706,7 +823,10 @@ var Model = TransisObject.extend(function() {
   // opts - An options object to pass to the `Transis.QueryArray#query` method (default: `{}`).
   //
   // Returns a new `Transis.QueryArray`.
-  this.query = function(opts = {}) { return this.buildQuery().query(opts); };
+  this.query = function () {
+    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    return this.buildQuery().query(opts);
+  };
 
   // Public: Retrieves a model from the identity map or creates a new empty model instance. If you
   // want to get the model from the mapper, then use the `Model.get` method.
@@ -714,7 +834,9 @@ var Model = TransisObject.extend(function() {
   // id - The id of the model to get.
   //
   // Returns an instance of the receiver.
-  this.local = function(id) { return IdMap.get(this, id) || this.empty(id); };
+  this.local = function (id) {
+    return _id_map2.default.get(this, id) || this.empty(id);
+  };
 
   // Public: Gets a model instance, either from the identity map or from the mapper. If the model
   // has already been loaded into the identity map, then it is simply returned, otherwise the data
@@ -726,22 +848,29 @@ var Model = TransisObject.extend(function() {
   //             exists in the identity map.
   //
   // Returns an instance of the receiver.
-  this.get = function(id, opts = {}) {
-    var model = this.local(id), getOpts = Object.assign({}, opts);
+  this.get = function (id) {
+    var _this4 = this;
+
+    var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    var model = this.local(id),
+        getOpts = Object.assign({}, opts);
     delete getOpts.refresh;
 
     if (model.isEmpty || opts.refresh) {
       model.isBusy = true;
-      model.__promise__ = wrapPromise(this._callMapper('get', [id, getOpts])
-        .then((result) => {
-          model.isBusy = false;
-          try { this.load(result); }
-          catch (e) { console.error(e); throw e; }
-        }, (errors) => {
-          model.isBusy = false;
-          model._loadErrors(errors);
-          return Promise.reject(errors);
-        }));
+      model.__promise__ = wrapPromise(this._callMapper('get', [id, getOpts]).then(function (result) {
+        model.isBusy = false;
+        try {
+          _this4.load(result);
+        } catch (e) {
+          console.error(e);throw e;
+        }
+      }, function (errors) {
+        model.isBusy = false;
+        model._loadErrors(errors);
+        return Promise.reject(errors);
+      }));
     }
 
     return model;
@@ -749,7 +878,9 @@ var Model = TransisObject.extend(function() {
 
   // Public: Clears all models from the id map. This will subsequently cause the model layer to go
   // to the mapper for any model that had previously been loaded.
-  this.clearIdMap = function() { IdMap.clear(); return this; };
+  this.clearIdMap = function () {
+    _id_map2.default.clear();return this;
+  };
 
   // Internal: Invokes the given method on the receiver's mapper, ensuring that it returns a
   // Thennable (Promise-like) object.
@@ -761,25 +892,27 @@ var Model = TransisObject.extend(function() {
   // Throws `Error` when the mapper is not defined.
   // Throws `Error` when the mapper does not implement the given method.
   // Throws `Error` when the mapper does not return a Thennable object.
-  this._callMapper = function(method, args) {
+  this._callMapper = function (method, args) {
+    var _this5 = this;
+
     var promise;
 
     if (!this.mapper) {
-      throw new Error(`${this}._callMapper: no mapper defined, assign one to \`${this}.mapper\``);
+      throw new Error(this + "._callMapper: no mapper defined, assign one to `" + this + ".mapper`");
     }
 
     if (typeof this.mapper[method] !== 'function') {
-      throw new Error(`${this}._callMapper: mapper does not implement \`${method}\``);
+      throw new Error(this + "._callMapper: mapper does not implement `" + method + "`");
     }
 
     promise = this.mapper[method].apply(this.mapper, args);
 
     if (!promise || typeof promise.then !== 'function') {
-      throw new Error(`${this}._callMapper: mapper's \`${method}\` method did not return a Promise`);
+      throw new Error(this + "._callMapper: mapper's `" + method + "` method did not return a Promise");
     }
 
-    promise.catch((error) => {
-      console.warn(`${this}#_callMapper(${method}): promise rejection:`, error);
+    promise.catch(function (error) {
+      console.warn(_this5 + "#_callMapper(" + method + "): promise rejection:", error);
       return Promise.reject(error);
     });
 
@@ -793,25 +926,27 @@ var Model = TransisObject.extend(function() {
   this.prototype.validators = {};
 
   // Internal: Initializes the model by setting up some internal properties.
-  this.prototype.init = function(props) {
+  this.prototype.init = function (props) {
     this.sourceState = NEW;
-    this.isBusy      = false;
+    this.isBusy = false;
     this.__promise__ = wrapPromise(Promise.resolve());
     this._clearChanges();
 
     Model.__super__.init.call(this, props);
-  }
+  };
 
   this.prop('id', {
-    get: function() { return this.__id; },
-    set: function(id) {
+    get: function get() {
+      return this.__id;
+    },
+    set: function set(id) {
       if (this.__id) {
-        throw new Error(`${this.constructor}#id=: overwriting a model's identity is not allowed: ${this}`);
+        throw new Error(this.constructor + "#id=: overwriting a model's identity is not allowed: " + this);
       }
 
       this.__id = id;
 
-      IdMap.insert(this);
+      _id_map2.default.insert(this);
     }
   });
 
@@ -819,22 +954,30 @@ var Model = TransisObject.extend(function() {
 
   this.prop('isNew', {
     on: ['sourceState'],
-    get: function(sourceState) { return sourceState === NEW; }
+    get: function get(sourceState) {
+      return sourceState === NEW;
+    }
   });
 
   this.prop('isEmpty', {
     on: ['sourceState'],
-    get: function(sourceState) { return sourceState === EMPTY; }
+    get: function get(sourceState) {
+      return sourceState === EMPTY;
+    }
   });
 
   this.prop('isLoaded', {
     on: ['sourceState'],
-    get: function(sourceState) { return sourceState === LOADED; }
+    get: function get(sourceState) {
+      return sourceState === LOADED;
+    }
   });
 
   this.prop('isDeleted', {
     on: ['sourceState'],
-    get: function(sourceState) { return sourceState === DELETED; }
+    get: function get(sourceState) {
+      return sourceState === DELETED;
+    }
   });
 
   this.prop('isBusy');
@@ -843,14 +986,18 @@ var Model = TransisObject.extend(function() {
   // and `hasOne` associations, the original value is stored. For `hasMany` associations, the added
   // and removed models are stored.
   this.prop('ownChanges', {
-    get: function() { return this.__ownChanges = this.__ownChanges || {}; }
+    get: function get() {
+      return this.__ownChanges = this.__ownChanges || {};
+    }
   });
 
   // Public: Returns a boolean indicating whether the model has any property changes or any
   // owned `hasMany` associations that have been mutated.
   this.prop('hasOwnChanges', {
     on: ['ownChanges'],
-    get: function(ownChanges) { return Object.keys(ownChanges).length > 0; }
+    get: function get(ownChanges) {
+      return Object.keys(ownChanges).length > 0;
+    }
   });
 
   // Public: Returns an object of changes made to properties on the receiver as well as for changes
@@ -865,23 +1012,36 @@ var Model = TransisObject.extend(function() {
   this.prop('changes', {
     on: ['ownChanges'],
     pure: false,
-    get: function() {
+    get: function get() {
       var changes = Object.assign({}, this.ownChanges);
 
-      util.detectRecursion(this, function() {
-        for (let name in this.associations) {
-          if (!this.associations[name].owner) { continue; }
+      util.detectRecursion(this, function () {
+        var _this6 = this;
 
-          if (this.associations[name].type === 'hasOne' && this[name]) {
-            let cs = this[name].changes;
-            for (let k in cs) { changes[`${name}.${k}`] = cs[k]; }
+        var _loop3 = function _loop3(name) {
+          if (!_this6.associations[name].owner) {
+            return "continue";
           }
-          else if (this.associations[name].type === 'hasMany') {
-            this[name].forEach((item, i) => {
-              let cs = item.changes;
-              for (let k in cs) { changes[`${name}.${i}.${k}`] = cs[k]; }
+
+          if (_this6.associations[name].type === 'hasOne' && _this6[name]) {
+            var cs = _this6[name].changes;
+            for (var k in cs) {
+              changes[name + "." + k] = cs[k];
+            }
+          } else if (_this6.associations[name].type === 'hasMany') {
+            _this6[name].forEach(function (item, i) {
+              var cs = item.changes;
+              for (var _k in cs) {
+                changes[name + "." + i + "." + _k] = cs[_k];
+              }
             });
           }
+        };
+
+        for (var name in this.associations) {
+          var _ret3 = _loop3(name);
+
+          if (_ret3 === "continue") continue;
         }
       }.bind(this));
 
@@ -893,13 +1053,17 @@ var Model = TransisObject.extend(function() {
   // associated models have changes.
   this.prop('hasChanges', {
     on: ['changes'],
-    get: function(changes) { return !!Object.keys(changes).length; }
+    get: function get(changes) {
+      return !!Object.keys(changes).length;
+    }
   });
 
   // Public: Object containing any validation errors on the model. The keys of the object are the
   // properties that have errors and the values are an array of error messages.
   this.prop('ownErrors', {
-    get: function() { return this.__ownErrors = this.__ownErrors || {}; }
+    get: function get() {
+      return this.__ownErrors = this.__ownErrors || {};
+    }
   });
 
   // Public: Returns a boolean indicating whether the model has any validation errors on its own
@@ -907,7 +1071,9 @@ var Model = TransisObject.extend(function() {
   // this property to return `false` regardless of whether there are validation errors.
   this.prop('hasOwnErrors', {
     on: ['ownErrors', '_destroy'],
-    get: function(ownErrors, _destroy) { return !_destroy && Object.keys(ownErrors).length > 0; }
+    get: function get(ownErrors, _destroy) {
+      return !_destroy && Object.keys(ownErrors).length > 0;
+    }
   });
 
   // Public: Returns an object of validation errors that exist on the receiver as well as any
@@ -916,24 +1082,37 @@ var Model = TransisObject.extend(function() {
   this.prop('errors', {
     on: ['ownErrors'],
     pure: false,
-    get: function() {
+    get: function get() {
       var errors = Object.assign({}, this.ownErrors);
 
-      util.detectRecursion(this, function() {
-        for (let name in this.associations) {
-          if (!this.associations[name].owner) { continue; }
+      util.detectRecursion(this, function () {
+        var _this7 = this;
 
-          if (this.associations[name].type === 'hasOne' && this[name] && !this[name]._destroy) {
-            let es = this[name].errors;
-            for (let k in es) { errors[`${name}.${k}`] = es[k]; }
+        var _loop4 = function _loop4(name) {
+          if (!_this7.associations[name].owner) {
+            return "continue";
           }
-          else if (this.associations[name].type === 'hasMany') {
-            this[name].forEach((item, i) => {
+
+          if (_this7.associations[name].type === 'hasOne' && _this7[name] && !_this7[name]._destroy) {
+            var es = _this7[name].errors;
+            for (var k in es) {
+              errors[name + "." + k] = es[k];
+            }
+          } else if (_this7.associations[name].type === 'hasMany') {
+            _this7[name].forEach(function (item, i) {
               if (item._destroy) return;
-              let es = item.errors;
-              for (let k in es) { errors[`${name}.${i}.${k}`] = es[k]; }
+              var es = item.errors;
+              for (var _k2 in es) {
+                errors[name + "." + i + "." + _k2] = es[_k2];
+              }
             });
           }
+        };
+
+        for (var name in this.associations) {
+          var _ret4 = _loop4(name);
+
+          if (_ret4 === "continue") continue;
         }
       }.bind(this));
 
@@ -945,7 +1124,7 @@ var Model = TransisObject.extend(function() {
   // its owned associated models have validation errors.
   this.prop('hasErrors', {
     on: ['errors'],
-    get: function(errors) {
+    get: function get(errors) {
       return !!Object.keys(errors).length;
     }
   });
@@ -956,17 +1135,21 @@ var Model = TransisObject.extend(function() {
 
   // Public: Returns an object containing the raw values of all the receiver's attributes. Special
   // care is taken with the `_destroy` attribute, its only included if its been set.
-  this.prototype.attrs = function() {
+  this.prototype.attrs = function () {
     var attrs = {};
 
-    for (let k in this.__props__) {
+    for (var k in this.__props__) {
       if (this.__props__[k].attr) {
         attrs[k] = this.__props__[k].converter.serialize(this[k]);
       }
     }
 
-    if (typeof this.id !== 'undefined') { attrs.id = this.id; }
-    if (attrs._destroy === undefined) { delete attrs._destroy; }
+    if (typeof this.id !== 'undefined') {
+      attrs.id = this.id;
+    }
+    if (attrs._destroy === undefined) {
+      delete attrs._destroy;
+    }
 
     return attrs;
   };
@@ -977,12 +1160,14 @@ var Model = TransisObject.extend(function() {
   //
   // Returns the receiver.
   // Throws `Error` if the receiver is not LOADED or is BUSY.
-  this.prototype.get = function(opts = {}) {
-    if ((!this.isLoaded && !this.isEmpty) || this.isBusy) {
-      throw new Error(`${this.constructor}#get: can't get a model in the ${this.stateString()} state: ${this}`);
+  this.prototype.get = function () {
+    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    if (!this.isLoaded && !this.isEmpty || this.isBusy) {
+      throw new Error(this.constructor + "#get: can't get a model in the " + this.stateString() + " state: " + this);
     }
 
-    return this.constructor.get(this.id, Object.assign({}, opts, {refresh: true}));
+    return this.constructor.get(this.id, Object.assign({}, opts, { refresh: true }));
   };
 
   // Public: Saves the model by invoking either the `create` or `update` method on the model's data
@@ -993,23 +1178,29 @@ var Model = TransisObject.extend(function() {
   //
   // Returns the receiver.
   // Throws `Error` if the receiver is not NEW or LOADED or is currently busy.
-  this.prototype.save = function(opts = {}) {
-    if ((!this.isNew && !this.isLoaded) || this.isBusy) {
-      throw new Error(`${this.constructor}#save: can't save a model in the ${this.stateString()} state: ${this}`);
+  this.prototype.save = function () {
+    var _this8 = this;
+
+    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    if (!this.isNew && !this.isLoaded || this.isBusy) {
+      throw new Error(this.constructor + "#save: can't save a model in the " + this.stateString() + " state: " + this);
     }
 
     this.isBusy = true;
 
-    this.__promise__ = wrapPromise(this.constructor._callMapper(this.isNew ? 'create' : 'update', [this, opts])
-      .then((attrs) => {
-        this.isBusy = false;
-        try { this.load(attrs); }
-        catch (e) { console.error(e); throw e; }
-      }, (errors) => {
-        this.isBusy = false;
-        this._loadErrors(errors);
-        return Promise.reject(errors);
-      }));
+    this.__promise__ = wrapPromise(this.constructor._callMapper(this.isNew ? 'create' : 'update', [this, opts]).then(function (attrs) {
+      _this8.isBusy = false;
+      try {
+        _this8.load(attrs);
+      } catch (e) {
+        console.error(e);throw e;
+      }
+    }, function (errors) {
+      _this8.isBusy = false;
+      _this8._loadErrors(errors);
+      return Promise.reject(errors);
+    }));
 
     return this;
   };
@@ -1020,27 +1211,31 @@ var Model = TransisObject.extend(function() {
   //
   // Returns the receiver.
   // Throws `Error` if the model is currently busy.
-  this.prototype.delete = function(opts = {}) {
-    if (this.isDeleted) { return this; }
+  this.prototype.delete = function () {
+    var _this9 = this;
+
+    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    if (this.isDeleted) {
+      return this;
+    }
 
     if (this.isBusy) {
-      throw new Error(`${this.constructor}#delete: can't delete a model in the ${this.stateString()} state: ${this}`);
+      throw new Error(this.constructor + "#delete: can't delete a model in the " + this.stateString() + " state: " + this);
     }
 
     if (this.isNew) {
       mapperDeleteSuccess.call(this);
-    }
-    else {
+    } else {
       this.isBusy = true;
 
-      this.__promise__ = wrapPromise(this.constructor._callMapper('delete', [this, opts])
-        .then(() => {
-          mapperDeleteSuccess.call(this);
-        }, (errors) => {
-          this.isBusy = false;
-          this._loadErrors(errors);
-          return Promise.reject(errors);
-        }));
+      this.__promise__ = wrapPromise(this.constructor._callMapper('delete', [this, opts]).then(function () {
+        mapperDeleteSuccess.call(_this9);
+      }, function (errors) {
+        _this9.isBusy = false;
+        _this9._loadErrors(errors);
+        return Promise.reject(errors);
+      }));
     }
 
     return this;
@@ -1057,7 +1252,7 @@ var Model = TransisObject.extend(function() {
   // onRejected  - A function to be invoked when the latest promise from the mapper is rejected.
   //
   // Returns a new `Promise` that will be resolved with the return value of `onFulfilled`.
-  this.prototype.then = function(onFulfilled, onRejected) {
+  this.prototype.then = function (onFulfilled, onRejected) {
     return this.__promise__.then(onFulfilled, onRejected);
   };
 
@@ -1067,7 +1262,7 @@ var Model = TransisObject.extend(function() {
   // onRejected  - A function to be invoked when the latest promise from the mapper is rejected.
   //
   // Returns a new `Promise` that is resolved to the return value of the callback if it is called.
-  this.prototype.catch = function(onRejected) {
+  this.prototype.catch = function (onRejected) {
     return this.__promise__.catch(onRejected);
   };
 
@@ -1079,23 +1274,22 @@ var Model = TransisObject.extend(function() {
   // situation may occur when you have a create or update situation on the backend.
   //
   // Returns the receiver.
-  this.prototype.load = function(attrs) {
+  this.prototype.load = function (attrs) {
     var id = attrs.id;
 
     if (id == null && this.id == null) {
-      throw new Error(`${this.constructor}#load: an \`id\` attribute is required`);
+      throw new Error(this.constructor + "#load: an `id` attribute is required");
     }
 
     if (id != null && this.id != null && id !== this.id) {
-      throw new Error(`${this.constructor}#load: received attributes with id \`${id}\` but model already has id \`${this.id}\``);
+      throw new Error(this.constructor + "#load: received attributes with id `" + id + "` but model already has id `" + this.id + "`");
     }
 
     if (this.id == null) {
-      if (!IdMap.get(this.constructor, id)) {
+      if (!_id_map2.default.get(this.constructor, id)) {
         this.id = id;
-      }
-      else {
-        console.warn(`${this.constructor}#load: loading attributes that contain an id (${id}) that already exists in the identity map, the receiver will not be updated`);
+      } else {
+        console.warn(this.constructor + "#load: loading attributes that contain an id (" + id + ") that already exists in the identity map, the receiver will not be updated");
       }
     }
 
@@ -1107,9 +1301,11 @@ var Model = TransisObject.extend(function() {
   };
 
   // Public: Returns a string representation of the model's current state.
-  this.prototype.stateString = function() {
+  this.prototype.stateString = function () {
     var a = [this.sourceState.toUpperCase()];
-    if (this.isBusy) { a.push('BUSY'); }
+    if (this.isBusy) {
+      a.push('BUSY');
+    }
     return a.join('-');
   };
 
@@ -1117,20 +1313,23 @@ var Model = TransisObject.extend(function() {
   // made then `undefined` is returned.
   //
   // name - A string containing the name of an attribute or association.
-  this.prototype.previousValueFor = function(name) {
+  this.prototype.previousValueFor = function (name) {
     var change = this.ownChanges[name];
 
     if (change && this.associations[name] && this.associations[name].type === 'hasMany') {
-      let previous = this[name].slice();
-      let removed  = change.removed.slice();
-      let added    = change.added.slice();
+      var previous = this[name].slice();
+      var removed = change.removed.slice();
+      var added = change.added.slice();
 
-      removed.reverse().forEach((m) => { previous.push(m); });
-      added.forEach((m) => { previous.splice(previous.indexOf(m), 1); });
+      removed.reverse().forEach(function (m) {
+        previous.push(m);
+      });
+      added.forEach(function (m) {
+        previous.splice(previous.indexOf(m), 1);
+      });
 
       return previous;
-    }
-    else {
+    } else {
       return change;
     }
   };
@@ -1145,50 +1344,77 @@ var Model = TransisObject.extend(function() {
   //            to only the provided names.
   //
   // Returns the receiver.
-  this.prototype.undoChanges = function(opts = {}) {
+  this.prototype.undoChanges = function () {
+    var _this10 = this;
+
+    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
     var associations = this.associations;
 
-    const shouldUndo = (name) => {
-      if(!opts) return true;
+    var shouldUndo = function shouldUndo(name) {
+      if (!opts) return true;
 
-      if (opts.except === name) { return false; }
-      if (Array.isArray(opts.except) && opts.except.indexOf(name) >= 0) { return false; }
+      if (opts.except === name) {
+        return false;
+      }
+      if (Array.isArray(opts.except) && opts.except.indexOf(name) >= 0) {
+        return false;
+      }
 
       if (Array.isArray(opts.only)) {
-        if (opts.only.indexOf(name) === -1) { return false; }
+        if (opts.only.indexOf(name) === -1) {
+          return false;
+        }
+      } else if (opts.only && opts.only !== name) {
+        return false;
       }
-      else if (opts.only && opts.only !== name) { return false; }
 
       return true;
     };
 
-    for (let prop in this.ownChanges) {
-      if (!shouldUndo(prop)) { continue; }
+    var _loop5 = function _loop5(prop) {
+      if (!shouldUndo(prop)) {
+        return "continue";
+      }
 
       if (associations[prop] && associations[prop].type === 'hasMany') {
-        let removed = this.ownChanges[prop].removed.slice();
-        let added   = this.ownChanges[prop].added.slice();
+        var removed = _this10.ownChanges[prop].removed.slice();
+        var added = _this10.ownChanges[prop].added.slice();
 
-        removed.reverse().forEach((m) => { this[prop].push(m); });
-        added.forEach((m) => { this[prop].splice(this[prop].indexOf(m), 1); });
+        removed.reverse().forEach(function (m) {
+          _this10[prop].push(m);
+        });
+        added.forEach(function (m) {
+          _this10[prop].splice(_this10[prop].indexOf(m), 1);
+        });
+      } else {
+        _this10[prop] = _this10.ownChanges[prop];
       }
-      else {
-        this[prop] = this.ownChanges[prop];
-      }
+    };
+
+    for (var prop in this.ownChanges) {
+      var _ret5 = _loop5(prop);
+
+      if (_ret5 === "continue") continue;
     }
 
-    util.detectRecursion(this, function() {
-      for (let name in associations) {
-        let desc = associations[name];
+    util.detectRecursion(this, function () {
+      for (var name in associations) {
+        var _desc2 = associations[name];
 
-        if (!desc.owner) { continue; }
-        if (!shouldUndo(name)) { continue; }
-
-        if (desc.type === 'hasOne') {
-          this[name] && this[name].undoChanges();
+        if (!_desc2.owner) {
+          continue;
         }
-        else if (desc.type === 'hasMany') {
-          this[name].forEach(m => m.undoChanges());
+        if (!shouldUndo(name)) {
+          continue;
+        }
+
+        if (_desc2.type === 'hasOne') {
+          this[name] && this[name].undoChanges();
+        } else if (_desc2.type === 'hasMany') {
+          this[name].forEach(function (m) {
+            return m.undoChanges();
+          });
         }
       }
     }.bind(this));
@@ -1205,7 +1431,7 @@ var Model = TransisObject.extend(function() {
   // message - A string containing the error message.
   //
   // Returns the receiver.
-  this.prototype.addError = function(name, message) {
+  this.prototype.addError = function (name, message) {
     this.ownErrors[name] = this.ownErrors[name] || [];
 
     if (this.ownErrors[name].indexOf(message) === -1) {
@@ -1224,18 +1450,26 @@ var Model = TransisObject.extend(function() {
   // ctx  - The context in which to run validations on the given attribute. (optional)
   //
   // Returns `true` if no validation errors are found on the given attribute and `false` otherwise.
-  this.prototype.validateAttr = function(name, ctx) {
+  this.prototype.validateAttr = function (name, ctx) {
     this._clearErrors(name);
-    if (!this.validators[name]) { return true; }
+    if (!this.validators[name]) {
+      return true;
+    }
 
-    const validators = this.validators[name].filter( (v)=> !v.opts.on || v.opts.on === ctx );
+    var validators = this.validators[name].filter(function (v) {
+      return !v.opts.on || v.opts.on === ctx;
+    });
 
-    for (let i = 0, n = validators.length; i < n; i++) {
-      let validator = validators[i].validator;
+    for (var i = 0, n = validators.length; i < n; i++) {
+      var validator = validators[i].validator;
 
-      if (typeof validator === 'function') { validator.call(this); }
-      else if (typeof validator === 'string' && validator in this) { this[validator](); }
-      else { throw new Error(`${this.constructor}#validateAttr: don't know how to execute validator: \`${validator}\``); }
+      if (typeof validator === 'function') {
+        validator.call(this);
+      } else if (typeof validator === 'string' && validator in this) {
+        this[validator]();
+      } else {
+        throw new Error(this.constructor + "#validateAttr: don't know how to execute validator: `" + validator + "`");
+      }
     }
 
     return !(name in this.ownErrors);
@@ -1248,29 +1482,37 @@ var Model = TransisObject.extend(function() {
   // ctx - The context in which to run validations
   //
   // Returns `true` if no validation errors are found and `false` otherwise.
-  this.prototype.validate = function(ctx) {
-    var associations = this.associations, failed = false;
+  this.prototype.validate = function (ctx) {
+    var associations = this.associations,
+        failed = false;
 
     this._clearErrors();
 
-    for (let name in this.validators) {
-      if (!this.validateAttr(name, ctx)) { failed = true; }
+    for (var name in this.validators) {
+      if (!this.validateAttr(name, ctx)) {
+        failed = true;
+      }
     }
 
-    util.detectRecursion(this, function() {
-      for (let name in associations) {
-        let desc = associations[name];
+    util.detectRecursion(this, function () {
+      for (var _name2 in associations) {
+        var _desc3 = associations[_name2];
 
-        if (!desc.owner) { continue; }
-
-        if (desc.type === 'hasOne') {
-          if (this[name] && !this[name]._destroy) {
-            if (!this[name].validate(ctx)) { failed = true; }
-          }
+        if (!_desc3.owner) {
+          continue;
         }
-        else if (desc.type === 'hasMany') {
-          this[name].forEach((m) => {
-            if (!m._destroy && !m.validate(ctx)) { failed = true; }
+
+        if (_desc3.type === 'hasOne') {
+          if (this[_name2] && !this[_name2]._destroy) {
+            if (!this[_name2].validate(ctx)) {
+              failed = true;
+            }
+          }
+        } else if (_desc3.type === 'hasMany') {
+          this[_name2].forEach(function (m) {
+            if (!m._destroy && !m.validate(ctx)) {
+              failed = true;
+            }
           });
         }
       }
@@ -1280,24 +1522,25 @@ var Model = TransisObject.extend(function() {
   };
 
   // Public: Returns a string representation of the model.
-  this.prototype.toString = function() {
+  this.prototype.toString = function () {
     var attrs = this.attrs();
 
-    for (let name in this.associations) {
+    for (var name in this.associations) {
       if (this.associations[name].type === 'hasOne') {
         if (this[name] && this[name].id) {
           attrs[name] = this[name].id;
         }
-      }
-      else if (this.associations[name].type === 'hasMany') {
-        let ids = this[name].map(function(x) { return x.id; }).compact();
+      } else if (this.associations[name].type === 'hasMany') {
+        var ids = this[name].map(function (x) {
+          return x.id;
+        }).compact();
         if (ids.length) {
           attrs[name] = ids;
         }
       }
     }
 
-    return `#<${this.constructor} (${this.stateString()}):${this.objectId} ${JSON.stringify(attrs)}>`;
+    return "#<" + this.constructor + " (" + this.stateString() + "):" + this.objectId + " " + JSON.stringify(attrs) + ">";
   };
 
   // Internal: Load error message(s) received from the mapper. When passed an object, the keys of
@@ -1307,20 +1550,24 @@ var Model = TransisObject.extend(function() {
   // errors - Either an object mapping attribute names to their error messages or a string.
   //
   // Returns the receiver.
-  this.prototype._loadErrors = function(errors) {
-    if (typeof errors === 'object') {
-      for (let k in errors) {
+  this.prototype._loadErrors = function (errors) {
+    var _this11 = this;
+
+    if ((typeof errors === "undefined" ? "undefined" : _typeof(errors)) === 'object') {
+      var _loop6 = function _loop6(k) {
         if (Array.isArray(errors[k])) {
-          errors[k].forEach(function(error) {
+          errors[k].forEach(function (error) {
             this.addError(k, error);
-          }, this);
+          }, _this11);
+        } else {
+          _this11.addError(k, String(errors[k]));
         }
-        else {
-          this.addError(k, String(errors[k]));
-        }
+      };
+
+      for (var k in errors) {
+        _loop6(k);
       }
-    }
-    else {
+    } else {
       this.addError('base', String(errors));
     }
 
@@ -1329,14 +1576,13 @@ var Model = TransisObject.extend(function() {
 
   // Internal: Clears validation errors from the `errors` hash. If a name is given, only the errors
   // for the property of that name are cleared, otherwise all errors are cleared.
-  this.prototype._clearErrors = function(name) {
+  this.prototype._clearErrors = function (name) {
     if (name) {
       if (name in this.ownErrors) {
         delete this.ownErrors[name];
         this.didChange('ownErrors');
       }
-    }
-    else if (Object.keys(this.ownErrors).length) {
+    } else if (Object.keys(this.ownErrors).length) {
       this.__ownErrors = {};
       this.didChange('ownErrors');
     }
@@ -1350,18 +1596,17 @@ var Model = TransisObject.extend(function() {
   // model - The model that was removed from the inverse side.
   //
   // Returns nothing.
-  this.prototype._inverseRemoved = function(name, model) {
+  this.prototype._inverseRemoved = function (name, model) {
     var desc = this.associations[name];
 
     if (!desc) {
-      throw new Error(`${this.constructor}#inverseRemoved: unknown association \`${name}\``);
+      throw new Error(this.constructor + "#inverseRemoved: unknown association `" + name + "`");
     }
 
     if (desc.type === 'hasOne') {
       hasOneSet.call(this, desc, undefined, false);
       this.didChange(desc.name);
-    }
-    else if (desc.type === 'hasMany') {
+    } else if (desc.type === 'hasMany') {
       this[desc.name]._inverseRemove(model);
     }
   };
@@ -1373,48 +1618,52 @@ var Model = TransisObject.extend(function() {
   // model - The model that was added on the inverse side.
   //
   // Returns nothing.
-  this.prototype._inverseAdded = function(name, model) {
+  this.prototype._inverseAdded = function (name, model) {
     var desc = this.associations[name];
 
     if (!desc) {
-      throw new Error(`${this.constructor}#inverseAdded: unknown association \`${name}\``);
+      throw new Error(this.constructor + "#inverseAdded: unknown association `" + name + "`");
     }
 
     if (desc.type === 'hasOne') {
       hasOneSet.call(this, desc, model, false);
       this.didChange(desc.name);
-    }
-    else if (desc.type === 'hasMany') {
+    } else if (desc.type === 'hasMany') {
       this[desc.name]._inverseAdd(model);
     }
   };
 
   // Internal: Overrides `Transis.Object#_setProp` in order to perform change tracking.
-  this.prototype._setProp = function(name, value) {
+  this.prototype._setProp = function (name, value) {
     var oldValue = Model.__super__._setProp.call(this, name, value);
 
-    if (!this.__props__[name].attr && !this.associations[name]) { return; }
-    if (this.associations[name] && !this.associations[name].owner) { return; }
+    if (!this.__props__[name].attr && !this.associations[name]) {
+      return;
+    }
+    if (this.associations[name] && !this.associations[name].owner) {
+      return;
+    }
 
     if (!(name in this.ownChanges)) {
       if (!util.eq(this[name], oldValue)) {
         this._setChange(name, oldValue);
       }
-    }
-    else if (util.eq(this[name], this.ownChanges[name])) {
+    } else if (util.eq(this[name], this.ownChanges[name])) {
       this._clearChange(name);
     }
   };
 
   // Internal: Sets the old value for the changed property of the given name.
-  this.prototype._setChange = function(name, oldValue) {
-    if (loads.length) { return; }
+  this.prototype._setChange = function (name, oldValue) {
+    if (loads.length) {
+      return;
+    }
     this.ownChanges[name] = oldValue;
     this.didChange('ownChanges');
   };
 
   // Internal: Clears the change record for the property of the given name.
-  this.prototype._clearChange = function(name) {
+  this.prototype._clearChange = function (name) {
     if (name in this.ownChanges) {
       delete this.ownChanges[name];
       this.didChange('ownChanges');
@@ -1422,7 +1671,7 @@ var Model = TransisObject.extend(function() {
   };
 
   // Internal: Clears all change records.
-  this.prototype._clearChanges = function() {
+  this.prototype._clearChanges = function () {
     if (Object.keys(this.ownChanges).length) {
       this.__ownChanges = {};
       this.didChange('ownChanges');
@@ -1430,12 +1679,13 @@ var Model = TransisObject.extend(function() {
   };
 });
 
-Model.NEW     = NEW;
-Model.EMPTY   = EMPTY;
-Model.LOADED  = LOADED;
+Model.NEW = NEW;
+Model.EMPTY = EMPTY;
+Model.LOADED = LOADED;
 Model.DELETED = DELETED;
 
-Object.assign(Model, Validations.static);
-Object.assign(Model.prototype, Validations.instance);
+Object.assign(Model, _validations2.default.static);
+Object.assign(Model.prototype, _validations2.default.instance);
 
-export default Model;
+exports.default = Model;
+module.exports = exports["default"];

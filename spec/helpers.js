@@ -2,7 +2,7 @@ import "es6-shim";
 import * as util from "../util";
 import TransisObject from "../object";
 
-function delay(f) { setTimeout(f, 5); }
+function delay(f) { setTimeout(f, 10); }
 function jasmineToString() { return this.toString(); }
 
 beforeEach(function() {
