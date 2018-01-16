@@ -650,4 +650,31 @@ describe('Transis.Object', function() {
       }.bind(this)).not.toThrow();
     });
   });
+
+  describe('#proxy & #unproxy', function() {
+    const ProxyTestModel = TransisObject.extend(function() {
+      this.prop('trigger')
+    })
+    beforeEach(function() {
+      this.twinA = new ProxyTestModel;
+      this.twinB = new ProxyTestModel;
+
+      this.spy = jasmine.createSpy();
+      this.twinA.proxy(this.twinB, 'twin')
+      this.twinB.on('twin.trigger', this.spy)
+    });
+
+    it('proxies `trigger` prop changes to the target object', function() {
+      this.twinA.trigger = true;
+      TransisObject.flush();
+      expect(this.spy).toHaveBeenCalled();
+    });
+
+    it('unproxies `trigger` prop changes to the target object', function() {
+      this.twinA.unproxy(this.twinB, 'twin');
+      this.twinA.trigger = true;
+      TransisObject.flush();
+      expect(this.spy).not.toHaveBeenCalled();
+    });
+  });
 });

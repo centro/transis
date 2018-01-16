@@ -843,6 +843,55 @@ describe('Array', function() {
       TransisObject.flush();
       expect(spy).not.toHaveBeenCalled();
     });
+
+    it('causes the array to proxy changes for attributes: `.@` (and therefore also `.sizes` and `.first`)', function() {
+      var spyAt = jasmine.createSpy();
+      this.to.on('things.@', spyAt);
+
+      expect(this.a.size).toBe(3);
+      this.a.splice(0, 1);
+
+      expect(spyAt).not.toHaveBeenCalled();
+
+      TransisObject.flush();
+      expect(this.a.size).toBe(2);
+      expect(spyAt).toHaveBeenCalled();
+    });
+
+    it('allows more than one proxied attr', function() {
+      var spy1 = jasmine.createSpy();
+      this.to.on('things.x', spy1);
+
+      this.anotherTo = new TransisObject;
+      this.a.proxy(this.anotherTo, 'things');
+      var spy2 = jasmine.createSpy();
+      this.anotherTo.on('things.x', spy2);
+
+      this.a[0].x = 5;
+      TransisObject.flush();
+      expect(spy1).toHaveBeenCalledWith('things.x');
+      expect(spy2).toHaveBeenCalledWith('things.x');
+    });
+
+    describe('#unproxy', function() {
+      beforeEach(function() {
+        this.spy1 = jasmine.createSpy();
+        this.to.on('things.x', this.spy1);
+
+        this.anotherTo = new TransisObject;
+        this.a.proxy(this.anotherTo, 'things');
+        this.spy2 = jasmine.createSpy();
+        this.anotherTo.on('things.x', this.spy2);
+      })
+
+      it('unproxies one specific proxy at a time based on `to` and `name`', function() {
+        this.a.unproxy(this.anotherTo, 'things')
+        this.a[0].x = 5;
+        TransisObject.flush();
+        expect(this.spy1).toHaveBeenCalledWith('things.x');
+        expect(this.spy2).not.toHaveBeenCalledWith('things.x');
+      });
+    });
   });
 
   describe('#forEachCons', function() {
