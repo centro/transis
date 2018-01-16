@@ -476,10 +476,8 @@ TransisObject.prototype._getProp = function(name) {
   if (desc.cache) {
     this.__cache__ = this.__cache__ || {};
 
-    if (this.__deps__ && this.__deps__[name]) {
-      if (value && typeof value.proxy === 'function') {
-        value.proxy(this, name);
-      }
+    if (this.__deps__ && this.__deps__[name] && value && typeof value.proxy === 'function') {
+      value.proxy(this, name);
     }
 
     this.__cache__[name] = value;
