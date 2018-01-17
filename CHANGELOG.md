@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.12.0]
+### Changed
+- Run a flush cycle before calling model promise callbacks. [#50](https://github.com/centro/transis/pull/50)
+
+### Added
+- Add support for chained computed prop dependencies. [#51](https://github.com/centro/transis/pull/51)
+
 ## [0.11.1]
 ### Fixed
 - Fix use of the deprecated `isMounted` call in React mixin. [#47](https://github.com/centro/transis/pull/47)
