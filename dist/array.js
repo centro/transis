@@ -142,6 +142,8 @@ TransisArray.from = function (a, mapFn, thisArg) {
   // passed the number of elements to remove and an array of items to add whereas the `splice`
   // method is more flexible in the arguments that it accepts.
   this.prototype._splice = function (i, n, added) {
+    var _this2 = this;
+
     var removed = splice.apply(this, [i, n].concat(added));
 
     if (n !== added.length) {
@@ -152,20 +154,31 @@ TransisArray.from = function (a, mapFn, thisArg) {
     }
     this.didChange('@');
 
-    if (this.__proxy__) {
-      removed.forEach(function (x) {
-        if (x instanceof _object2.default || x instanceof TransisArray) {
-          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
-        }
-      }, this);
+    if (this.__proxies__) {
+      var _loop = function _loop(k) {
+        var _proxies__$k = _this2.__proxies__[k],
+            object = _proxies__$k.object,
+            name = _proxies__$k.name;
 
-      added.forEach(function (x) {
-        if (x instanceof _object2.default || x instanceof TransisArray) {
-          x._registerProxy(this.__proxy__.to, this.__proxy__.name);
-        }
-      }, this);
 
-      this.__proxy__.to.didChange(this.__proxy__.name);
+        removed.forEach(function (x) {
+          if (x instanceof _object2.default || x instanceof TransisArray) {
+            x.unproxy(object, name);
+          }
+        }, _this2);
+
+        added.forEach(function (x) {
+          if (x instanceof _object2.default || x instanceof TransisArray) {
+            x.proxy(object, name);
+          }
+        }, _this2);
+
+        object.didChange(name + "@");
+      };
+
+      for (var k in this.__proxies__) {
+        _loop(k);
+      }
     }
 
     return TransisArray.from(removed);
@@ -412,31 +425,26 @@ TransisArray.from = function (a, mapFn, thisArg) {
   //
   // Returns the receiver.
   this.prototype.proxy = function (to, name) {
-    if (this.__proxy__) {
-      this.unproxy();
-    }
-
-    this.__proxy__ = { to: to, name: name };
+    _object2.default.prototype.proxy.call(this, to, name);
 
     this.forEach(function (x) {
       if (x instanceof _object2.default || x instanceof TransisArray) {
-        x._registerProxy(to, name);
+        x.proxy(to, name);
       }
     });
 
     return this;
   };
 
-  // Public: Stop proxying prop changes.
-  this.prototype.unproxy = function () {
-    if (this.__proxy__) {
-      this.forEach(function (x) {
-        if (x instanceof _object2.default || x instanceof TransisArray) {
-          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
-        }
-      }, this);
-      delete this.__proxy__;
-    }
+  // Public: Stop proxying prop changes previously set up by `#proxy`.
+  this.prototype.unproxy = function (to, name) {
+    _object2.default.prototype.unproxy.call(this, to, name);
+
+    this.forEach(function (x) {
+      if (x instanceof _object2.default || x instanceof TransisArray) {
+        x.unproxy(to, name);
+      }
+    }, this);
 
     return this;
   };

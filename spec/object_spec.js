@@ -296,6 +296,74 @@ describe('Transis.Object', function() {
           }).toThrow(new Error('Transis.Object.defineProp: dependent property paths of more than two segments are not allowed: `foo.bar.baz`'));
         });
       });
+
+      describe('with a chained dependency on another computed prop', function() {
+        var Foo = TransisObject.extend(function() {
+          this.prop('barA');
+          this.prop('barB');
+          this.prop('useA', {default: false});
+
+          this.prop('bar', {
+            cache: true,
+            on: ['barA', 'barB', 'useA'],
+            get: function(barA, barB, useA) {
+              return useA ? barA : barB;
+            }
+          });
+          this.prop('barName', {
+            cache: true,
+            on: ['bar.name'],
+            get: function(name) {
+              return name;
+            }
+          });
+        });
+
+        var Bar = TransisObject.extend(function() {
+          this.prop('name');
+        });
+
+        beforeEach(function() {
+          this.foo = new Foo;
+          this.foo.barA = new Bar({name: 'a'});
+          this.foo.barB = new Bar({name: 'b'});
+          TransisObject.flush();
+
+          expect(this.foo.bar).toBe(this.foo.barB);
+        });
+
+        it('automatically proxies changes on the computed prop object', function() {
+          var spy = jasmine.createSpy();
+
+          this.foo.on('bar.name', spy);
+
+          this.foo.barB.name = 'B';
+          TransisObject.flush();
+          expect(spy).toHaveBeenCalledTimes(1);
+
+          this.foo.barA.name = 'A';
+          TransisObject.flush();
+          expect(spy).toHaveBeenCalledTimes(1);
+        });
+
+        it('automatically unproxies the old computed object when a new one is calculated', function() {
+          var spy = jasmine.createSpy();
+
+          this.foo.on('bar.name', spy);
+
+          this.foo.barB.name = 'B';
+          TransisObject.flush();
+          expect(spy).toHaveBeenCalledTimes(1);
+
+          this.foo.useA = true;
+          TransisObject.flush();
+          expect(spy).toHaveBeenCalledTimes(1);
+
+          this.foo.barB.name = 'BB';
+          TransisObject.flush();
+          expect(spy).toHaveBeenCalledTimes(1);
+        });
+      });
     });
 
     describe('with cache option', function() {
@@ -648,6 +716,93 @@ describe('Transis.Object', function() {
       expect(function() {
         this.object.notify('baz');
       }.bind(this)).not.toThrow();
+    });
+  });
+
+  describe('#proxy', function() {
+    it('sets up the receiver to proxy notifications to the given proxy object', function() {
+      var t = new Test;
+      var proxy = new TransisObject;
+      var spy = jasmine.createSpy();
+
+      t.proxy(proxy, 'test');
+
+      proxy.on('test.str', spy);
+
+      t.str = 'a';
+      TransisObject.flush();
+
+      expect(spy).toHaveBeenCalledWith('test.str');
+    });
+
+    it('works when multiple proxies are registered', function() {
+      var t = new Test;
+      var proxy1 = new TransisObject;
+      var proxy2 = new TransisObject;
+      var spy1 = jasmine.createSpy();
+      var spy2 = jasmine.createSpy();
+
+      t.proxy(proxy1, 'test');
+      t.proxy(proxy2, 'test');
+
+      proxy1.on('test.str', spy1);
+      proxy2.on('test.str', spy2);
+
+      t.str = 'a';
+      TransisObject.flush();
+
+      expect(spy1).toHaveBeenCalledWith('test.str');
+      expect(spy2).toHaveBeenCalledWith('test.str');
+    });
+  });
+
+  describe('#unproxy', function() {
+    it('removes a previously registered proxy', function() {
+      var t = new Test;
+      var proxy = new TransisObject;
+      var spy = jasmine.createSpy();
+
+      t.proxy(proxy, 'test');
+
+      proxy.on('test.str', spy);
+
+      t.str = 'a';
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledTimes(1);
+
+      t.unproxy(proxy, 'test');
+
+      t.str = 'b';
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('works when multiple proxies are registered', function() {
+      var t = new Test;
+      var proxy1 = new TransisObject;
+      var proxy2 = new TransisObject;
+      var spy1 = jasmine.createSpy();
+      var spy2 = jasmine.createSpy();
+
+      t.proxy(proxy1, 'test');
+      t.proxy(proxy2, 'test');
+
+      proxy1.on('test.str', spy1);
+      proxy2.on('test.str', spy2);
+
+      t.str = 'a';
+      TransisObject.flush();
+
+      expect(spy1).toHaveBeenCalledTimes(1);
+      expect(spy2).toHaveBeenCalledTimes(1);
+
+      t.unproxy(proxy1, 'test');
+
+      t.str = 'b';
+      TransisObject.flush();
+
+      expect(spy1).toHaveBeenCalledTimes(1);
+      expect(spy2).toHaveBeenCalledTimes(2);
     });
   });
 });

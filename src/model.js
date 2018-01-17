@@ -240,8 +240,8 @@ function hasOneSet(desc, v, sync) {
   if (sync && inv && prev) { prev._inverseRemoved(inv, this); }
   if (sync && inv && v) { v._inverseAdded(inv, this); }
 
-  if (prev) { prev._deregisterProxy(this, name); }
-  if (v) { v._registerProxy(this, name); }
+  if (prev) { prev.unproxy(this, name); }
+  if (v) { v.proxy(this, name); }
 }
 
 // Internal: Callback for a successful model deletion. Updates the model's state, removes it from

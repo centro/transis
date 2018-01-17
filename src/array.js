@@ -111,20 +111,24 @@ TransisArray.from = function(a, mapFn, thisArg) {
     if (i === 0) { this.didChange('first'); }
     this.didChange('@');
 
-    if (this.__proxy__) {
-      removed.forEach(function(x) {
-        if (x instanceof TransisObject || x instanceof TransisArray) {
-          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
-        }
-      }, this);
+    if (this.__proxies__) {
+      for (let k in this.__proxies__) {
+        const {object, name} = this.__proxies__[k];
 
-      added.forEach(function(x) {
-        if (x instanceof TransisObject || x instanceof TransisArray) {
-          x._registerProxy(this.__proxy__.to, this.__proxy__.name);
-        }
-      }, this);
+        removed.forEach(function(x) {
+          if (x instanceof TransisObject || x instanceof TransisArray) {
+            x.unproxy(object, name);
+          }
+        }, this);
 
-      this.__proxy__.to.didChange(this.__proxy__.name);
+        added.forEach(function(x) {
+          if (x instanceof TransisObject || x instanceof TransisArray) {
+            x.proxy(object, name);
+          }
+        }, this);
+
+        object.didChange(`${name}@`);
+      }
     }
 
     return TransisArray.from(removed);
@@ -358,29 +362,26 @@ TransisArray.from = function(a, mapFn, thisArg) {
   //
   // Returns the receiver.
   this.prototype.proxy = function(to, name) {
-    if (this.__proxy__) { this.unproxy(); }
-
-    this.__proxy__ = {to, name};
+    TransisObject.prototype.proxy.call(this, to, name);
 
     this.forEach(function(x) {
       if (x instanceof TransisObject || x instanceof TransisArray) {
-        x._registerProxy(to, name);
+        x.proxy(to, name);
       }
     });
 
     return this;
   };
 
-  // Public: Stop proxying prop changes.
-  this.prototype.unproxy = function() {
-    if (this.__proxy__) {
-      this.forEach(function(x) {
-        if (x instanceof TransisObject || x instanceof TransisArray) {
-          x._deregisterProxy(this.__proxy__.to, this.__proxy__.name);
-        }
-      }, this);
-      delete this.__proxy__;
-    }
+  // Public: Stop proxying prop changes previously set up by `#proxy`.
+  this.prototype.unproxy = function(to, name) {
+    TransisObject.prototype.unproxy.call(this, to, name);
+
+    this.forEach(function(x) {
+      if (x instanceof TransisObject || x instanceof TransisArray) {
+        x.unproxy(to, name);
+      }
+    }, this);
 
     return this;
   };

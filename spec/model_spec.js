@@ -55,6 +55,84 @@ describe('Model', function () {
     this.hasOne('billingAddress', 'Address', {owner: true});
     this.hasMany('lineItems', 'LineItem', {owner: true, inverse: 'invoice'});
     this.attr('name', 'string');
+
+    this.prop('companyName', {
+      on: ['company.name'],
+      cache: true,
+      get: function(name) { return name; }
+    });
+
+    this.prop('numLineItems', {
+      on: ['lineItems.size'],
+      cache: true,
+      get: function(size) { return size; }
+    });
+
+    this.prop('firstLineItem', {
+      on: ['lineItems'],
+      cache: true,
+      get: function(lineItems) { return lineItems[0]; }
+    });
+
+    this.prop('maxRateLineItem', {
+      on: ['lineItems', 'lineItems.rate'],
+      cache: true,
+      get: function(lineItems) {
+        let max = lineItems[0];
+
+        lineItems.slice(1).forEach(function(lineItem) {
+          if (lineItem.rate > max.rate) {
+            max = lineItem;
+          }
+        });
+
+        return max;
+      }
+    });
+
+    this.prop('minRateLineItem', {
+      on: ['lineItems', 'lineItems.rate'],
+      cache: false,
+      get: function(lineItems) {
+        let min = lineItems[0];
+
+        lineItems.slice(1).forEach(function(lineItem) {
+          if (lineItem.rate < min.rate) {
+            min = lineItem;
+          }
+        });
+
+        return min;
+      }
+    });
+
+    this.prop('maxRateLineItemCost', {
+      on: ['maxRateLineItem.cost'],
+      cache: true,
+      get: function(cost) { return cost; }
+    });
+
+    this.prop('minRateLineItemCost', {
+      // DOES NOT WORK SINCE minRateLineItem is not cached
+      on: ['minRateLineItem.cost'],
+      get: function(cost) { return cost; }
+    });
+
+    this.prop('maxQuantityLineItem', {
+      on: ['lineItems', 'lineItems.quantity'],
+      cache: true,
+      get: function(lineItems) {
+        let max = lineItems[0];
+
+        lineItems.slice(1).forEach(function(lineItem) {
+          if (lineItem.quantity > max.quantity) {
+            max = lineItem;
+          }
+        });
+
+        return max;
+      }
+    });
   });
 
   var LineItem = Model.extend('LineItem', function() {
@@ -62,6 +140,12 @@ describe('Model', function () {
     this.attr('name', 'string');
     this.attr('quantity', 'number');
     this.attr('rate', 'number');
+
+    this.prop('cost', {
+      on: ['quantity', 'rate'],
+      cache: true,
+      get: function(quantity, rate) { return quantity * rate; }
+    });
   });
 
   var CircularA = Model.extend('CircularA', function() {
@@ -73,7 +157,6 @@ describe('Model', function () {
     this.attr('name', 'string');
     this.hasMany('as', 'CircularA', {inverse: 'bs', owner: true});
   });
-
 
   beforeEach(function() {
     BasicModel.mapper = TestMapper;
@@ -3281,6 +3364,120 @@ describe('Model', function () {
           });
         }).toThrow();
       })
+    });
+  });
+
+  describe('chained prop dependencies', function() {
+    beforeEach(function() {
+      this.company = new Company({name: 'XYZ'});
+      this.lineItem1 = new LineItem({name: 'a', quantity: 5, rate: 2});
+      this.lineItem2 = new LineItem({name: 'b', quantity: 10, rate: 5});
+      this.lineItem3 = new LineItem({name: 'c', quantity: 2, rate: 3});
+      this.invoice = new Invoice({
+        company: this.company,
+        lineItems: [this.lineItem1, this.lineItem2, this.lineItem3]
+      });
+      TransisObject.flush();
+
+      expect(this.invoice.companyName).toBe('XYZ');
+      expect(this.invoice.numLineItems).toBe(3);
+      expect(this.invoice.firstLineItem).toBe(this.lineItem1);
+      expect(this.invoice.maxRateLineItem).toBe(this.lineItem2);
+      expect(this.invoice.minRateLineItem).toBe(this.lineItem1);
+      expect(this.invoice.maxRateLineItemCost).toBe(50);
+      expect(this.invoice.minRateLineItemCost).toBe(10);
+      expect(this.invoice.maxQuantityLineItem).toBe(this.lineItem2);
+    });
+
+    it('supports props that depend on a prop of a hasOne associated object', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('companyName', spy);
+      this.company.name = 'ABC';
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledWith('companyName');
+      expect(this.invoice.companyName).toBe('ABC');
+    });
+
+    it('supports props that depend on a prop of a hasMany association ', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('numLineItems', spy);
+      this.invoice.lineItems.pop();
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledWith('numLineItems');
+      expect(this.invoice.numLineItems).toBe(2);
+    });
+
+    it('supports props that depend on mutations of a hasMany association', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('firstLineItem', spy);
+      this.invoice.lineItems.shift();
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledWith('firstLineItem');
+      expect(this.invoice.firstLineItem).toBe(this.lineItem2);
+    });
+
+    it('supports props that depend on props of objects within a hasMany association', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('maxRateLineItem', spy);
+      this.lineItem3.rate = 7;
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledWith('maxRateLineItem');
+      expect(this.invoice.maxRateLineItem).toBe(this.lineItem3);
+    });
+
+    it('supports props that depend on props of a cached computed prop object', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('maxRateLineItemCost', spy);
+      this.lineItem2.quantity = 11;
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledWith('maxRateLineItemCost');
+      expect(this.invoice.maxRateLineItemCost).toBe(55);
+    });
+
+    it('does not send change notifications for props that depend on props of an uncached computed prop object', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('minRateLineItemCost', spy);
+      this.lineItem1.quantity = 6;
+      TransisObject.flush();
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('does not proxy change notifications for prop changes of cached computed prop objects that have no dependencies', function() {
+      var spy = jasmine.createSpy();
+
+      // no props depend on `maxQuantityLineItem`
+      this.invoice.on('maxQuantityLineItem.cost', spy);
+      this.lineItem2.rate = 7;
+      TransisObject.flush();
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('stops sending change notifications for prop changes on the previous value of a cached computed prop', function() {
+      var spy = jasmine.createSpy();
+
+      this.invoice.on('maxRateLineItemCost', spy);
+      this.lineItem2.quantity = 11;
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledWith('maxRateLineItemCost');
+      expect(this.invoice.maxRateLineItemCost).toBe(55);
+
+      // update the value of maxRateLineItem
+      this.lineItem1.rate = 10;
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(this.invoice.maxRateLineItemCost).toBe(50);
+
+      // this change no longer triggers a change notiication on maxRateLineItemCost
+      this.lineItem2.quantity = 12;
+      TransisObject.flush();
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(this.invoice.maxRateLineItemCost).toBe(50);
     });
   });
 });
