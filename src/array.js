@@ -113,7 +113,7 @@ TransisArray.from = function(a, mapFn, thisArg) {
 
     if (this.__proxies__) {
       for (let k in this.__proxies__) {
-        let {object, name} = this.__proxies__[k];
+        const {object, name} = this.__proxies__[k];
 
         removed.forEach(function(x) {
           if (x instanceof TransisObject || x instanceof TransisArray) {
