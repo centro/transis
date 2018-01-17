@@ -284,7 +284,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      object.notify(
 	      // strip '@' suffix if present
-	      k.length > 1 && k[k.length - 1] === '@' && k[k.length - 2] !== '.' ? k.slice(0, k.length - 1) : k);
+	      k.length > 1 && k.endsWith('@') && !k.endsWith('.@') ? k.slice(0, k.length - 1) : k);
 	    }
 
 	    if (star) {
