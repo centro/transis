@@ -539,6 +539,14 @@ describe('Transis.Object', function() {
       expect('x' in new Test).toBe(false);
     });
 
+    it('Throws an error if the option provided is unknown', function() {
+      expect(function() {
+        TransisObject.extend(function() {
+          this.prop('x', { foo: true, on: ['bar'], get: function() {}});
+        });
+      }).toThrow(new Error('Transis.Object.defineProp: unknown option `foo`'));
+    });
+
     it('notifies observers when changed', function() {
       var spy = jasmine.createSpy();
 

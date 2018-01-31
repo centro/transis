@@ -176,6 +176,16 @@ function flush() {
   }
 }
 
+var VALID_OPTIONS = ['attr', 'converter', 'name', 'get', 'set', 'default', 'on', 'cache', 'pure'];
+// Internal: Throws error if option is passed that is not used.
+function validateOptions(opts) {
+  Object.getOwnPropertyNames(opts).forEach(function (opt) {
+    if (VALID_OPTIONS.indexOf(opt) < 0) {
+      throw new Error('Transis.Object.defineProp: unknown option `' + opt + '`');
+    }
+  });
+}
+
 // Internal: Indicates whether the current name has a value cached.
 function isCached(name) {
   return this.__cache__ ? this.__cache__.hasOwnProperty(name) : false;
@@ -191,6 +201,8 @@ function getCached(name) {
 // Returns nothing.
 function defineProp(object, name) {
   var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+  validateOptions(opts);
 
   var descriptor = Object.assign({
     name: name,
