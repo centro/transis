@@ -140,14 +140,15 @@ function flush() {
   while ((f = delayPostFlushCallbacks.shift())) { f(); }
 }
 
-var VALID_OPTIONS = ['attr', 'converter', 'name', 'get', 'set', 'default', 'on', 'cache', 'pure'];
-// Internal: Throws error if option is passed that is not used.
+const VALID_OPTIONS = { attr: 0, converter: 0, name: 0, get: 0, set: 0, default: 0, on: 0, cache: 0, pure: 0 };
+
+// Internal: Throw a warning if option is passed that is not used.
 function validateOptions(opts) {
-  Object.getOwnPropertyNames(opts).forEach(function(opt) {
-    if(VALID_OPTIONS.indexOf(opt) < 0) {
-      throw new Error(`Transis.Object.defineProp: unknown option \`${opt}\``);
+  for (let k in opts) {
+    if(!(k in VALID_OPTIONS)) {
+      console.warn(`Transis.Object.defineProp: unknown option \`${k}\``);
     }
-  });
+  }
 }
 
 // Internal: Indicates whether the current name has a value cached.
