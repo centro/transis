@@ -176,6 +176,17 @@ function flush() {
   }
 }
 
+var VALID_OPTIONS = { attr: 0, converter: 0, name: 0, get: 0, set: 0, default: 0, on: 0, cache: 0, pure: 0 };
+
+// Internal: Throw a warning if option is passed that is not used.
+function validateOptions(opts) {
+  for (var k in opts) {
+    if (!(k in VALID_OPTIONS)) {
+      console.warn('Transis.Object.defineProp: unknown option `' + k + '`');
+    }
+  }
+}
+
 // Internal: Indicates whether the current name has a value cached.
 function isCached(name) {
   return this.__cache__ ? this.__cache__.hasOwnProperty(name) : false;
@@ -191,6 +202,8 @@ function getCached(name) {
 // Returns nothing.
 function defineProp(object, name) {
   var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+  validateOptions(opts);
 
   var descriptor = Object.assign({
     name: name,

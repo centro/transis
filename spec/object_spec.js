@@ -539,6 +539,13 @@ describe('Transis.Object', function() {
       expect('x' in new Test).toBe(false);
     });
 
+    describe('with an uknown option', function() {
+      it('thows a warning message if in non production environment', function() {
+        TransisObject.extend(function() { this.prop('x', { foo: true }); });
+        expect(console.warn).toHaveBeenCalledWith('Transis.Object.defineProp: unknown option `foo`');
+      });
+    });
+
     it('notifies observers when changed', function() {
       var spy = jasmine.createSpy();
 
