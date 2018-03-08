@@ -1015,6 +1015,45 @@ describe('Model', function () {
         expect(this.a.isPaged).toBe(true);
       });
     });
+
+    describe('QueryArray#reset', function() {
+      var a1;
+      var meta = { totalCount: 4 };
+      beforeEach(function() {
+        a1 = BasicModel.buildQuery({ pageSize: 4 });
+        a1.meta = { foo: 'bar' };
+        a1.error = "error occured"
+      });
+
+      it('clears error', function() {
+        a1.reset();
+        expect(a1.error).toBe(undefined);
+      });
+
+      it('clears meta if no meta is given', function() {
+        a1.reset([6, 7]);
+        expect(a1.meta).toBe(undefined);
+      });
+
+      it('return an empty array if no initial array is given', function() {
+        a1.reset();
+        expect(a1).toEqual([]);
+      });
+
+      describe('given new initial array and meta', function() {
+        beforeEach(function() {
+          a1.reset([6, 7], meta);
+        });
+
+        it('clears the existing array and set the new items', function() {
+          expect(a1).toEqual([6, 7, undefined, undefined]);
+        });
+
+        it('sets the `meta` on the instance', function() {
+          expect(a1.meta).toEqual(meta);
+        });
+      });
+    });
   });
 
   describe('query array', function() {

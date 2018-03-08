@@ -279,6 +279,20 @@ function queryArrayAt(i) {
   return r;
 }
 
+// Internal: Provides the implementation of the query array to empty and then refill its content and update its `meta`.
+function queryArrayReset() {
+  var newInitialArray = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var meta = arguments[1];
+
+  this.replace(newInitialArray);
+  this.meta = meta;
+  if (meta && meta.totalCount) {
+    this.length = meta.totalCount;
+  }
+  this.error = undefined;
+  return this;
+};
+
 // Internal: Sets the given object on a `hasOne` property.
 //
 // desc - An association descriptor.
@@ -748,6 +762,9 @@ var Model = _object2.default.extend(function () {
   //   you a sparse array that will automatically lazily load its contents when they are needed.
   //   This behavior works very well with a virtualized list component.
   //
+  //   `reset`: A function to be invoked to empty, refill and update the metadata on the
+  //   query array.
+  //
   //   Here is an example of the object expected from the mapper:
   //
   //   {
@@ -813,6 +830,7 @@ var Model = _object2.default.extend(function () {
     a.then = queryArrayThen;
     a.catch = queryArrayCatch;
     a.at = queryArrayAt;
+    a.reset = queryArrayReset;
 
     return a;
   };
