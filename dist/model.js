@@ -605,10 +605,10 @@ var Model = _object2.default.extend(function () {
   // Throws `Error` if the given attributes do not contain an `id` attribute.
   this.load = function (attrs) {
     var id = attrs.id,
-        associations = this.prototype.associations,
         associated = {},
         model,
-        LoadKlass;
+        LoadKlass,
+        associations;
 
     if (id == null) {
       throw new Error(this + ".load: an `id` attribute is required");
@@ -623,7 +623,7 @@ var Model = _object2.default.extend(function () {
       LoadKlass = this;
     }
 
-    model = _id_map2.default.get(LoadKlass, id) || new LoadKlass();
+    associations = LoadKlass.prototype.associations, model = _id_map2.default.get(LoadKlass, id) || new LoadKlass();
 
     delete attrs.id;
 
