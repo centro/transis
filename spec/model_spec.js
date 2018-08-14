@@ -3374,7 +3374,7 @@ describe('Model', function () {
 
       describe('loading subclass associations', function() {
         it('loads subclass hasOne associations', function() {
-          Composition.load({
+          var testComp = Composition.load({
             id: 'composition1000',
             things: [
               {
@@ -3383,11 +3383,14 @@ describe('Model', function () {
                 widget: { id: 'widget1' }
               }
             ]
-          })
-        })
+          });
+
+          expect(testComp.things.first instanceof AnotherChild).toBe(true);
+          expect(testComp.things.first.widget instanceof Widget).toBe(true);
+        });
 
         it('loads subclass hasMany associations', function() {
-          Composition.load({
+          var testComp = Composition.load({
             id: 'composition1000',
             things: [
               {
@@ -3398,7 +3401,10 @@ describe('Model', function () {
                 ]
               }
             ]
-          })
+          });
+
+          expect(testComp.things.first instanceof Child).toBe(true);
+          expect(testComp.things.first.widgets.first instanceof Widget).toBe(true);
         });
       });
     });
