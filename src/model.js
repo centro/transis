@@ -506,7 +506,7 @@ var Model = TransisObject.extend(function() {
   // Returns the loaded model instance.
   // Throws `Error` if the given attributes do not contain an `id` attribute.
   this.load = function(attrs) {
-    var id = attrs.id, associations = this.prototype.associations, associated = {}, model, LoadKlass;
+    var id = attrs.id, associated = {}, model, LoadKlass, associations;
 
     if (id == null) {
       throw new Error(`${this}.load: an \`id\` attribute is required`);
@@ -521,6 +521,8 @@ var Model = TransisObject.extend(function() {
     else {
       LoadKlass = this;
     }
+
+    associations = LoadKlass.prototype.associations,
 
     model = IdMap.get(LoadKlass, id) || new LoadKlass;
 

@@ -3302,8 +3302,15 @@ describe('Model', function () {
       };
     });
 
-    var Child = Parent.extend('Child');
-    var AnotherChild = Parent.extend('AnotherChild');
+    var Widget = Model.extend('Widget');
+
+    var Child = Parent.extend('Child', function() {
+      this.hasMany('widgets', 'Widget');
+    });
+
+    var AnotherChild = Parent.extend('AnotherChild', function() {
+      this.hasOne('widget', 'Widget');
+    });
 
     var Composition = Model.extend('Composition', function() {
       this.hasMany('things', 'Parent');
@@ -3363,7 +3370,43 @@ describe('Model', function () {
             ]
           });
         }).toThrow();
-      })
+      });
+
+      describe('loading subclass associations', function() {
+        it('loads subclass hasOne associations', function() {
+          var testComp = Composition.load({
+            id: 'composition1000',
+            things: [
+              {
+                id: 'randomThing2',
+                type: 'AnotherChild',
+                widget: { id: 'widget1' }
+              }
+            ]
+          });
+
+          expect(testComp.things.first instanceof AnotherChild).toBe(true);
+          expect(testComp.things.first.widget instanceof Widget).toBe(true);
+        });
+
+        it('loads subclass hasMany associations', function() {
+          var testComp = Composition.load({
+            id: 'composition1000',
+            things: [
+              {
+                id: 'randomThing2',
+                type: 'Child',
+                widgets: [
+                  { id: 'widget2' }
+                ]
+              }
+            ]
+          });
+
+          expect(testComp.things.first instanceof Child).toBe(true);
+          expect(testComp.things.first.widgets.first instanceof Widget).toBe(true);
+        });
+      });
     });
   });
 
