@@ -96,6 +96,10 @@ var BooleanAttr = exports.BooleanAttr = {
   }
 };
 
+function format2Digits(num) {
+  return num < 10 ? '0' + num : num;
+}
+
 var DateAttr = exports.DateAttr = {
   coerce: function coerce(v) {
     if (v == null || v instanceof Date) {
@@ -112,7 +116,11 @@ var DateAttr = exports.DateAttr = {
     return parsers.parseDate(v);
   },
   serialize: function serialize(date) {
-    return date instanceof Date ? date.toJSON().replace(/T.*$/, '') : date;
+    if (date instanceof Date) {
+      return date.getFullYear() + '-' + format2Digits(date.getMonth() + 1) + '-' + format2Digits(date.getDate());
+    } else {
+      return date;
+    }
   }
 };
 
