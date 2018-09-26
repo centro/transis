@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.12.1]
+### Fixed
+- Fix Date attribute serialization timezone issue. [#55](https://github.com/centro/transis/pull/55)
+- Fix inability of subclasses to load associations. [#54](https://github.com/centro/transis/pull/54)
+
+### Added
+- Verify valid options object is provided to `prop()`. [#52](https://github.com/centro/transis/pull/52)
+
+
 ## [0.12.0]
 ### Changed
 - Run a flush cycle before calling model promise callbacks. [#50](https://github.com/centro/transis/pull/50)
