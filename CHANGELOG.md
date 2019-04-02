@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file. This project adheres to
 [Semantic Versioning](http://semver.org/).
 
+## [0.13.0]
+### Added
+- Model validators can now receive a function as the 'if' opt to define whether it should be used or not.
+
 ## [0.12.1]
 ### Fixed
 - Fix Date attribute serialization timezone issue. [#55](https://github.com/centro/transis/pull/55)

@@ -581,6 +581,8 @@ var Model = _object2.default.extend(function () {
   // name - The name of the property to validate.
   // f    - A validator function or the name of an instance method.
   // opts - An `on:` option can be provided to specify the context in which to validate.
+  //        An `if:` function can be provided to specify whether to run or not the validation. The function receives
+  //        the context as the argument and must return a boolean.
   //
   // Returns the receiver.
   this.validate = function (name, f) {
@@ -1451,13 +1453,22 @@ var Model = _object2.default.extend(function () {
   //
   // Returns `true` if no validation errors are found on the given attribute and `false` otherwise.
   this.prototype.validateAttr = function (name, ctx) {
+    var _this11 = this;
+
     this._clearErrors(name);
     if (!this.validators[name]) {
       return true;
     }
 
     var validators = this.validators[name].filter(function (v) {
-      return !v.opts.on || v.opts.on === ctx;
+      var on = v.opts.on;
+      var ifFunc = v.opts.if;
+      if (!on && !ifFunc) {
+        return true;
+      }
+      var onValidation = !on || typeof on === 'string' && on === ctx;
+      var ifValidation = !ifFunc || typeof ifFunc === 'function' && !!ifFunc.call(_this11, ctx);
+      return onValidation && ifValidation;
     });
 
     for (var i = 0, n = validators.length; i < n; i++) {
@@ -1551,16 +1562,16 @@ var Model = _object2.default.extend(function () {
   //
   // Returns the receiver.
   this.prototype._loadErrors = function (errors) {
-    var _this11 = this;
+    var _this12 = this;
 
     if ((typeof errors === "undefined" ? "undefined" : _typeof(errors)) === 'object') {
       var _loop6 = function _loop6(k) {
         if (Array.isArray(errors[k])) {
           errors[k].forEach(function (error) {
             this.addError(k, error);
-          }, _this11);
+          }, _this12);
         } else {
-          _this11.addError(k, String(errors[k]));
+          _this12.addError(k, String(errors[k]));
         }
       };
 

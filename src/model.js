@@ -485,6 +485,8 @@ var Model = TransisObject.extend(function() {
   // name - The name of the property to validate.
   // f    - A validator function or the name of an instance method.
   // opts - An `on:` option can be provided to specify the context in which to validate.
+  //        An `if:` function can be provided to specify whether to run or not the validation. The function receives
+  //        the context as the argument and must return a boolean.
   //
   // Returns the receiver.
   this.validate = function(name, f, opts = {}) {
@@ -1230,7 +1232,14 @@ var Model = TransisObject.extend(function() {
     this._clearErrors(name);
     if (!this.validators[name]) { return true; }
 
-    const validators = this.validators[name].filter( (v)=> !v.opts.on || v.opts.on === ctx );
+    const validators = this.validators[name].filter( (v) => {
+      const on = v.opts.on;
+      const ifFunc = v.opts.if;
+      if (!on && !ifFunc) { return true; }
+      const onValidation = !on || (typeof on === 'string' && on === ctx);
+      const ifValidation = !ifFunc || (typeof ifFunc === 'function' && !!ifFunc.call(this, ctx));
+      return onValidation && ifValidation;
+    });
 
     for (let i = 0, n = validators.length; i < n; i++) {
       let validator = validators[i].validator;

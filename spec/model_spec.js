@@ -2716,6 +2716,30 @@ describe('Model', function () {
           }
       }, {on: 'maxNumContext'});
 
+      this.validate('num', function() {
+        if(this.num < 0) {
+          this.addError('num', 'num cannot be lower than zero')
+        }
+      }, {on: 'minNumContext'});
+
+      this.validate('num', function() {
+        if(this.num === 5) {
+          this.addError('num', 'num can\'t be 5')
+        }
+      }, {if: function(ctx) { return ctx !== 'minNumContext' && ctx !== 'maxNumContext'; }});
+
+      this.validate('num', function() {
+        if(this.num === 6) {
+          this.addError('num', 'num can\'t be 6')
+        }
+      }, {if: function() { return this.name === 'specific_name'; }});
+
+      this.validate('num', function() {
+        if(this.num === 7) {
+          this.addError('num', 'num can\'t be 7')
+        }
+      }, {on: 'specificSevenValue', if: function() { return this.name === 'specific_name'; }});
+
       this.validate('num', 'numIsInteger');
 
       this.hasMany('bars', 'ValidatedBar', {owner: true});
@@ -3008,6 +3032,8 @@ describe('Model', function () {
     });
 
     describe('#validateAttr', function() {
+      var contains = function(array, value) { return array.indexOf(value) >= 0 }
+
       it('runs all registered validators for the given property name', function() {
         var m = new ValidatedFoo({name: 'FooBarBazQuux'});
         m.validateAttr('name');
@@ -3050,8 +3076,6 @@ describe('Model', function () {
 
 
       describe('given a context', function() {
-        var contains = function(array, value) { return array.indexOf(value) >= 0 }
-
         it('runs only validators for the given property name that include the context', function() {
           var m = new ValidatedFoo({name: 'FOO', num: 34.3});
           m.validateAttr('name', 'nameContext');
@@ -3080,6 +3104,36 @@ describe('Model', function () {
         it('returns true when all validations pass', function() {
           var m = new ValidatedFoo({name: 'foobar'});
           expect(m.validateAttr('name', 'nameContext')).toBe(true);
+        });
+      });
+
+      describe('with an \'if\' opt', function () {
+        it('Receives the context as an argument', function() {
+          var m = new ValidatedFoo({name: 'FOO', num: 5});
+          m.validateAttr('num', 'notMinNumNotMaxNumContext');
+          expect( contains(m.ownErrors.num, 'num can\'t be 5') ).toBe(true);
+        });
+
+        it('Uses model values', function() {
+          var m = new ValidatedFoo({name: 'specific_name', num: 6});
+          m.validateAttr('num');
+          expect( contains(m.ownErrors.num, 'num can\'t be 6') ).toBe(true);
+        });
+
+        it('that returns true. If \'on\' context is valid, validation is run', function() {
+          var m = new ValidatedFoo({name: 'specific_name', num: 7});
+          m.validateAttr('num', 'specificSevenValue');
+          expect(contains(m.ownErrors.num, 'num can\'t be 7') ).toBe(true);
+        });
+
+        it('that returns true. If \'on\' context is not valid, validation is not run', function() {
+          var m = new ValidatedFoo({name: 'specific_name', num: 7});
+          expect(m.validateAttr('num', 'randomContext')).toBe(true);
+        });
+
+        it('that returns false. Even if \'on\' context is valid, validation is not run', function() {
+          var m = new ValidatedFoo({name: 'FOO', num: 7});
+          expect(m.validateAttr('num', 'specificSevenValue')).toBe(true);
         });
       });
 
